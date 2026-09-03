@@ -47,6 +47,9 @@ export const CIVIC_DATA = {
     }
   ],
 
+  // Single Source of Truth Note:
+  // Persistent reports and mutations are owned by Backend/server.js (persisted in Backend/data/reports.json).
+  // sampleReports below serves strictly as the initial pre-mount fallback so dashboards and maps render with zero delay before the API responds.
   sampleReports: [
     {
       id: "CIVIC-2026-8921",

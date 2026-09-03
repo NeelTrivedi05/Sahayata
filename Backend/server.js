@@ -1,6 +1,18 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,7 +42,8 @@ let jurisdiction = {
   helpline: "1916"
 };
 
-let reports = [
+// Bootstrap Seed Data (Single Source of Truth for initial bootstrap)
+const SEED_REPORTS = [
   {
     id: "CIVIC-2026-8921",
     title: "Deep Crater Pothole causing two-wheeler skids",
@@ -140,6 +153,34 @@ let reports = [
   }
 ];
 
+function loadReports() {
+  try {
+    if (fs.existsSync(REPORTS_FILE)) {
+      const data = fs.readFileSync(REPORTS_FILE, 'utf-8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        console.log(`[Persistence] Loaded ${parsed.length} reports from ${REPORTS_FILE}`);
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('[Persistence] Could not read reports.json, falling back to seed data:', err);
+  }
+  // Initialize with seed data and save file
+  saveReports(SEED_REPORTS);
+  return [...SEED_REPORTS];
+}
+
+function saveReports(data) {
+  try {
+    fs.writeFileSync(REPORTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[Persistence] Error saving reports.json:', err);
+  }
+}
+
+let reports = loadReports();
+
 // Single Source of Truth: Comprehensive Priority Score Formula
 export function calculatePriorityScore(report) {
   const base = report.baseSeverity || 25;
@@ -218,6 +259,35 @@ function calculateHammingDistance(hexA, hexB) {
   }
   return dist;
 }
+
+// 0. Root Status & Health Check
+app.get('/', (req, res) => {
+  res.json({
+    name: "Sahayata Civic Platform API",
+    version: "2.0.0",
+    status: "online",
+    port: PORT,
+    database: {
+      persistedReports: reports.length,
+      persistedUsers: registeredUsers.length
+    },
+    endpoints: {
+      reports: "/api/reports",
+      jurisdiction: "/api/jurisdiction",
+      authLogin: "/api/auth/login",
+      authSignup: "/api/auth/signup"
+    },
+    message: "Sahayata Backend API is running properly. Open http://localhost:5173 to access the frontend."
+  });
+});
+
+app.get('/api', (req, res) => {
+  res.redirect('/');
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: "ok", uptime: process.uptime(), reports: reports.length });
+});
 
 // 1. Health check & Jurisdiction info
 app.get('/api/jurisdiction', (req, res) => {
@@ -324,6 +394,7 @@ app.post('/api/reports', (req, res) => {
   };
 
   reports.unshift(newReport);
+  saveReports(reports);
   const pri = calculatePriorityScore(newReport);
   
   res.status(201).json({
@@ -345,6 +416,7 @@ app.post('/api/reports/:id/endorse', (req, res) => {
   }
 
   target.duplicateCount = (target.duplicateCount || 1) + 1;
+  saveReports(reports);
   const pri = calculatePriorityScore(target);
 
   res.json({
@@ -384,6 +456,7 @@ app.post('/api/reports/:id/progress', (req, res) => {
     }
   }
 
+  saveReports(reports);
   const pri = calculatePriorityScore(target);
   res.json({
     success: true,
@@ -415,6 +488,7 @@ app.post('/api/reports/:id/verify', (req, res) => {
     target.resolution.note = "CITIZEN DISPUTE: Repair failed quality threshold. Reopened for field re-inspection.";
   }
 
+  saveReports(reports);
   const pri = calculatePriorityScore(target);
   res.json({
     success: true,
@@ -427,7 +501,7 @@ app.post('/api/reports/:id/verify', (req, res) => {
 });
 
 // ==================== AUTHENTICATION API ====================
-let registeredUsers = [
+const SEED_USERS = [
   {
     id: 'usr-1',
     fullName: 'Aarav Sharma',
@@ -456,6 +530,33 @@ let registeredUsers = [
     civicKarma: 1200
   }
 ];
+
+function loadUsers() {
+  try {
+    if (fs.existsSync(USERS_FILE)) {
+      const data = fs.readFileSync(USERS_FILE, 'utf-8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        console.log(`[Persistence] Loaded ${parsed.length} users from ${USERS_FILE}`);
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('[Persistence] Could not read users.json, falling back to seed users:', err);
+  }
+  saveUsers(SEED_USERS);
+  return [...SEED_USERS];
+}
+
+function saveUsers(data) {
+  try {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[Persistence] Error saving users.json:', err);
+  }
+}
+
+let registeredUsers = loadUsers();
 
 const NAME_REGEX = /^[A-Za-z\s]{2,50}$/;
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -498,6 +599,7 @@ app.post('/api/auth/signup', (req, res) => {
   };
 
   registeredUsers.push(newUser);
+  saveUsers(registeredUsers);
 
   res.status(201).json({
     success: true,

@@ -1,0 +1,208 @@
+[
+  {
+    "id": "CIVIC-2026-4691",
+    "title": "Pothole on Carter Road 1788474432",
+    "category": "pothole",
+    "categoryLabel": "Road Hazard & Pothole",
+    "coords": [
+      19.068,
+      72.825
+    ],
+    "address": "Carter Road Promenade, Bandra West, Mumbai",
+    "status": "verified",
+    "statusStep": 6,
+    "slaHours": 24,
+    "elapsedHours": 1,
+    "duplicateCount": 2,
+    "impactRadiusMeters": 100,
+    "criticalZone": "Coastal Road Corridor",
+    "trafficDensity": "High",
+    "baseSeverity": 30,
+    "reportedBy": "You (Citizen)",
+    "reportedAt": "Just now",
+    "afterImage": "https://example.com/after.jpg",
+    "phash": null,
+    "resolution": {
+      "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
+      "contractor": "BMC Fast-Response Team",
+      "note": "Clarification provided: None"
+    }
+  },
+  {
+    "id": "CIVIC-2026-6668",
+    "title": "Pothole on Carter Road 1788474416",
+    "category": "pothole",
+    "categoryLabel": "Road Hazard & Pothole",
+    "coords": [
+      19.068,
+      72.825
+    ],
+    "address": "Carter Road Promenade, Bandra West, Mumbai",
+    "status": "verified",
+    "statusStep": 6,
+    "slaHours": 24,
+    "elapsedHours": 1,
+    "duplicateCount": 2,
+    "impactRadiusMeters": 100,
+    "criticalZone": "Coastal Road Corridor",
+    "trafficDensity": "High",
+    "baseSeverity": 30,
+    "reportedBy": "You (Citizen)",
+    "reportedAt": "Just now",
+    "afterImage": "https://example.com/after.jpg",
+    "phash": null,
+    "resolution": {
+      "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
+      "contractor": "BMC Fast-Response Team",
+      "note": "Clarification provided: None"
+    }
+  },
+  {
+    "id": "CIVIC-2026-3651",
+    "title": "Test Broken Water Pipe near Bandra Station",
+    "category": "water",
+    "categoryLabel": "Water Supply & Sewage",
+    "coords": [
+      19.062,
+      72.842
+    ],
+    "address": "Station Road, Bandra West, Mumbai",
+    "status": "assigned",
+    "statusStep": 4,
+    "slaHours": 24,
+    "elapsedHours": 1,
+    "duplicateCount": 1,
+    "impactRadiusMeters": 100,
+    "criticalZone": "Transit Main Road",
+    "trafficDensity": "High",
+    "baseSeverity": 30,
+    "reportedBy": "You (Citizen)",
+    "reportedAt": "Just now",
+    "phash": null,
+    "resolution": {
+      "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
+      "contractor": "BMC Fast-Response Team",
+      "note": "Clarification provided: None"
+    }
+  },
+  {
+    "id": "CIVIC-2026-8921",
+    "title": "Deep Crater Pothole causing two-wheeler skids",
+    "category": "pothole",
+    "categoryLabel": "Road Hazard & Pothole",
+    "coords": [
+      19.0558,
+      72.8295
+    ],
+    "address": "Near St. Andrew's High School, Hill Road, Bandra West, Mumbai",
+    "status": "resolved",
+    "statusStep": 5,
+    "slaHours": 48,
+    "elapsedHours": 54,
+    "duplicateCount": 15,
+    "impactRadiusMeters": 140,
+    "criticalZone": "St. Andrew's High School (60m)",
+    "trafficDensity": "High (School Bus Route)",
+    "baseSeverity": 35,
+    "reportedBy": "Priya S. & 14 others",
+    "reportedAt": "2 days ago",
+    "beforeImage": "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
+    "afterImage": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
+    "resolution": {
+      "assignedTo": "Er. Rajesh Sawant (Ward H/West)",
+      "contractor": "Falcon Mumbai Infrastructure Ltd.",
+      "note": "Compaction scheduled with emergency mastic asphalt.",
+      "inspectionStatus": "Field Repair Completed - Verification Pending",
+      "aiConfidence": "96.4% Repair Cleared"
+    }
+  },
+  {
+    "id": "CIVIC-2026-8904",
+    "title": "Overflowing Garbage Dump on Footpath",
+    "category": "garbage",
+    "categoryLabel": "Solid Waste Management",
+    "coords": [
+      19.0585,
+      72.8315
+    ],
+    "address": "Linking Road Corner, Near National College, Bandra West, Mumbai",
+    "status": "resolved",
+    "statusStep": 5,
+    "slaHours": 24,
+    "elapsedHours": 19,
+    "duplicateCount": 8,
+    "impactRadiusMeters": 90,
+    "criticalZone": "Commercial Market Footfall",
+    "trafficDensity": "Medium",
+    "baseSeverity": 28,
+    "reportedBy": "Karthik R. & 8 others",
+    "reportedAt": "19 hours ago",
+    "beforeImage": "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
+    "afterImage": "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
+    "resolution": {
+      "assignedTo": "Er. Rajesh Sawant",
+      "contractor": "CleanMumbai BMC Solid Waste Marshall Squad #3",
+      "note": "Waste cleared, footpath washed and sanitized.",
+      "aiConfidence": "95.8% Cleanliness Cleared"
+    }
+  },
+  {
+    "id": "CIVIC-2026-8877",
+    "title": "Broken Streetlight & Hanging Live Wire",
+    "category": "electricity",
+    "categoryLabel": "Electrical & Lighting",
+    "coords": [
+      19.0514,
+      72.8296
+    ],
+    "address": "Lilavati Hospital Emergency Access Lane, Bandra West, Mumbai",
+    "status": "verified",
+    "statusStep": 6,
+    "slaHours": 12,
+    "elapsedHours": 11,
+    "duplicateCount": 5,
+    "impactRadiusMeters": 80,
+    "criticalZone": "Lilavati Hospital Ambulance Corridor",
+    "trafficDensity": "High (Ambulance Route)",
+    "baseSeverity": 40,
+    "reportedBy": "Dr. Ananya Rao",
+    "reportedAt": "Yesterday",
+    "beforeImage": "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
+    "afterImage": "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+    "resolution": {
+      "assignedTo": "Er. Ramesh Patil (BEST Electrical Dept)",
+      "contractor": "BEST Emergency Wing",
+      "note": "Insulated junction replaced, 120W LED lamp installed and tested.",
+      "aiConfidence": "98.2% Illumination Restored"
+    }
+  },
+  {
+    "id": "CIVIC-2026-8842",
+    "title": "Burst Water Pipeline gushing across road",
+    "category": "water",
+    "categoryLabel": "Water Supply & Sewage",
+    "coords": [
+      19.061,
+      72.835
+    ],
+    "address": "Turner Road Junction, Bandra West, Mumbai",
+    "status": "prioritized",
+    "statusStep": 3,
+    "slaHours": 24,
+    "elapsedHours": 14,
+    "duplicateCount": 11,
+    "impactRadiusMeters": 120,
+    "criticalZone": "Transit Main Road",
+    "trafficDensity": "High",
+    "baseSeverity": 32,
+    "reportedBy": "Meera Deshmukh & 10 others",
+    "reportedAt": "14 hours ago",
+    "beforeImage": "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
+    "afterImage": "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
+    "resolution": {
+      "assignedTo": "Er. Rajesh Sawant",
+      "contractor": "BMC Hydraulic Engineering Quick Response Unit",
+      "note": "Isolation valve dispatched to stem wastage."
+    }
+  }
+]
