@@ -180,7 +180,7 @@ export default function App() {
     });
   };
 
-  // Handle citizen submission with real API call and pHash deduplication
+  // Handle citizen submission with instant deduplication check (works both online and offline)
   const handleReportSubmit = async (payload) => {
     const reportData = {
       title: payload?.title || (customDescription ? customDescription : activePreset.name),
@@ -196,6 +196,19 @@ export default function App() {
       baseSeverity: payload?.baseSeverity || 28
     };
 
+    // 1. ALWAYS perform immediate deduplication evaluation against existing complaints
+    const dupCheck = await evaluateDuplicateCandidate(reportData, reports, { maxRadiusMeters: 50 });
+    if (dupCheck.isDuplicate && dupCheck.duplicateReport) {
+      setMatchedDuplicate({
+        ...dupCheck.duplicateReport,
+        matchScore: dupCheck.confidenceScore,
+        reasons: dupCheck.reasons
+      });
+      setDuplicateModalOpen(true);
+      return;
+    }
+
+    // 2. If no duplicate exists, attempt submission to backend API
     try {
       const res = await api.createReport(reportData);
       if (res.data) {
@@ -204,42 +217,44 @@ export default function App() {
         try {
           confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
         } catch (e) {}
-        showToast(`Grievance registered! Ticket ${res.data.id} routed to Ward H/West.`);
+        showToast(`Grievance registered! Ticket ${res.data.id} routed to Ward.`);
         setActiveTab('pipeline');
+        return;
       }
     } catch (err) {
       if (err.data?.isDuplicate) {
         setMatchedDuplicate(err.data.duplicateReport);
         setDuplicateModalOpen(true);
-      } else {
-        // Fallback local creation if backend offline
-        const newReportId = `CIVIC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-        const localReport = {
-          id: newReportId,
-          ...reportData,
-          status: 'reported',
-          statusStep: 1,
-          slaHours: 24,
-          elapsedHours: 1,
-          duplicateCount: 1,
-          impactRadiusMeters: 100,
-          beforeImage: reportData.image,
-          afterImage: reportData.image,
-          resolution: {
-            assignedTo: "Er. Rajesh Sawant (Executive Engineer)",
-            contractor: "BMC Fast-Response Team",
-            note: `Auto-routed based on AI Clarification: "${selectedClarification}"`
-          },
-          priorityScore: 78,
-          priority: { finalScore: 78, isOverdue: false, overdueHours: 0, breakdown: { base: 28, dup: 3, critical: 24, traffic: 14, aging: 0 } }
-        };
-        setReports(prev => [localReport, ...prev]);
-        setCivicKarma(k => k + 20);
-        try { confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } }); } catch (e) {}
-        showToast(`Grievance registered! Ticket ${newReportId} routed to Ward H/West.`);
-        setActiveTab('pipeline');
+        return;
       }
     }
+
+    // 3. Fallback: create locally if backend is unreachable
+    const newReportId = `CIVIC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const localReport = {
+      id: newReportId,
+      ...reportData,
+      status: 'reported',
+      statusStep: 1,
+      slaHours: 24,
+      elapsedHours: 1,
+      duplicateCount: 1,
+      impactRadiusMeters: 100,
+      beforeImage: reportData.image,
+      afterImage: reportData.image,
+      resolution: {
+        assignedTo: "Er. Rajesh Sawant (Executive Engineer)",
+        contractor: "BMC Fast-Response Team",
+        note: `Auto-routed based on AI Clarification: "${selectedClarification}"`
+      },
+      priorityScore: 78,
+      priority: { finalScore: 78, isOverdue: false, overdueHours: 0, breakdown: { base: 28, dup: 3, critical: 24, traffic: 14, aging: 0 } }
+    };
+    setReports(prev => [localReport, ...prev]);
+    setCivicKarma(k => k + 20);
+    try { confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } }); } catch (e) {}
+    showToast(`Grievance registered! Ticket ${newReportId} routed to Ward.`);
+    setActiveTab('pipeline');
   };
 
   // Handle duplicate upvoting (+1 endorsement)
