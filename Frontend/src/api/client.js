@@ -64,5 +64,11 @@ export const api = {
   signup: (userData) => request('/auth/signup', {
     method: 'POST',
     body: JSON.stringify(userData)
+  }),
+
+  // Image Classification (AI Vision)
+  classifyImage: (imageBase64) => request('/classify-image', {
+    method: 'POST',
+    body: JSON.stringify({ imageBase64 })
   })
 };

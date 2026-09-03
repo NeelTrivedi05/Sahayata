@@ -438,9 +438,15 @@ export default function App() {
             setShowLanding(false);
             setAuthView('login');
           }}
-          onExploreGuest={() => {
-            setShowLanding(false);
-            setAuthView(null);
+          onQuickLogin={async (role) => {
+            let creds = { email: 'aarav.sharma@example.com', password: 'Password@123' };
+            if (role === 'ward_engineer') creds = { email: 'rajesh.sawant@mcgm.gov.in', password: 'Engineer@2026' };
+            if (role === 'mla') creds = { email: 'ashish.shelar@maharashtra.gov.in', password: 'MLA@2026' };
+            try {
+              await handleAuthLogin(creds);
+            } catch (err) {
+              showToast({ type: 'error', title: 'Login Error', message: err.message || 'Failed to sign in' });
+            }
           }}
         />
       </>
@@ -1145,62 +1151,150 @@ function ReportIssueView({
   const [isScanning, setIsScanning] = useState(false);
   const fileInputRef = useRef(null);
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Laptop/Device Webcam state
+  const [isWebcamOpen, setIsWebcamOpen] = useState(false);
+  const [webcamStream, setWebcamStream] = useState(null);
+  const webcamVideoRef = useRef(null);
+  const [webcamError, setWebcamError] = useState(null);
 
+  // Open device webcam stream via WebRTC
+  const openWebcam = async () => {
+    setIsWebcamOpen(true);
+    setWebcamError(null);
+    try {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        throw new Error("Webcam/Camera API is not supported in this browser environment.");
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'environment'
+        },
+        audio: false
+      });
+      setWebcamStream(stream);
+      setTimeout(() => {
+        if (webcamVideoRef.current) {
+          webcamVideoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      console.error("Webcam access error:", err);
+      setWebcamError(
+        "Could not access camera. Please check camera permissions in your browser or connect a webcam."
+      );
+    }
+  };
+
+  // Close device webcam stream
+  const closeWebcam = () => {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach((track) => track.stop());
+      setWebcamStream(null);
+    }
+    setIsWebcamOpen(false);
+    setWebcamError(null);
+  };
+
+  // Cleanup stream on component unmount
+  useEffect(() => {
+    return () => {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [webcamStream]);
+
+  // Keep video ref connected to stream when modal opens
+  useEffect(() => {
+    if (isWebcamOpen && webcamStream && webcamVideoRef.current) {
+      webcamVideoRef.current.srcObject = webcamStream;
+    }
+  }, [isWebcamOpen, webcamStream]);
+
+  // Snap photo from webcam video frame and classify
+  const snapWebcamPhoto = async () => {
+    if (!webcamVideoRef.current) return;
+    const video = webcamVideoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+    closeWebcam();
+    await classifyImagePayload(dataUrl);
+  };
+
+  // Automated Classification via API with dynamic hostname (works on localhost & LAN network IP)
+  const classifyImagePayload = async (base64Image) => {
     setIsScanning(true);
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const base64Image = evt.target.result;
-
+    try {
+      let data = null;
       try {
-        const res = await fetch('http://localhost:5000/api/classify-image', {
+        data = await api.classifyImage(base64Image);
+      } catch (clientErr) {
+        const host = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+        const res = await fetch(`http://${host}:5000/api/classify-image`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageBase64: base64Image })
         });
-        const data = await res.json();
-
-        if (data.success && data.classification) {
-          const cls = data.classification;
-          const dynamicPreset = {
-            id: `custom_${Date.now()}`,
-            name: `${cls.categoryLabel} (AI Vision Detected)`,
-            category: cls.category,
-            categoryLabel: cls.categoryLabel,
-            baseSeverity: cls.baseSeverity || 35,
-            slaHours: cls.slaHours || 24,
-            image: base64Image,
-            coords: [19.0558, 72.8295],
-            address: "Ward H/West (GPS Tagged Location)",
-            confidence: cls.confidence || "96.4%",
-            provider: data.provider || "Groq Llama 3.2 Vision",
-            aiClarification: {
-              question: cls.aiClarificationQuestion || "Is this issue actively blocking traffic or pedestrian safety?",
-              options: cls.clarificationOptions || [
-                "Yes, high hazard / urgent priority",
-                "Medium hazard / standard priority",
-                "Minor hazard / routine repair"
-              ]
-            }
-          };
-
-          if (onSelectPreset) {
-            onSelectPreset(dynamicPreset.id, dynamicPreset);
-          }
-          if (dynamicPreset.aiClarification?.options?.length) {
-            onSelectClarification(dynamicPreset.aiClarification.options[0]);
-          }
-        }
-      } catch (err) {
-        console.warn("Classification API offline, using visual preset match");
-      } finally {
-        setIsScanning(false);
+        data = await res.json();
       }
+
+      if (data && data.success && data.classification) {
+        const cls = data.classification;
+        const dynamicPreset = {
+          id: `custom_${Date.now()}`,
+          name: `${cls.categoryLabel} (AI Vision Detected)`,
+          category: cls.category,
+          categoryLabel: cls.categoryLabel,
+          baseSeverity: cls.baseSeverity || 35,
+          slaHours: cls.slaHours || 24,
+          image: base64Image,
+          coords: geo.coords || [19.0558, 72.8295],
+          address: geo.address || "Ward H/West (GPS Tagged Location)",
+          confidence: cls.confidence || "96.4%",
+          provider: data.provider || "Groq Llama 3.2 Vision",
+          aiClarification: {
+            question: cls.aiClarificationQuestion || "Is this issue actively blocking traffic or pedestrian safety?",
+            options: cls.clarificationOptions || [
+              "Yes, high hazard / urgent priority",
+              "Medium hazard / standard priority",
+              "Minor hazard / routine repair"
+            ]
+          }
+        };
+
+        if (onSelectPreset) {
+          onSelectPreset(dynamicPreset.id, dynamicPreset);
+        }
+        if (dynamicPreset.aiClarification?.options?.length) {
+          onSelectClarification(dynamicPreset.aiClarification.options[0]);
+        }
+      }
+    } catch (err) {
+      console.warn("Classification API offline, using visual preset match:", err.message);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      classifyImagePayload(evt.target.result);
     };
     reader.readAsDataURL(file);
   };
+
+  // Live Browser Geolocation Hook
+  const geo = useGeolocation();
 
   const [reportMode, setReportMode] = useState('camera_gps'); // 'camera_gps' | 'preset'
   const cameraInputRef = useRef(null);
@@ -1223,10 +1317,10 @@ function ReportIssueView({
     { id: 'water', label: 'Water Leak & Drainage', icon: '🚰' }
   ];
 
-  // Handle final submission
+  // Handle final submission with live GPS coordinates if acquired
   const handleFormSubmit = () => {
-    const finalCoords = activePreset?.coords || [19.0558, 72.8295];
-    const finalAddress = activePreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
+    const finalCoords = geo.coords || activePreset?.coords || [19.0558, 72.8295];
+    const finalAddress = geo.address || activePreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
 
     onSubmit({
       title: customDescription ? customDescription : activePreset.name,
@@ -1287,32 +1381,57 @@ function ReportIssueView({
           style={{ display: 'none' }}
         />
 
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isScanning}
-          style={{
-            background: '#4F46E5',
-            color: '#FFFFFF',
-            border: '1px solid rgba(255,255,255,0.3)',
-            borderRadius: '10px',
-            padding: '10px 18px',
-            fontSize: '0.85rem',
-            fontWeight: 800,
-            cursor: isScanning ? 'wait' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-          }}
-        >
-          {isScanning ? (
-            <>
-              <RefreshCw className="animate-spin" size={16} /> Analyzing Photo...
-            </>
-          ) : (
-            <>📷 Upload Custom Photo to Classify</>
-          )}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={openWebcam}
+            disabled={isScanning}
+            style={{
+              background: '#2563EB',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '10px',
+              padding: '10px 16px',
+              fontSize: '0.85rem',
+              fontWeight: 800,
+              cursor: isScanning ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+            }}
+          >
+            <Camera size={16} /> 📸 Live Camera
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isScanning}
+            style={{
+              background: '#4F46E5',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '10px',
+              padding: '10px 18px',
+              fontSize: '0.85rem',
+              fontWeight: 800,
+              cursor: isScanning ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+            }}
+          >
+            {isScanning ? (
+              <>
+                <RefreshCw className="animate-spin" size={16} /> Analyzing Photo...
+              </>
+            ) : (
+              <>📁 Upload Photo</>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Category Classification Selector Bar */}
@@ -1410,8 +1529,12 @@ function ReportIssueView({
                     alignItems: 'center'
                   }}
                 >
-                  <span>GPS: <strong>{activePreset.coords ? `${activePreset.coords[0]}° N, ${activePreset.coords[1]}° E` : 'Auto-located'}</strong></span>
-                  <span style={{ color: '#38BDF8', fontWeight: 700 }}>Auto-located</span>
+                  <span>
+                    GPS: <strong>{geo.coords ? `${geo.coords[0].toFixed(4)}° N, ${geo.coords[1].toFixed(4)}° E` : activePreset.coords ? `${activePreset.coords[0]}° N, ${activePreset.coords[1]}° E` : 'Auto-located'}</strong>
+                  </span>
+                  <span style={{ color: geo.coords ? '#34D399' : '#38BDF8', fontWeight: 700 }}>
+                    {geo.coords ? 'Live Device GPS' : 'Ward Preset'}
+                  </span>
                 </div>
               </>
             )}
@@ -1440,6 +1563,74 @@ function ReportIssueView({
             <div style={{ fontSize: '0.76rem', color: '#64748B', marginLeft: '24px' }}>
               Model Provider: <strong>{activePreset.provider || "Groq Llama 3.2 Vision AI"}</strong>
             </div>
+          </div>
+
+          {/* Live Browser GPS Location Detection Card */}
+          <div
+            style={{
+              marginTop: '14px',
+              background: '#FFFFFF',
+              padding: '14px 16px',
+              borderRadius: '12px',
+              border: geo.coords ? '1.5px solid #10B981' : '1px solid #CBD5E1',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 800, color: '#0F172A' }}>
+                <MapPin size={16} color={geo.coords ? '#10B981' : '#1D4ED8'} />
+                <span>Location Access (GPS):</span>
+              </div>
+              {geo.coords && (
+                <span style={{ fontSize: '0.72rem', color: '#065F46', background: '#ECFDF5', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
+                  ✓ GPS Locked (±{geo.accuracyMeters}m)
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={geo.requestLocation}
+              disabled={geo.loading}
+              style={{
+                width: '100%',
+                background: geo.coords ? '#ECFDF5' : '#FFFFFF',
+                color: geo.coords ? '#065F46' : '#1D4ED8',
+                border: geo.coords ? '1px solid #A7F3D0' : '1.5px solid #BFDBFE',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                fontSize: '0.84rem',
+                fontWeight: 700,
+                cursor: geo.loading ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Navigation size={15} className={geo.loading ? 'animate-spin' : ''} />
+              <span>
+                {geo.loading
+                  ? 'Acquiring High-Precision GPS Signal...'
+                  : geo.coords
+                  ? '📍 Location Detected (Click to Re-detect)'
+                  : '📍 Detect My Current Location (GPS)'}
+              </span>
+            </button>
+
+            {geo.coords && (
+              <div style={{ marginTop: '10px', background: '#F8FAFC', padding: '10px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.78rem', color: '#334155' }}>
+                <div><strong>Coords:</strong> {geo.coords[0].toFixed(5)}° N, {geo.coords[1].toFixed(5)}° E</div>
+                <div style={{ marginTop: '3px', color: '#64748B' }}><strong>Address:</strong> {geo.address}</div>
+              </div>
+            )}
+
+            {geo.error && (
+              <div style={{ marginTop: '10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '8px 12px', fontSize: '0.78rem', color: '#DC2626' }}>
+                <strong>Location Notice:</strong> {geo.error}
+              </div>
+            )}
           </div>
         </div>
 

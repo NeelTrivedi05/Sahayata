@@ -55,10 +55,13 @@ export function AuthProvider({ children }) {
     }
   });
 
-  // Load current authenticated session
+  // Load current authenticated session strictly from sessionStorage so that
+  // every fresh run of the project starts on the Role Select / Login screen
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const storedSession = localStorage.getItem('sahayata_auth_user') || sessionStorage.getItem('sahayata_auth_user');
+      // Clear legacy permanent localStorage session
+      localStorage.removeItem('sahayata_auth_user');
+      const storedSession = sessionStorage.getItem('sahayata_auth_user');
       return storedSession ? JSON.parse(storedSession) : null;
     } catch (e) {
       return null;
@@ -157,11 +160,8 @@ export function AuthProvider({ children }) {
     if (sessionUser) {
       setCurrentUser(sessionUser);
 
-      if (rememberMe) {
-        localStorage.setItem('sahayata_auth_user', JSON.stringify(sessionUser));
-      } else {
-        sessionStorage.setItem('sahayata_auth_user', JSON.stringify(sessionUser));
-      }
+      sessionStorage.setItem('sahayata_auth_user', JSON.stringify(sessionUser));
+      localStorage.removeItem('sahayata_auth_user');
 
       return {
         success: true,

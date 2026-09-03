@@ -44,7 +44,7 @@ export function useGeolocation() {
             const addr = data.address || {};
             const road = addr.road || addr.pedestrian || addr.suburb || '';
             const neighbourhood = addr.neighbourhood || addr.residential || '';
-            const city = addr.city || addr.town || addr.state_district || 'Bengaluru';
+            const city = addr.city || addr.town || addr.state_district || 'Mumbai';
             const postcode = addr.postcode ? ` - ${addr.postcode}` : '';
 
             const formatted = [road, neighbourhood, city].filter(Boolean).join(', ') + postcode;
