@@ -18,11 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-<<<<<<< HEAD
 app.use(express.json({ limit: '20mb' }));
-=======
-app.use(express.json({ limit: '15mb' }));
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
 
 // In-memory data store for CivicCare (Sahayata) - Mumbai
 let jurisdiction = {

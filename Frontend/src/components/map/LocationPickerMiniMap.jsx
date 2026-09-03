@@ -101,13 +101,40 @@ export default function LocationPickerMiniMap({
 
     mapInstanceRef.current = map;
 
+    // Trigger invalidateSize to ensure tiles fill container properly
+    const timer = setTimeout(() => {
+      try {
+        map.invalidateSize();
+      } catch (e) {}
+    }, 150);
+
     return () => {
+      clearTimeout(timer);
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {}
         mapInstanceRef.current = null;
       }
     };
   }, []);
+
+  // Update marker & view when initialCoords changes externally (e.g. preset selection)
+  useEffect(() => {
+    if (initialCoords && initialCoords.length === 2 && mapInstanceRef.current && markerRef.current) {
+      const [lat, lng] = initialCoords;
+      if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
+        try {
+          const current = markerRef.current.getLatLng();
+          if (Math.abs(current.lat - lat) > 0.0001 || Math.abs(current.lng - lng) > 0.0001) {
+            markerRef.current.setLatLng([lat, lng]);
+            mapInstanceRef.current.setView([lat, lng], 16);
+            setCurrentCoords([lat, lng]);
+          }
+        } catch (e) {}
+      }
+    }
+  }, [initialCoords?.[0], initialCoords?.[1]]);
 
   // Center on Live GPS
   const handleGPSDetect = () => {

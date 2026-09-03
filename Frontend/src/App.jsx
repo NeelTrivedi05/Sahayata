@@ -59,10 +59,11 @@ import ToastNotification from './components/ui/ToastNotification';
 import InteractiveCivicMap from './components/map/InteractiveCivicMap';
 import LocationPickerMiniMap from './components/map/LocationPickerMiniMap';
 import ComplaintMiniMap from './components/map/ComplaintMiniMap';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 
 export default function App() {
   const { currentUser, login, signup, logout } = useAuth();
-  
+
   // Landing state: shown on first load if !currentUser
   const [showLanding, setShowLanding] = useState(!currentUser);
   const [selectedRole, setSelectedRole] = useState('citizen'); // 'citizen' | 'ward_engineer' | 'mla'
@@ -267,7 +268,7 @@ export default function App() {
         setCivicKarma(k => k + 20);
         try {
           confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-        } catch (e) {}
+        } catch (e) { }
         showToast(`Grievance registered! Ticket ${res.data.id} routed to Ward.`);
         setActiveTab('pipeline');
         return;
@@ -303,7 +304,7 @@ export default function App() {
     };
     setReports(prev => [localReport, ...prev]);
     setCivicKarma(k => k + 20);
-    try { confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } }); } catch (e) {}
+    try { confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } }); } catch (e) { }
     showToast(`Grievance registered! Ticket ${newReportId} routed to Ward.`);
     setActiveTab('pipeline');
   };
@@ -329,7 +330,7 @@ export default function App() {
     setCivicKarma(k => k + 25);
     try {
       confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
-    } catch (e) {}
+    } catch (e) { }
     showToast(`Endorsement recorded! Complaint ${matchedDuplicate.id} boosted in priority (+25 Karma).`);
     setActiveTab('pipeline');
   };
@@ -392,7 +393,7 @@ export default function App() {
     setCivicKarma(k => k + 50);
     try {
       confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
-    } catch (e) {}
+    } catch (e) { }
     showToast("Community verification confirmed! Contractor work marked complete. +50 Karma awarded!");
   };
 
@@ -408,15 +409,15 @@ export default function App() {
         prev.map(r =>
           r.id === reportId
             ? {
-                ...r,
-                status: 'assigned',
-                statusStep: 4,
-                elapsedHours: (r.slaHours || 48) + 6,
-                resolution: {
-                  ...r.resolution,
-                  note: "CITIZEN QUALITY DISPUTE: Repair failed quality threshold. Reopened for field re-inspection."
-                }
+              ...r,
+              status: 'assigned',
+              statusStep: 4,
+              elapsedHours: (r.slaHours || 48) + 6,
+              resolution: {
+                ...r.resolution,
+                note: "CITIZEN QUALITY DISPUTE: Repair failed quality threshold. Reopened for field re-inspection."
               }
+            }
             : r
         )
       );
@@ -811,8 +812,8 @@ export default function App() {
             currentRole === 'citizen'
               ? '#EFF6FF'
               : currentRole === 'ward_engineer'
-              ? '#FEF3C7'
-              : '#F3E8FF',
+                ? '#FEF3C7'
+                : '#F3E8FF',
           borderBottom: '1px solid #E2E8F0',
           padding: '8px 32px',
           fontSize: '0.8rem',
@@ -878,25 +879,31 @@ export default function App() {
             }}
           />
         )}
-        
+
         {activeTab === 'report' && (
-          <ReportIssueView
-            presets={CIVIC_DATA.reportingPresets}
-            existingReports={reports}
-            activePreset={activePreset}
-            onSelectPreset={(pId, customObj) => {
-              const p = customObj || CIVIC_DATA.reportingPresets.find(x => x.id === pId) || activePreset;
-              setActivePreset(p);
-              if (p.aiClarification?.options?.length) {
-                setSelectedClarification(p.aiClarification.options[0]);
-              }
-            }}
-            selectedClarification={selectedClarification}
-            onSelectClarification={setSelectedClarification}
-            customDescription={customDescription}
-            setCustomDescription={setCustomDescription}
-            onSubmit={handleReportSubmit}
-          />
+          <ErrorBoundary
+            fallbackTitle="Report Issue View Error"
+            fallbackMessage="An unexpected issue occurred while rendering the grievance form. You can return to the radar map or retry."
+            onBack={() => setActiveTab('radar')}
+          >
+            <ReportIssueView
+              presets={CIVIC_DATA.reportingPresets}
+              existingReports={reports}
+              activePreset={activePreset}
+              onSelectPreset={(pId, customObj) => {
+                const p = customObj || CIVIC_DATA.reportingPresets.find(x => x.id === pId) || activePreset;
+                setActivePreset(p);
+                if (p.aiClarification?.options?.length) {
+                  setSelectedClarification(p.aiClarification.options[0]);
+                }
+              }}
+              selectedClarification={selectedClarification}
+              onSelectClarification={setSelectedClarification}
+              customDescription={customDescription}
+              setCustomDescription={setCustomDescription}
+              onSubmit={handleReportSubmit}
+            />
+          </ErrorBoundary>
         )}
 
         {activeTab === 'pipeline' && (
@@ -1138,7 +1145,7 @@ function CivicRadarMapView({ reports, onSelectReport, onReportAtLocation, onEndo
 // 2. REPORT ISSUE VIEW (With Real Camera Capture, File Upload & Live GPS)
 // ==========================================================================
 function ReportIssueView({
-  presets,
+  presets = [],
   existingReports = [],
   activePreset,
   onSelectPreset,
@@ -1148,16 +1155,42 @@ function ReportIssueView({
   setCustomDescription,
   onSubmit
 }) {
+  const currentPreset = activePreset || presets?.[0] || CIVIC_DATA.reportingPresets?.[0] || {};
   const [isScanning, setIsScanning] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Laptop/Device Webcam state
+  // Live Browser Geolocation Hook
+  const geo = useGeolocation();
+
+  // Webcam state
   const [isWebcamOpen, setIsWebcamOpen] = useState(false);
   const [webcamStream, setWebcamStream] = useState(null);
-  const webcamVideoRef = useRef(null);
   const [webcamError, setWebcamError] = useState(null);
+  const webcamVideoRef = useRef(null);
 
-  // Open device webcam stream via WebRTC
+  // Geographic coordinates & address state for pinpointing
+  const [selectedCoords, setSelectedCoords] = useState(currentPreset?.coords || [19.0558, 72.8295]);
+  const [selectedAddress, setSelectedAddress] = useState(currentPreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai");
+
+  useEffect(() => {
+    if (currentPreset?.coords && Array.isArray(currentPreset.coords)) {
+      setSelectedCoords(currentPreset.coords);
+    }
+    if (currentPreset?.address) {
+      setSelectedAddress(currentPreset.address);
+    }
+  }, [currentPreset?.id]);
+
+  useEffect(() => {
+    if (geo.coords) {
+      setSelectedCoords(geo.coords);
+      if (geo.address) {
+        setSelectedAddress(geo.address);
+      }
+    }
+  }, [geo.coords, geo.address]);
+
+  // Open laptop/device webcam stream via WebRTC
   const openWebcam = async () => {
     setIsWebcamOpen(true);
     setWebcamError(null);
@@ -1169,7 +1202,7 @@ function ReportIssueView({
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: 'environment'
+          facingMode: { ideal: 'environment' }
         },
         audio: false
       });
@@ -1182,12 +1215,12 @@ function ReportIssueView({
     } catch (err) {
       console.error("Webcam access error:", err);
       setWebcamError(
-        "Could not access camera. Please check camera permissions in your browser or connect a webcam."
+        "Could not access camera/webcam. Please ensure camera access is allowed in your browser permissions or Windows Privacy Settings."
       );
     }
   };
 
-  // Close device webcam stream
+  // Close webcam stream
   const closeWebcam = () => {
     if (webcamStream) {
       webcamStream.getTracks().forEach((track) => track.stop());
@@ -1212,21 +1245,6 @@ function ReportIssueView({
       webcamVideoRef.current.srcObject = webcamStream;
     }
   }, [isWebcamOpen, webcamStream]);
-
-  // Snap photo from webcam video frame and classify
-  const snapWebcamPhoto = async () => {
-    if (!webcamVideoRef.current) return;
-    const video = webcamVideoRef.current;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-    closeWebcam();
-    await classifyImagePayload(dataUrl);
-  };
 
   // Automated Classification via API with dynamic hostname (works on localhost & LAN network IP)
   const classifyImagePayload = async (base64Image) => {
@@ -1255,8 +1273,8 @@ function ReportIssueView({
           baseSeverity: cls.baseSeverity || 35,
           slaHours: cls.slaHours || 24,
           image: base64Image,
-          coords: geo.coords || [19.0558, 72.8295],
-          address: geo.address || "Ward H/West (GPS Tagged Location)",
+          coords: selectedCoords || geo.coords || [19.0558, 72.8295],
+          address: selectedAddress || geo.address || "Ward H/West (GPS Tagged Location)",
           confidence: cls.confidence || "96.4%",
           provider: data.provider || "Groq Llama 3.2 Vision",
           aiClarification: {
@@ -1272,7 +1290,7 @@ function ReportIssueView({
         if (onSelectPreset) {
           onSelectPreset(dynamicPreset.id, dynamicPreset);
         }
-        if (dynamicPreset.aiClarification?.options?.length) {
+        if (dynamicPreset.aiClarification?.options?.length && onSelectClarification) {
           onSelectClarification(dynamicPreset.aiClarification.options[0]);
         }
       }
@@ -1283,18 +1301,34 @@ function ReportIssueView({
     }
   };
 
+  const processImageForClassification = classifyImagePayload;
+
+  // Snap photo from webcam video frame and classify
+  const snapWebcamPhoto = async () => {
+    if (!webcamVideoRef.current) return;
+    const video = webcamVideoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+    setCapturedPhoto(dataUrl);
+    setPhotoName('webcam_snapshot.jpg');
+    closeWebcam();
+    await classifyImagePayload(dataUrl);
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
-      classifyImagePayload(evt.target.result);
+    reader.onload = async (evt) => {
+      await classifyImagePayload(evt.target.result);
     };
     reader.readAsDataURL(file);
   };
-
-  // Live Browser Geolocation Hook
-  const geo = useGeolocation();
 
   const [reportMode, setReportMode] = useState('camera_gps'); // 'camera_gps' | 'preset'
   const cameraInputRef = useRef(null);
@@ -1319,250 +1353,271 @@ function ReportIssueView({
 
   // Handle final submission with live GPS coordinates if acquired
   const handleFormSubmit = () => {
-    const finalCoords = geo.coords || activePreset?.coords || [19.0558, 72.8295];
-    const finalAddress = geo.address || activePreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
+    const finalCoords = selectedCoords || geo.coords || currentPreset?.coords || [19.0558, 72.8295];
+    const finalAddress = selectedAddress || geo.address || currentPreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
 
-    onSubmit({
-      title: customDescription ? customDescription : activePreset.name,
-      category: activePreset.category,
-      categoryLabel: activePreset.categoryLabel,
-      coords: finalCoords,
-      address: finalAddress,
-      image: activePreset.image,
-      phash: activePreset.phash,
-      clarificationAnswer: selectedClarification
-    });
-  };
+      onSubmit({
+        title: customDescription ? customDescription : (currentPreset?.name || "Civic Grievance"),
+        category: currentPreset?.category || 'pothole',
+        categoryLabel: currentPreset?.categoryLabel || 'Road Hazard & Pothole',
+        coords: finalCoords,
+        address: finalAddress,
+        image: currentPreset?.image,
+        phash: currentPreset?.phash,
+        clarificationAnswer: selectedClarification
+      });
+    };
 
-  return (
-    <div>
-      <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0' }}>
-        Report a Civic Grievance & Auto-Classify Issue
-      </h2>
-      <p style={{ color: '#64748B', fontSize: '0.88rem', margin: '0 0 20px 0' }}>
-        Upload or select any civic issue photo. Groq Llama 3.2 Vision AI detects classification, assigns target SLAs, and generates dynamic clarification prompts.
-      </p>
+    return (
+      <div>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0' }}>
+          Report a Civic Grievance & Auto-Classify Issue
+        </h2>
+        <p style={{ color: '#64748B', fontSize: '0.88rem', margin: '0 0 20px 0' }}>
+          Upload or select any civic issue photo. Groq Llama 3.2 Vision AI detects classification, assigns target SLAs, and generates dynamic clarification prompts.
+        </p>
 
-      {/* Upload Custom Photo Banner */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)',
-          borderRadius: '14px',
-          padding: '16px 20px',
-          marginBottom: '20px',
-          color: '#FFFFFF',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
-          boxShadow: '0 4px 12px rgba(49, 46, 129, 0.25)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.15)', padding: '10px', borderRadius: '10px' }}>
-            <Sparkles className="w-6 h-6 text-amber-300" size={24} />
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '0.98rem' }}>
-              Groq Llama 3.2 Vision Automated Image Classifier
+        {/* Upload Custom Photo Banner */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)',
+            borderRadius: '14px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            color: '#FFFFFF',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+            boxShadow: '0 4px 12px rgba(49, 46, 129, 0.25)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.15)', padding: '10px', borderRadius: '10px' }}>
+              <Sparkles className="w-6 h-6 text-amber-300" size={24} />
             </div>
-            <div style={{ fontSize: '0.78rem', opacity: 0.85, marginTop: '2px' }}>
-              Upload any photo from your device. AI will analyze pixel features, detect issue category & generate clarification options.
-            </div>
-          </div>
-        </div>
-
-        <input
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-          style={{ display: 'none' }}
-        />
-
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={openWebcam}
-            disabled={isScanning}
-            style={{
-              background: '#2563EB',
-              color: '#FFFFFF',
-              border: '1px solid rgba(255,255,255,0.3)',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              fontSize: '0.85rem',
-              fontWeight: 800,
-              cursor: isScanning ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-            }}
-          >
-            <Camera size={16} /> 📸 Live Camera
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isScanning}
-            style={{
-              background: '#4F46E5',
-              color: '#FFFFFF',
-              border: '1px solid rgba(255,255,255,0.3)',
-              borderRadius: '10px',
-              padding: '10px 18px',
-              fontSize: '0.85rem',
-              fontWeight: 800,
-              cursor: isScanning ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-            }}
-          >
-            {isScanning ? (
-              <>
-                <RefreshCw className="animate-spin" size={16} /> Analyzing Photo...
-              </>
-            ) : (
-              <>📁 Upload Photo</>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Category Classification Selector Bar */}
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>
-          Or Select Issue Preset Classification:
-        </label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-          {presets.map(p => {
-            const isSelected = activePreset.id === p.id;
-            return (
-              <button
-                key={p.id}
-                onClick={() => onSelectPreset(p.id)}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: '12px',
-                  border: isSelected ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
-                  background: isSelected ? '#EFF6FF' : '#FFFFFF',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  boxShadow: isSelected ? '0 4px 6px -1px rgba(29, 78, 216, 0.15)' : 'none'
-                }}
-              >
-                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: isSelected ? '#1D4ED8' : '#0F172A' }}>
-                  {p.categoryLabel}
-                </div>
-                <div style={{ display: 'flex', gap: '6px', marginTop: '4px', fontSize: '0.7rem', color: '#64748B' }}>
-                  <span style={{ background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
-                    SLA: {p.slaHours}h
-                  </span>
-                  <span style={{ background: isSelected ? '#DBEAFE' : '#F1F5F9', color: isSelected ? '#1E40AF' : '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                    Sev: {p.baseSeverity}/50
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1.2fr',
-          gap: '24px',
-          background: '#FFFFFF',
-          borderRadius: '16px',
-          overflow: 'hidden',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
-        }}
-      >
-        {/* Left Column: Visual Evidence & Preset Details */}
-        <div style={{ background: '#F8FAFC', padding: '28px', borderRight: '1px solid #E2E8F0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, margin: 0 }}>
-              Photographic Proof & Classification
-            </label>
-            <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#166534', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-              Target SLA: {activePreset.slaHours || 24} Hours
-            </span>
-          </div>
-
-          {/* Photo Preview Container */}
-          <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #CBD5E1' }}>
-            {isScanning ? (
-              <div style={{ height: '260px', background: '#1E1B4B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
-                <RefreshCw size={36} className="animate-spin text-indigo-400 mb-3" />
-                <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>Groq Llama 3.2 Vision Analyzing Photo...</div>
-                <div style={{ fontSize: '0.75rem', color: '#A5B4FC', marginTop: '4px' }}>Extracting features, severity & context</div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '0.98rem' }}>
+                Groq Llama 3.2 Vision Automated Image Classifier
               </div>
-            ) : (
-              <>
-                <img
-                  src={activePreset.image}
-                  alt="Uploaded issue"
-                  style={{ width: '100%', height: '260px', objectFit: 'cover', display: 'block' }}
-                />
-                <div
+              <div style={{ fontSize: '0.78rem', opacity: 0.85, marginTop: '2px' }}>
+                Upload any photo or open webcam. AI will analyze pixel features, detect issue category & generate clarification options.
+              </div>
+            </div>
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
+
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={openWebcam}
+              disabled={isScanning}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '10px',
+                padding: '10px 16px',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                cursor: isScanning ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+              }}
+            >
+              <Camera size={16} /> 📸 Live Camera / Webcam
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isScanning}
+              style={{
+                background: '#4F46E5',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '10px',
+                padding: '10px 18px',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                cursor: isScanning ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+              }}
+            >
+              {isScanning ? (
+                <>
+                  <RefreshCw className="animate-spin" size={16} /> Analyzing Photo...
+                </>
+              ) : (
+                <>📁 Upload Photo</>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Category Classification Selector Bar */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>
+            Or Select Issue Preset Classification:
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+            {(presets || []).map(p => {
+              const isSelected = currentPreset?.id === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => onSelectPreset(p.id)}
                   style={{
-                    position: 'absolute',
-                    bottom: '12px',
-                    left: '12px',
-                    right: '12px',
-                    background: 'rgba(15, 23, 42, 0.85)',
-                    backdropFilter: 'blur(6px)',
-                    color: '#FFF',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    fontSize: '0.75rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    border: isSelected ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
+                    background: isSelected ? '#EFF6FF' : '#FFFFFF',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: isSelected ? '0 4px 6px -1px rgba(29, 78, 216, 0.15)' : 'none'
                   }}
                 >
-                  <span>
-                    GPS: <strong>{geo.coords ? `${geo.coords[0].toFixed(4)}° N, ${geo.coords[1].toFixed(4)}° E` : activePreset.coords ? `${activePreset.coords[0]}° N, ${activePreset.coords[1]}° E` : 'Auto-located'}</strong>
-                  </span>
-                  <span style={{ color: geo.coords ? '#34D399' : '#38BDF8', fontWeight: 700 }}>
-                    {geo.coords ? 'Live Device GPS' : 'Ward Preset'}
-                  </span>
-                </div>
-              </>
-            )}
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: isSelected ? '#1D4ED8' : '#0F172A' }}>
+                    {p.categoryLabel}
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px', fontSize: '0.7rem', color: '#64748B' }}>
+                    <span style={{ background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                      SLA: {p.slaHours}h
+                    </span>
+                    <span style={{ background: isSelected ? '#DBEAFE' : '#F1F5F9', color: isSelected ? '#1E40AF' : '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                      Sev: {p.baseSeverity}/50
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          <div
-            style={{
-              marginTop: '14px',
-              background: '#FFFFFF',
-              padding: '12px 14px',
-              borderRadius: '10px',
-              fontSize: '0.82rem',
-              color: '#334155',
-              border: '1px solid #E2E8F0',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CheckCircle2 size={16} color="#059669" />
-              <span>
-                <strong>Vision AI Classification:</strong> {activePreset.categoryLabel} (<strong>{activePreset.confidence || "95.4% Match"}</strong>)
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1.2fr',
+            gap: '24px',
+            background: '#FFFFFF',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+          }}
+        >
+          {/* Left Column: Visual Evidence & Preset Details */}
+          <div style={{ background: '#F8FAFC', padding: '28px', borderRight: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 700, margin: 0 }}>
+                Photographic Proof & Classification
+              </label>
+              <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#166534', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                Target SLA: {currentPreset?.slaHours || 24} Hours
               </span>
             </div>
-            <div style={{ fontSize: '0.76rem', color: '#64748B', marginLeft: '24px' }}>
-              Model Provider: <strong>{activePreset.provider || "Groq Llama 3.2 Vision AI"}</strong>
+
+            {/* Photo Preview Container */}
+            <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #CBD5E1' }}>
+              {isScanning ? (
+                <div style={{ height: '240px', background: '#1E1B4B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
+                  <RefreshCw size={36} className="animate-spin text-indigo-400 mb-3" />
+                  <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>Groq Llama 3.2 Vision Analyzing Photo...</div>
+                  <div style={{ fontSize: '0.75rem', color: '#A5B4FC', marginTop: '4px' }}>Extracting features, severity & context</div>
+                </div>
+              ) : (
+                <>
+                  <img
+                    src={currentPreset?.image || "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80"}
+                    alt="Uploaded issue"
+                    style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '12px',
+                      left: '12px',
+                      right: '12px',
+                      background: 'rgba(15, 23, 42, 0.85)',
+                      backdropFilter: 'blur(6px)',
+                      color: '#FFF',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                  <span>
+                    GPS: <strong>{selectedCoords ? `${selectedCoords[0]?.toFixed(4)}° N, ${selectedCoords[1]?.toFixed(4)}° E` : 'Auto-located'}</strong>
+                  </span>
+                  <span style={{ color: geo.coords ? '#34D399' : '#38BDF8', fontWeight: 700 }}>
+                    {geo.coords ? 'Live Device GPS' : 'Interactive Pin'}
+                  </span>
+                </div >
+              </>
+            )
+}
+          </div >
+
+  <div
+    style={{
+      marginTop: '14px',
+      background: '#FFFFFF',
+      padding: '12px 14px',
+      borderRadius: '10px',
+      fontSize: '0.82rem',
+      color: '#334155',
+      border: '1px solid #E2E8F0',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px'
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <CheckCircle2 size={16} color="#059669" />
+      <span>
+        <strong>Vision AI Classification:</strong> {currentPreset?.categoryLabel || "Civic Hazard"} (<strong>{currentPreset?.confidence || "95.4% Match"}</strong>)
+      </span>
+    </div>
+    <div style={{ fontSize: '0.76rem', color: '#64748B', marginLeft: '24px' }}>
+      Model Provider: <strong>{currentPreset?.provider || "Groq Llama 3.2 Vision AI"}</strong>
+    </div>
+  </div>
+
+          {/* Real Interactive Location Picker Mini Map */}
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 700, margin: 0, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <MapPin size={14} color="#2563EB" /> Pinpoint Location on Map
+              </label>
+              <span style={{ fontSize: '0.7rem', color: '#64748B' }}>
+                Drag pin or click GPS
+              </span>
             </div>
+            <LocationPickerMiniMap
+              initialCoords={selectedCoords}
+              onLocationChange={(coords, address) => {
+                setSelectedCoords(coords);
+                setSelectedAddress(address);
+              }}
+              height="180px"
+            />
           </div>
 
           {/* Live Browser GPS Location Detection Card */}
@@ -1636,264 +1691,266 @@ function ReportIssueView({
 
         {/* Right Column: AI Dynamic Clarification & Submission */}
         <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div
-              style={{
-                background: '#EFF6FF',
-                border: '1px solid #BFDBFE',
-                borderRadius: '10px',
-                padding: '12px 16px',
-                marginBottom: '20px'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1D4ED8', fontWeight: 700, fontSize: '0.82rem' }}>
-                <Sparkles size={16} />
-                <span>AI Smart Clarification Engine</span>
-              </div>
-              <p style={{ fontSize: '0.8rem', color: '#1E3A8A', margin: '4px 0 0' }}>
-                Help us prioritize this issue! Selecting critical impact options boosts dispatch priority automatically.
-              </p>
-            </div>
+  <div>
+    <div
+      style={{
+        background: '#EFF6FF',
+        border: '1px solid #BFDBFE',
+        borderRadius: '10px',
+        padding: '12px 16px',
+        marginBottom: '20px'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1D4ED8', fontWeight: 700, fontSize: '0.82rem' }}>
+        <Sparkles size={16} />
+        <span>AI Smart Clarification Engine</span>
+      </div>
+      <p style={{ fontSize: '0.8rem', color: '#1E3A8A', margin: '4px 0 0' }}>
+        Help us prioritize this issue! Selecting critical impact options boosts dispatch priority automatically.
+      </p>
+    </div>
 
-            <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>
-              Dynamic Context Clarification:
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: '#334155', marginBottom: '14px', fontWeight: 600 }}>
-              {activePreset.aiClarification?.question || "What is the severity of this issue?"}
-            </p>
+    <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>
+      Dynamic Context Clarification:
+    </h3>
+    <p style={{ fontSize: '0.85rem', color: '#334155', marginBottom: '14px', fontWeight: 600 }}>
+      {currentPreset?.aiClarification?.question || "What is the severity of this issue?"}
+    </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-              {(activePreset.aiClarification?.options || ["High Hazard", "Medium Hazard", "Routine Repair"]).map((opt, idx) => {
-                const isSelected = selectedClarification === opt;
-                const isHighImpact = opt.includes("Hazard") || opt.includes("Critical") || opt.includes("Urgent") || opt.includes("Severe") || opt.includes("High");
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => onSelectClarification(opt)}
-                    style={{
-                      padding: '12px 16px',
-                      borderRadius: '10px',
-                      border: isSelected ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
-                      background: isSelected ? '#EFF6FF' : '#FFFFFF',
-                      color: isSelected ? '#1D4ED8' : '#334155',
-                      cursor: 'pointer',
-                      fontSize: '0.84rem',
-                      fontWeight: isSelected ? 700 : 500,
-                      transition: 'all 0.15s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          border: isSelected ? '5px solid #1D4ED8' : '2px solid #CBD5E1',
-                          background: '#FFF'
-                        }}
-                      />
-                      <span>{opt}</span>
-                    </div>
-                    {isHighImpact && (
-                      <span style={{ fontSize: '0.7rem', background: '#FEE2E2', color: '#B91C1C', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                        +18 Priority Bonus
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Optional Citizen Notes */}
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-              Optional Citizen Landmark Notes:
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Near Indiranagar Metro pillar #140, opposite bakery"
-              value={customDescription}
-              onChange={(e) => setCustomDescription(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                border: '1px solid #CBD5E1',
-                fontSize: '0.85rem',
-                marginBottom: '16px'
-              }}
-            />
-
-            <div
-              style={{
-                background: '#F8FAFC',
-                padding: '12px 14px',
-                borderRadius: '8px',
-                border: '1px solid #E2E8F0',
-                fontSize: '0.8rem',
-                color: '#64748B',
-                marginBottom: '16px'
-              }}
-            >
-              <strong>Target Jurisdiction:</strong> Ward H/West (Bandra West) • Auto-routing to <strong>BMC Fast-Response Team</strong>
-            </div>
-          </div>
-
-          <button
-            type="button"
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+      {(currentPreset?.aiClarification?.options || ["High Hazard", "Medium Hazard", "Routine Repair"]).map((opt, idx) => {
+        const isSelected = selectedClarification === opt;
+        const isHighImpact = opt.includes("Hazard") || opt.includes("Critical") || opt.includes("Urgent") || opt.includes("Severe") || opt.includes("High");
+        return (
+          <div
+            key={idx}
+            onClick={() => onSelectClarification && onSelectClarification(opt)}
             style={{
-              background: '#1D4ED8',
-              color: '#FFFFFF',
-              border: 'none',
+              padding: '12px 16px',
               borderRadius: '10px',
-              padding: '14px',
-              fontWeight: 800,
-              fontSize: '0.98rem',
+              border: isSelected ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
+              background: isSelected ? '#EFF6FF' : '#FFFFFF',
+              color: isSelected ? '#1D4ED8' : '#334155',
               cursor: 'pointer',
+              fontSize: '0.84rem',
+              fontWeight: isSelected ? 700 : 500,
+              transition: 'all 0.15s ease',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 10px rgba(29, 78, 216, 0.3)',
-              marginTop: '10px'
+              justifyContent: 'space-between'
             }}
-            onClick={handleFormSubmit}
           >
-            Submit Classified Grievance →
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  border: isSelected ? '5px solid #1D4ED8' : '2px solid #CBD5E1',
+                  background: '#FFF'
+                }}
+              />
+              <span>{opt}</span>
+            </div>
+            {isHighImpact && (
+              <span style={{ fontSize: '0.7rem', background: '#FEE2E2', color: '#B91C1C', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                +18 Priority Bonus
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+
+    {/* Optional Citizen Notes */}
+    <label style={{ fontSize: '0.82rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+      Optional Citizen Landmark Notes:
+    </label>
+    <input
+      type="text"
+      placeholder="e.g. Near Indiranagar Metro pillar #140, opposite bakery"
+      value={customDescription}
+      onChange={(e) => setCustomDescription(e.target.value)}
+      style={{
+        width: '100%',
+        padding: '10px 14px',
+        borderRadius: '8px',
+        border: '1px solid #CBD5E1',
+        fontSize: '0.85rem',
+        marginBottom: '16px'
+      }}
+    />
+
+    <div
+      style={{
+        background: '#F8FAFC',
+        padding: '12px 14px',
+        borderRadius: '8px',
+        border: '1px solid #E2E8F0',
+        fontSize: '0.8rem',
+        color: '#64748B',
+        marginBottom: '16px'
+      }}
+    >
+      <strong>Target Jurisdiction:</strong> Ward H/West (Bandra West) • Auto-routing to <strong>BMC Fast-Response Team</strong>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    style={{
+      background: '#1D4ED8',
+      color: '#FFFFFF',
+      border: 'none',
+      borderRadius: '10px',
+      padding: '14px',
+      fontWeight: 800,
+      fontSize: '0.98rem',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      boxShadow: '0 4px 10px rgba(29, 78, 216, 0.3)',
+      marginTop: '10px'
+    }}
+    onClick={handleFormSubmit}
+  >
+    Submit Classified Grievance →
+  </button>
+</div>
+      </div >
+
+  {/* Live Laptop Webcam Viewfinder Modal */ }
+{
+  isWebcamOpen && (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.85)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 3000,
+        padding: '20px'
+      }}
+    >
+      <div
+        style={{
+          background: '#0F172A',
+          color: '#FFF',
+          borderRadius: '16px',
+          maxWidth: '640px',
+          width: '100%',
+          padding: '24px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#EF4444' }} />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+              Live Laptop Webcam Feed
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={closeWebcam}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#94A3B8',
+              fontSize: '1.4rem',
+              cursor: 'pointer',
+              padding: '4px',
+              lineHeight: 1
+            }}
+          >
+            ✕
           </button>
         </div>
-      </div>
 
-      {/* Live Laptop Webcam Viewfinder Modal */}
-      {isWebcamOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 3000,
-            padding: '20px'
-          }}
-        >
-          <div
-            style={{
-              background: '#0F172A',
-              color: '#FFF',
-              borderRadius: '16px',
-              maxWidth: '640px',
-              width: '100%',
-              padding: '24px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#EF4444' }} />
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
-                  Live Laptop Webcam Feed
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={closeWebcam}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#94A3B8',
-                  fontSize: '1.4rem',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  lineHeight: 1
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {webcamError ? (
-              <div style={{ background: '#7F1D1D', border: '1px solid #DC2626', padding: '16px', borderRadius: '10px', fontSize: '0.85rem' }}>
-                <strong style={{ color: '#FECACA' }}>Camera Permission Required:</strong>
-                <p style={{ margin: '6px 0 0', color: '#FCA5A5' }}>{webcamError}</p>
-              </div>
-            ) : (
-              <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', background: '#000', height: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <video
-                  ref={webcamVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    background: 'rgba(0,0,0,0.6)',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: '0.72rem',
-                    color: '#E2E8F0'
-                  }}
-                >
-                  Position issue in frame & click Snap
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={closeWebcam}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #475569',
-                  color: '#CBD5E1',
-                  borderRadius: '8px',
-                  padding: '10px 18px',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              {!webcamError && (
-                <button
-                  type="button"
-                  onClick={snapWebcamPhoto}
-                  style={{
-                    background: '#2563EB',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 22px',
-                    fontSize: '0.9rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
-                  }}
-                >
-                  <Camera size={18} /> 📸 Snap Photo
-                </button>
-              )}
+        {webcamError ? (
+          <div style={{ background: '#7F1D1D', border: '1px solid #DC2626', padding: '16px', borderRadius: '10px', fontSize: '0.85rem' }}>
+            <strong style={{ color: '#FECACA' }}>Camera Permission Required:</strong>
+            <p style={{ margin: '6px 0 0', color: '#FCA5A5' }}>{webcamError}</p>
+          </div>
+        ) : (
+          <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', background: '#000', height: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <video
+              ref={webcamVideoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                top: '12px',
+                left: '12px',
+                background: 'rgba(0,0,0,0.6)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '0.72rem',
+                color: '#E2E8F0'
+              }}
+            >
+              Position issue in frame & click Snap
             </div>
           </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={closeWebcam}
+            style={{
+              background: 'transparent',
+              border: '1px solid #475569',
+              color: '#CBD5E1',
+              borderRadius: '8px',
+              padding: '10px 18px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          {!webcamError && (
+            <button
+              type="button"
+              onClick={snapWebcamPhoto}
+              style={{
+                background: '#2563EB',
+                color: '#FFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 22px',
+                fontSize: '0.9rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
+              }}
+            >
+              <Camera size={18} /> 📸 Snap Photo
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
+  )
+}
+    </div >
   );
 }
 

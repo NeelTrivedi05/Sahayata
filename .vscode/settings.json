@@ -1,0 +1,9 @@
+{
+  "python.defaultInterpreterPath": "C:\\Python314\\python.exe",
+  "python.analysis.extraPaths": [
+    "./Backend"
+  ],
+  "python.autoComplete.extraPaths": [
+    "./Backend"
+  ]
+}

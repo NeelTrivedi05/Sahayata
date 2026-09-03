@@ -256,7 +256,7 @@ class ReportCreateSchema(BaseModel):
     title: Optional[str] = None
     category: str = Field(..., description="pothole | garbage | electricity | water")
     categoryLabel: Optional[str] = None
-    coords: List[float] = Field(..., min_items=2, max_items=2, description="[latitude, longitude]")
+    coords: List[float] = Field(..., min_length=2, max_length=2, description="[latitude, longitude]")
     address: Optional[str] = None
     image: Optional[str] = None
     phash: Optional[str] = Field(None, description="64-bit hexadecimal dHash/pHash")
