@@ -55,6 +55,7 @@ import AuthCard from './components/auth/AuthCard';
 import WardDashboardView from './components/ward/WardDashboardView';
 import PriorityQueueView from './components/priority/PriorityQueueView';
 import ToastNotification from './components/ui/ToastNotification';
+import InteractiveCivicMap from './components/map/InteractiveCivicMap';
 
 export default function App() {
   const { currentUser, login, signup, logout } = useAuth();
@@ -747,7 +748,39 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'radar' && <CivicRadarMapView reports={reports} onSelectReport={() => setActiveTab('pipeline')} />}
+        {activeTab === 'radar' && (
+          <CivicRadarMapView
+            reports={reports}
+            onSelectReport={(report) => setActiveTab('pipeline')}
+            onReportAtLocation={(coords, address) => {
+              setActivePreset(prev => ({
+                ...prev,
+                coords,
+                address
+              }));
+              setActiveTab('report');
+              showToast(`📍 Selected location on map: ${address.split('(')[0]}`);
+            }}
+            onEndorseReport={async (reportId) => {
+              try {
+                const res = await api.endorseReport(reportId);
+                if (res.data) {
+                  setReports(prev => prev.map(r => r.id === reportId ? res.data : r));
+                }
+              } catch (e) {
+                setReports(prev =>
+                  prev.map(r =>
+                    r.id === reportId
+                      ? { ...r, duplicateCount: (r.duplicateCount || 1) + 1, priorityScore: Math.min(100, (r.priorityScore || 70) + 4) }
+                      : r
+                  )
+                );
+              }
+              setCivicKarma(k => k + 25);
+              showToast(`Endorsement registered! Ticket ${reportId} boosted (+25 Karma).`);
+            }}
+          />
+        )}
         
         {activeTab === 'report' && (
           <ReportIssueView
@@ -991,239 +1024,14 @@ export default function App() {
 // ==========================================================================
 // 1. CIVIC RADAR & MAP VIEW (Interactive Leaflet Map with Critical Zones)
 // ==========================================================================
-function CivicRadarMapView({ reports, onSelectReport }) {
-  const mapContainerRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const [showCriticalZones, setShowCriticalZones] = useState(true);
-  const [showImpactRadius, setShowImpactRadius] = useState(true);
-
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-
-    // Clean up if already initialized
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.remove();
-      mapInstanceRef.current = null;
-    }
-    if (mapContainerRef.current && mapContainerRef.current._leaflet_id) {
-      delete mapContainerRef.current._leaflet_id;
-    }
-
-    const map = L.map(mapContainerRef.current, {
-      zoomControl: true,
-      attributionControl: true
-    }).setView([19.0560, 72.8340], 15);
-
-    // Standard OpenStreetMap tiles (100% Free & Open-Source, No API Key Required)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    // 1. Plot Critical Buffer Zones (Schools, Hospitals)
-    if (showCriticalZones) {
-      CIVIC_DATA.criticalZones.forEach(z => {
-        const color = z.type === 'school' ? '#D97706' : z.type === 'hospital' ? '#DC2626' : '#2563EB';
-        L.circle(z.coords, {
-          radius: z.bufferRadius,
-          color,
-          fillColor: color,
-          fillOpacity: 0.08,
-          weight: 2,
-          dashArray: '5,5'
-        })
-          .bindPopup(`
-            <div style="font-family: inherit;">
-              <span style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;">${z.tag}</span>
-              <h4 style="font-size:14px;margin:2px 0 6px;">${z.name}</h4>
-              <p style="font-size:12px;color:#64748B;margin:0;">High priority safety buffer: <strong>${z.bufferRadius}m</strong></p>
-            </div>
-          `)
-          .addTo(map);
-      });
-    }
-
-    // 2. Plot Reports with Priority Pins & Impact Radiuses
-    reports.forEach(r => {
-      const p = r.priority || { finalScore: r.priorityScore || 75 };
-      const color =
-        r.status === 'verified'
-          ? '#059669'
-          : p.finalScore >= 80
-          ? '#DC2626'
-          : p.finalScore >= 50
-          ? '#D97706'
-          : '#2563EB';
-
-      // Impact Radius circle
-      if (showImpactRadius) {
-        L.circle(r.coords, {
-          radius: r.impactRadiusMeters,
-          color,
-          fillColor: color,
-          fillOpacity: 0.12,
-          weight: 1.5
-        }).addTo(map);
-      }
-
-      // Priority Marker Pin
-      const icon = L.divIcon({
-        html: `
-          <div style="
-            width:34px;
-            height:34px;
-            background:${color};
-            border:2.5px solid #FFFFFF;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#FFFFFF;
-            font-weight:800;
-            font-size:12px;
-            box-shadow:0 4px 10px rgba(0,0,0,0.3);
-            cursor:pointer;
-          ">
-            ${p.finalScore}
-          </div>
-        `,
-        iconSize: [34, 34],
-        iconAnchor: [17, 17]
-      });
-
-      L.marker(r.coords, { icon })
-        .bindPopup(`
-          <div style="font-family: inherit; min-width: 180px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:11px;font-weight:800;color:${color};">${r.id}</span>
-              <span style="font-size:11px;background:#F1F5F9;padding:2px 6px;border-radius:4px;font-weight:600;">${r.status.toUpperCase()}</span>
-            </div>
-            <h4 style="font-size:13px;margin:4px 0;">${r.title}</h4>
-            <div style="font-size:11px;color:#64748B;margin-bottom:6px;">${r.address}</div>
-            <div style="background:#F8FAFC;padding:6px 8px;border-radius:6px;font-size:11px;">
-              <strong>Priority: ${p.finalScore}/100</strong> • ${r.duplicateCount} Endorsements<br/>
-              ${p.isOverdue ? '<span style="color:#DC2626;font-weight:700;">⚠️ SLA Overdue (Surged)</span>' : 'Within SLA'}
-            </div>
-          </div>
-        `)
-        .addTo(map);
-    });
-
-    mapInstanceRef.current = map;
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [reports, showCriticalZones, showImpactRadius]);
-
+function CivicRadarMapView({ reports, onSelectReport, onReportAtLocation, onEndorseReport }) {
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0' }}>
-            Civic Radar & Ward 142 Geospatial Map
-          </h2>
-          <p style={{ color: '#64748B', fontSize: '0.88rem', margin: 0 }}>
-            Real-time geospatial clustering, danger radius zones, and school/hospital buffer corridors.
-          </p>
-        </div>
-
-        {/* Map Filter Controls */}
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setShowCriticalZones(!showCriticalZones)}
-            style={{
-              background: showCriticalZones ? '#FEF3C7' : '#FFFFFF',
-              color: showCriticalZones ? '#B45309' : '#64748B',
-              border: '1px solid #CBD5E1',
-              borderRadius: '8px',
-              padding: '6px 12px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <Shield size={14} /> Critical Zones ({showCriticalZones ? 'ON' : 'OFF'})
-          </button>
-          <button
-            onClick={() => setShowImpactRadius(!showImpactRadius)}
-            style={{
-              background: showImpactRadius ? '#EFF6FF' : '#FFFFFF',
-              color: showImpactRadius ? '#1D4ED8' : '#64748B',
-              border: '1px solid #CBD5E1',
-              borderRadius: '8px',
-              padding: '6px 12px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <Layers size={14} /> Impact Radiuses ({showImpactRadius ? 'ON' : 'OFF'})
-          </button>
-        </div>
-      </div>
-
-      {/* Map Card */}
-      <div
-        style={{
-          background: '#FFFFFF',
-          borderRadius: '16px',
-          border: '1px solid #E2E8F0',
-          overflow: 'hidden',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-          position: 'relative'
-        }}
-      >
-        <div ref={mapContainerRef} style={{ width: '100%', height: '560px' }} />
-
-        {/* Floating Legend */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            background: 'rgba(255, 255, 255, 0.94)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: '12px',
-            padding: '12px 16px',
-            fontSize: '0.78rem',
-            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-            border: '1px solid #CBD5E1',
-            zIndex: 1000,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}
-        >
-          <strong style={{ fontSize: '0.82rem', color: '#0F172A' }}>Map Legend:</strong>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#DC2626' }}></div>
-            <span>Critical Priority (Score ≥ 80 / Overdue)</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#D97706' }}></div>
-            <span>Medium-High Priority (Score 50–79)</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#059669' }}></div>
-            <span>Community Verified Fixed</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '14px', height: '0px', borderTop: '2px dashed #D97706' }}></div>
-            <span>School / Hospital Buffer Zone</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <InteractiveCivicMap
+      reports={reports}
+      onSelectReport={onSelectReport}
+      onReportAtLocation={onReportAtLocation}
+      onEndorseReport={onEndorseReport}
+    />
   );
 }
 
