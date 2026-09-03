@@ -137,18 +137,12 @@ export const CIVIC_DATA = {
   reportingPresets: [
     {
       id: "preset_pothole",
-<<<<<<< HEAD
-      name: "Deep Crater Pothole near St. Mary's School",
+      name: "Deep Crater Pothole near St. Andrew's School",
       category: "pothole",
       categoryLabel: "Road Hazard & Pothole",
       baseSeverity: 35,
       slaHours: 48,
-=======
-      name: "Pothole near St. Andrew's School (Triggers Duplicate Clustering)",
-      category: "pothole",
-      categoryLabel: "Road Hazard & Pothole",
-      phash: "a1b2c3d4e5f60719", // Hamming distance 1 with CIVIC-2026-8921 (Near identical)
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
+      phash: "a1b2c3d4e5f60719",
       image: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
       coords: [19.0558, 72.8295],
       address: "Hill Road, Near St. Andrew's Church, Bandra West, Mumbai",
@@ -163,11 +157,7 @@ export const CIVIC_DATA = {
     },
     {
       id: "preset_light",
-<<<<<<< HEAD
-      name: "Broken Streetlight & Exposed Wire on Ambulance Corridor",
-=======
-      name: "Broken Streetlight on Lilavati Hospital Corridor",
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
+      name: "Broken Streetlight & Exposed Wire on Hospital Corridor",
       category: "electricity",
       categoryLabel: "Electrical & Lighting",
       baseSeverity: 42,
@@ -263,7 +253,6 @@ export const CIVIC_DATA = {
   ]
 };
 
-<<<<<<< HEAD
 export function calculatePriorityScore(report) {
   const base = report.baseSeverity || 25;
   const dupBonus = Math.min((report.duplicateCount || 1) * 3.5, 35);
@@ -314,6 +303,3 @@ export function calculatePriorityScore(report) {
     }
   };
 }
-
-=======
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b

@@ -155,7 +155,6 @@ export function calculatePriorityScore(report) {
     trafficBonus = 14;
   }
 
-<<<<<<< HEAD
   // Dynamic AI Clarification Priority Bonus
   let clarificationBonus = 0;
   const clar = report.resolution?.note || report.clarificationAnswer || "";
@@ -165,9 +164,7 @@ export function calculatePriorityScore(report) {
     clarificationBonus = 10;
   }
 
-=======
   // Anti-Deadlock Aging Engine
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
   let agingBonus = 0;
   const elapsed = report.elapsedHours || 0;
   const sla = report.slaHours || 48;
@@ -177,13 +174,9 @@ export function calculatePriorityScore(report) {
     agingBonus = (elapsed / sla) * 12;
   }
 
-<<<<<<< HEAD
   const raw = base + dupBonus + criticalBonus + trafficBonus + clarificationBonus + agingBonus;
-=======
-  const raw = base + dupBonus + criticalBonus + trafficBonus + agingBonus;
   const finalScore = Math.min(Math.round(raw), 100);
 
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
   return {
     finalScore,
     isOverdue: elapsed > sla,
@@ -193,10 +186,7 @@ export function calculatePriorityScore(report) {
       dup: Math.round(dupBonus),
       critical: Math.round(criticalBonus),
       traffic: Math.round(trafficBonus),
-<<<<<<< HEAD
       clarification: Math.round(clarificationBonus),
-=======
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
       aging: Math.round(agingBonus)
     }
   };
@@ -251,9 +241,6 @@ app.get('/api/reports', (req, res) => {
 
 // 3. Submit a new report (with Haversine + pHash Duplicate Intercept Check)
 app.post('/api/reports', (req, res) => {
-<<<<<<< HEAD
-  const { title, category, categoryLabel, coords, address, image, clarificationAnswer, baseSeverity, slaHours } = req.body;
-=======
   const {
     title,
     category,
@@ -265,9 +252,9 @@ app.post('/api/reports', (req, res) => {
     clarificationAnswer,
     criticalZone,
     trafficDensity,
-    baseSeverity
+    baseSeverity,
+    slaHours
   } = req.body;
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
   
   if (!coords || !category) {
     return res.status(400).json({ success: false, message: "Coordinates and category are required" });
@@ -320,31 +307,19 @@ app.post('/api/reports', (req, res) => {
     elapsedHours: 1,
     duplicateCount: 1,
     impactRadiusMeters: 100,
-<<<<<<< HEAD
-    criticalZone: "Ward 142 Active Zone",
-    trafficDensity: "Medium",
-    baseSeverity: baseSeverity || 28,
-    clarificationAnswer: clarificationAnswer || "Standard reporting",
-=======
     criticalZone: criticalZone || (category === 'pothole' ? "St. Andrew's School Zone" : "Ward H/West Corridor"),
     trafficDensity: trafficDensity || "Medium",
     baseSeverity: baseSeverity || 28,
+    clarificationAnswer: clarificationAnswer || "Standard reporting",
     reportedBy: "You (Citizen)",
     reportedAt: "Just now",
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
     beforeImage: image,
     afterImage: image,
     phash: phash || null,
     resolution: {
-<<<<<<< HEAD
-      assignedTo: "Er. Ravi Kumar (Executive Engineer)",
-      contractor: "BBMP Fast-Response Team",
-      note: `Auto-classified: ${categoryLabel || category}. AI Clarification: ${clarificationAnswer || 'None'}`
-=======
       assignedTo: "Er. Rajesh Sawant (Executive Engineer)",
       contractor: "BMC Fast-Response Team",
-      note: `Clarification provided: ${clarificationAnswer || 'None'}`
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
+      note: `Auto-classified: ${categoryLabel || category}. AI Clarification: ${clarificationAnswer || 'None'}`
     }
   };
 

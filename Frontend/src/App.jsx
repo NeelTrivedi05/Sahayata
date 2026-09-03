@@ -157,40 +157,6 @@ export default function App() {
     setAuthView('login');
   };
 
-<<<<<<< HEAD
-    if (existing) {
-      setMatchedDuplicate(existing);
-      setDuplicateModalOpen(true);
-    } else {
-      const newReportId = `CIVIC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-      const newReport = {
-        id: newReportId,
-        title: customDescription ? customDescription : activePreset.name,
-        category: activePreset.category,
-        categoryLabel: activePreset.categoryLabel,
-        coords: activePreset.coords,
-        address: activePreset.address,
-        status: 'reported',
-        statusStep: 1,
-        slaHours: activePreset.slaHours || 24,
-        elapsedHours: 1,
-        duplicateCount: 1,
-        impactRadiusMeters: 100,
-        criticalZone: activePreset.category === 'pothole' ? "St. Mary's School Zone" : "Ward 142 Corridor",
-        trafficDensity: "Medium",
-        baseSeverity: activePreset.baseSeverity || 28,
-        clarificationAnswer: selectedClarification,
-        reportedBy: "You (Citizen)",
-        reportedAt: "Just now",
-        beforeImage: activePreset.image,
-        afterImage: activePreset.image,
-        resolution: {
-          assignedTo: "Er. Ravi Kumar (Executive Engineer)",
-          contractor: "BBMP Fast-Response Team",
-          note: `Auto-routed based on AI Clarification: "${selectedClarification}"`
-        }
-      };
-=======
   const handleAuthLogin = async (credentials) => {
     const res = await login(credentials);
     const userRole = res?.user?.role || 'citizen';
@@ -203,7 +169,6 @@ export default function App() {
     setShowLanding(false);
     setActiveTab(getDefaultTabForRole(userRole));
   };
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
 
   const handleAuthLogout = () => {
     logout();
@@ -1088,7 +1053,6 @@ function ReportIssueView({
   setCustomDescription,
   onSubmit
 }) {
-<<<<<<< HEAD
   const [isScanning, setIsScanning] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -1119,8 +1083,8 @@ function ReportIssueView({
             baseSeverity: cls.baseSeverity || 35,
             slaHours: cls.slaHours || 24,
             image: base64Image,
-            coords: [12.9750, 77.6420],
-            address: "Ward 142 (GPS Tagged Location)",
+            coords: [19.0558, 72.8295],
+            address: "Ward H/West (GPS Tagged Location)",
             confidence: cls.confidence || "96.4%",
             provider: data.provider || "Groq Llama 3.2 Vision",
             aiClarification: {
@@ -1147,7 +1111,8 @@ function ReportIssueView({
       }
     };
     reader.readAsDataURL(file);
-=======
+  };
+
   const [reportMode, setReportMode] = useState('camera_gps'); // 'camera_gps' | 'preset'
   const cameraInputRef = useRef(null);
   const uploadInputRef = useRef(null);
@@ -1158,30 +1123,9 @@ function ReportIssueView({
   const [photoPHash, setPhotoPHash] = useState('');
   const [computingHash, setComputingHash] = useState(false);
 
-  // Laptop Webcam state
-  const [isWebcamOpen, setIsWebcamOpen] = useState(false);
-  const [webcamStream, setWebcamStream] = useState(null);
-  const webcamVideoRef = useRef(null);
-  const [webcamError, setWebcamError] = useState(null);
-
   // Category state for custom mode
   const [category, setCategory] = useState('pothole');
   const [categoryLabel, setCategoryLabel] = useState('Road Hazard & Pothole');
-
-  // Geolocation Hook
-  const geo = useGeolocation();
-  const [selectedLocationCoords, setSelectedLocationCoords] = useState(activePreset?.coords || [19.0558, 72.8295]);
-  const [selectedLocationAddress, setSelectedLocationAddress] = useState(activePreset?.address || 'Hill Road, Ward H/West, Bandra West, Mumbai');
-
-  useEffect(() => {
-    if (activePreset) {
-      if (activePreset.coords) setSelectedLocationCoords(activePreset.coords);
-      if (activePreset.address) setSelectedLocationAddress(activePreset.address);
-    }
-  }, [activePreset]);
-
-  // Dynamic nearby duplicate detection candidate
-  const [nearbyCandidate, setNearbyCandidate] = useState(null);
 
   const categories = [
     { id: 'pothole', label: 'Road Hazard & Pothole', icon: '🕳️' },
@@ -1190,230 +1134,31 @@ function ReportIssueView({
     { id: 'water', label: 'Water Leak & Drainage', icon: '🚰' }
   ];
 
-  // Open laptop webcam stream via WebRTC
-  const openWebcam = async () => {
-    setIsWebcamOpen(true);
-    setWebcamError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user'
-        },
-        audio: false
-      });
-      setWebcamStream(stream);
-      setTimeout(() => {
-        if (webcamVideoRef.current) {
-          webcamVideoRef.current.srcObject = stream;
-        }
-      }, 100);
-    } catch (err) {
-      console.error("Webcam access error:", err);
-      setWebcamError(
-        "Could not access laptop webcam. Please ensure camera access is allowed in your browser address bar or Windows Camera Privacy settings."
-      );
-    }
-  };
-
-  // Close laptop webcam stream
-  const closeWebcam = () => {
-    if (webcamStream) {
-      webcamStream.getTracks().forEach((track) => track.stop());
-      setWebcamStream(null);
-    }
-    setIsWebcamOpen(false);
-    setWebcamError(null);
-  };
-
-  // Cleanup stream on component unmount
-  useEffect(() => {
-    return () => {
-      if (webcamStream) {
-        webcamStream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [webcamStream]);
-
-  // Snap photo from webcam video frame
-  const snapWebcamPhoto = async () => {
-    if (!webcamVideoRef.current) return;
-    const video = webcamVideoRef.current;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-
-    setCapturedPhoto(dataUrl);
-    setPhotoName('laptop_webcam_snapshot.jpg');
-    closeWebcam();
-
-    setComputingHash(true);
-    try {
-      const hashResult = await computeImagePHash(dataUrl);
-      setPhotoPHash(hashResult.hexHash);
-    } catch (err) {
-      console.error("pHash computation error:", err);
-      setPhotoPHash("a1b2c3d4e5f60718");
-    } finally {
-      setComputingHash(false);
-    }
-  };
-
-  // Handle native camera / upload photo selection
-  const handlePhotoChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const previewUrl = URL.createObjectURL(file);
-    setCapturedPhoto(previewUrl);
-    setPhotoName(file.name);
-    setComputingHash(true);
-
-    try {
-      const hashResult = await computeImagePHash(previewUrl);
-      setPhotoPHash(hashResult.hexHash);
-    } catch (err) {
-      console.error("pHash computation error:", err);
-      setPhotoPHash("a1b2c3d4e5f60718");
-    } finally {
-      setComputingHash(false);
-    }
-  };
-
-  // Live background deduplication radar: evaluates candidate whenever location/photo/category changes
-  useEffect(() => {
-    const currentCoords =
-      reportMode === 'camera_gps'
-        ? geo.coords || [19.0558, 72.8295]
-        : activePreset.coords;
-    const currentCat = reportMode === 'camera_gps' ? category : activePreset.category;
-    const currentHash = reportMode === 'camera_gps' ? photoPHash : activePreset.phash;
-
-    evaluateDuplicateCandidate(
-      {
-        coords: currentCoords,
-        category: currentCat,
-        phash: currentHash
-      },
-      existingReports || [],
-      { maxRadiusMeters: 50 }
-    ).then((res) => {
-      if (res.isDuplicate && res.duplicateReport) {
-        setNearbyCandidate(res.duplicateReport);
-      } else {
-        setNearbyCandidate(null);
-      }
-    });
-  }, [geo.coords, category, photoPHash, reportMode, activePreset, existingReports]);
-
   // Handle final submission
   const handleFormSubmit = () => {
-    const finalCoords = selectedLocationCoords || (reportMode === 'preset' ? activePreset.coords : geo.coords) || [19.0558, 72.8295];
-    const finalAddress = selectedLocationAddress || (reportMode === 'preset' ? activePreset.address : geo.address) || "Hill Road, Ward H/West, Bandra West, Mumbai";
+    const finalCoords = activePreset?.coords || [19.0558, 72.8295];
+    const finalAddress = activePreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
 
-    if (reportMode === 'preset') {
-      onSubmit({
-        title: customDescription ? customDescription : activePreset.name,
-        category: activePreset.category,
-        categoryLabel: activePreset.categoryLabel,
-        coords: finalCoords,
-        address: finalAddress,
-        image: activePreset.image,
-        phash: activePreset.phash,
-        clarificationAnswer: selectedClarification
-      });
-    } else {
-      const finalImage =
-        capturedPhoto ||
-        (category === 'pothole'
-          ? "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80"
-          : category === 'garbage'
-          ? "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80"
-          : "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80");
-
-      onSubmit({
-        title: customDescription || `${categoryLabel} reported near ${finalAddress.split(',')[0]}`,
-        category,
-        categoryLabel,
-        coords: finalCoords,
-        address: finalAddress,
-        image: finalImage,
-        phash: photoPHash || "a1b2c3d4e5f60718",
-        clarificationAnswer: selectedClarification
-      });
-    }
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
+    onSubmit({
+      title: customDescription ? customDescription : activePreset.name,
+      category: activePreset.category,
+      categoryLabel: activePreset.categoryLabel,
+      coords: finalCoords,
+      address: finalAddress,
+      image: activePreset.image,
+      phash: activePreset.phash,
+      clarificationAnswer: selectedClarification
+    });
   };
 
   return (
     <div>
-<<<<<<< HEAD
       <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0' }}>
         Report a Civic Grievance & Auto-Classify Issue
       </h2>
       <p style={{ color: '#64748B', fontSize: '0.88rem', margin: '0 0 20px 0' }}>
         Upload or select any civic issue photo. Groq Llama 3.2 Vision AI detects classification, assigns target SLAs, and generates dynamic clarification prompts.
       </p>
-=======
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0' }}>
-            Report a Civic Grievance
-          </h2>
-          <p style={{ color: '#64748B', fontSize: '0.88rem', margin: 0 }}>
-            Capture a photo with GPS. Vision AI and our Deduplication Engine verify and route your complaint directly to Ward H/West (Bandra West).
-          </p>
-        </div>
-
-        {/* Input Mode Selector */}
-        <div style={{ display: 'flex', background: '#E2E8F0', padding: '3px', borderRadius: '10px' }}>
-          <button
-            type="button"
-            onClick={() => setReportMode('camera_gps')}
-            style={{
-              background: reportMode === 'camera_gps' ? '#FFFFFF' : 'transparent',
-              color: reportMode === 'camera_gps' ? '#1D4ED8' : '#64748B',
-              fontWeight: reportMode === 'camera_gps' ? 700 : 600,
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: 'none',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: reportMode === 'camera_gps' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-            }}
-          >
-            <Camera size={15} /> 📸 Live Camera & GPS (Real Device)
-          </button>
-          <button
-            type="button"
-            onClick={() => setReportMode('preset')}
-            style={{
-              background: reportMode === 'preset' ? '#FFFFFF' : 'transparent',
-              color: reportMode === 'preset' ? '#1D4ED8' : '#64748B',
-              fontWeight: reportMode === 'preset' ? 700 : 600,
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: 'none',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: reportMode === 'preset' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-            }}
-          >
-            <Sliders size={15} /> 🧪 Demo Presets
-          </button>
-        </div>
-      </div>
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
 
       {/* Upload Custom Photo Banner */}
       <div
@@ -1533,7 +1278,6 @@ function ReportIssueView({
           boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
         }}
       >
-<<<<<<< HEAD
         {/* Left Column: Visual Evidence & Preset Details */}
         <div style={{ background: '#F8FAFC', padding: '28px', borderRight: '1px solid #E2E8F0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -1559,41 +1303,6 @@ function ReportIssueView({
                   src={activePreset.image}
                   alt="Uploaded issue"
                   style={{ width: '100%', height: '260px', objectFit: 'cover', display: 'block' }}
-=======
-        {/* ================= LEFT COLUMN: PHOTO EVIDENCE & GPS ================= */}
-        <div style={{ background: '#F8FAFC', padding: '28px', borderRight: '1px solid #E2E8F0' }}>
-          {reportMode === 'preset' ? (
-            <div>
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                Select Test Scenario:
-              </label>
-              <select
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid #CBD5E1',
-                  marginBottom: '16px',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
-                  background: '#FFF'
-                }}
-                value={activePreset.id}
-                onChange={(e) => onSelectPreset(e.target.value)}
-              >
-                {presets.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-
-              <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #CBD5E1' }}>
-                <img
-                  src={activePreset.image}
-                  alt="Uploaded issue"
-                  style={{ width: '100%', height: '270px', objectFit: 'cover', display: 'block' }}
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
                 />
                 <div
                   style={{
@@ -1612,8 +1321,7 @@ function ReportIssueView({
                     alignItems: 'center'
                   }}
                 >
-<<<<<<< HEAD
-                  <span>GPS Tag: <strong>12.9723° N, 77.6418° E</strong></span>
+                  <span>GPS: <strong>{activePreset.coords ? `${activePreset.coords[0]}° N, ${activePreset.coords[1]}° E` : 'Auto-located'}</strong></span>
                   <span style={{ color: '#38BDF8', fontWeight: 700 }}>Auto-located</span>
                 </div>
               </>
@@ -1644,252 +1352,22 @@ function ReportIssueView({
               Model Provider: <strong>{activePreset.provider || "Groq Llama 3.2 Vision AI"}</strong>
             </div>
           </div>
-=======
-                  <span>GPS: <strong>{activePreset.coords[0]}° N, {activePreset.coords[1]}° E</strong></span>
-                  <span style={{ color: '#38BDF8', fontWeight: 700 }}>Preset Verified</span>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '12px', background: '#FFFFFF', padding: '10px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.78rem', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span><strong>64-bit pHash:</strong> <code style={{ color: '#1D4ED8', fontWeight: 700 }}>{activePreset.phash || "a1b2c3d4e5f60719"}</code></span>
-                <span style={{ color: '#059669', fontWeight: 700 }}>✓ Indexed</span>
-              </div>
-
-              <div style={{ marginTop: '14px' }}>
-                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-                  📍 Ward H/West Location (Nudge pin to adjust):
-                </div>
-                <LocationPickerMiniMap
-                  initialCoords={selectedLocationCoords}
-                  onLocationChange={(coords, address) => {
-                    setSelectedLocationCoords(coords);
-                    setSelectedLocationAddress(address);
-                  }}
-                  height="140px"
-                />
-              </div>
-            </div>
-          ) : (
-            <div>
-              {/* Native Camera (capture="environment") + Gallery Upload Controls */}
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                onChange={handlePhotoChange}
-              />
-              <input
-                ref={uploadInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handlePhotoChange}
-              />
-
-              <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '8px', color: '#0F172A' }}>
-                1. Capture Photo Evidence:
-              </label>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
-                <button
-                  type="button"
-                  onClick={openWebcam}
-                  style={{
-                    background: '#1D4ED8',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '10px',
-                    padding: '12px 14px',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 2px 4px rgba(29, 78, 216, 0.2)'
-                  }}
-                >
-                  <Camera size={18} /> 💻 Open Laptop Webcam
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => uploadInputRef.current?.click()}
-                  style={{
-                    background: '#FFFFFF',
-                    color: '#334155',
-                    border: '1px solid #CBD5E1',
-                    borderRadius: '10px',
-                    padding: '12px 14px',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <Upload size={18} /> Upload Photo
-                </button>
-              </div>
-
-              {/* Photo Display Card */}
-              {capturedPhoto ? (
-                <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #CBD5E1' }}>
-                  <img
-                    src={capturedPhoto}
-                    alt="Captured issue"
-                    style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      color: '#FFF',
-                      borderRadius: '6px',
-                      padding: '4px 8px',
-                      fontSize: '0.72rem',
-                      cursor: 'pointer',
-                      fontWeight: 600
-                    }}
-                    onClick={() => {
-                      setCapturedPhoto(null);
-                      setPhotoPHash('');
-                    }}
-                  >
-                    ✕ Retake Photo
-                  </div>
-
-                  {/* pHash Banner */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: '10px',
-                      left: '10px',
-                      right: '10px',
-                      background: 'rgba(15, 23, 42, 0.88)',
-                      backdropFilter: 'blur(6px)',
-                      color: '#FFF',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      fontSize: '0.72rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <span>
-                      pHash: <strong style={{ color: '#38BDF8', fontFamily: 'monospace' }}>{photoPHash || 'Calculating...'}</strong>
-                    </span>
-                    <span style={{ color: '#A7F3D0', fontWeight: 700 }}>
-                      {computingHash ? 'Hashing...' : '✓ 64-bit Fingerprint'}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    height: '140px',
-                    border: '2px dashed #CBD5E1',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#64748B',
-                    background: '#FFFFFF',
-                    gap: '6px'
-                  }}
-                >
-                  <Camera size={28} color="#94A3B8" />
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>No photo selected yet</span>
-                  <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Tap "Take Photo" or "Upload Photo" above</span>
-                </div>
-              )}
-
-              {/* 2. Interactive Geolocation Map (Draggable Pin + GPS) */}
-              <div style={{ marginTop: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A' }}>
-                    2. Location Access (Draggable Map Pin):
-                  </label>
-                  <span style={{ fontSize: '0.72rem', color: '#1D4ED8', background: '#EFF6FF', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
-                    Live Leaflet Map
-                  </span>
-                </div>
-
-                <LocationPickerMiniMap
-                  initialCoords={selectedLocationCoords}
-                  onLocationChange={(coords, address) => {
-                    setSelectedLocationCoords(coords);
-                    setSelectedLocationAddress(address);
-                  }}
-                  height="190px"
-                />
-              </div>
-            </div>
-          )}
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
         </div>
 
-        {/* ================= RIGHT COLUMN: AI CONTEXT & SUBMISSION ================= */}
+        {/* Right Column: AI Dynamic Clarification & Submission */}
         <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
-            {/* Category Selector if in Custom Camera mode */}
-            {reportMode === 'camera_gps' && (
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '8px', color: '#0F172A' }}>
-                  Select Grievance Category:
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {categories.map((c) => (
-                    <div
-                      key={c.id}
-                      onClick={() => {
-                        setCategory(c.id);
-                        setCategoryLabel(c.label);
-                      }}
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: category === c.id ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
-                        background: category === c.id ? '#EFF6FF' : '#FFFFFF',
-                        color: category === c.id ? '#1D4ED8' : '#334155',
-                        fontWeight: category === c.id ? 700 : 500,
-                        fontSize: '0.82rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <span>{c.icon}</span>
-                      <span>{c.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* AI Dynamic Clarification Prompt */}
             <div
               style={{
                 background: '#EFF6FF',
                 border: '1px solid #BFDBFE',
                 borderRadius: '10px',
                 padding: '12px 16px',
-                marginBottom: '18px'
+                marginBottom: '20px'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1D4ED8', fontWeight: 700, fontSize: '0.82rem' }}>
                 <Sparkles size={16} />
-<<<<<<< HEAD
                 <span>AI Smart Clarification Engine</span>
               </div>
               <p style={{ fontSize: '0.8rem', color: '#1E3A8A', margin: '4px 0 0' }}>
@@ -1901,58 +1379,18 @@ function ReportIssueView({
               Dynamic Context Clarification:
             </h3>
             <p style={{ fontSize: '0.85rem', color: '#334155', marginBottom: '14px', fontWeight: 600 }}>
-              {activePreset.aiClarification.question}
+              {activePreset.aiClarification?.question || "What is the severity of this issue?"}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-              {activePreset.aiClarification.options.map((opt, idx) => {
+              {(activePreset.aiClarification?.options || ["High Hazard", "Medium Hazard", "Routine Repair"]).map((opt, idx) => {
                 const isSelected = selectedClarification === opt;
                 const isHighImpact = opt.includes("Hazard") || opt.includes("Critical") || opt.includes("Urgent") || opt.includes("Severe") || opt.includes("High");
                 return (
-=======
-                <span>AI Automated Context Clarification</span>
-              </div>
-              <p style={{ fontSize: '0.8rem', color: '#1E3A8A', margin: '4px 0 0' }}>
-                Vision AI identified this risk. Answer this quick prompt to fine-tune anti-deadlock priority:
-              </p>
-            </div>
-
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
-              Clarification Question:
-            </h3>
-            <p style={{ fontSize: '0.86rem', color: '#334155', marginBottom: '12px', fontWeight: 600 }}>
-              {activePreset.aiClarification.question}
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
-              {activePreset.aiClarification.options.map((opt, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => onSelectClarification(opt)}
-                  style={{
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    border:
-                      selectedClarification === opt
-                        ? '2px solid #1D4ED8'
-                        : '1px solid #CBD5E1',
-                    background: selectedClarification === opt ? '#EFF6FF' : '#FFFFFF',
-                    color: selectedClarification === opt ? '#1D4ED8' : '#334155',
-                    cursor: 'pointer',
-                    fontSize: '0.84rem',
-                    fontWeight: selectedClarification === opt ? 700 : 500,
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                  }}
-                >
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
                   <div
                     key={idx}
                     onClick={() => onSelectClarification(opt)}
                     style={{
-<<<<<<< HEAD
                       padding: '12px 16px',
                       borderRadius: '10px',
                       border: isSelected ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
@@ -1965,16 +1403,6 @@ function ReportIssueView({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between'
-=======
-                      width: '16px',
-                      height: '16px',
-                      borderRadius: '50%',
-                      border:
-                        selectedClarification === opt
-                          ? '5px solid #1D4ED8'
-                          : '2px solid #CBD5E1',
-                      background: '#FFF'
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -2018,30 +1446,6 @@ function ReportIssueView({
               }}
             />
 
-            {/* LIVE DEDUPLICATION RADAR BANNER */}
-            {nearbyCandidate && (
-              <div
-                style={{
-                  background: '#FFFBEB',
-                  border: '1px solid #FDE68A',
-                  borderRadius: '10px',
-                  padding: '12px 14px',
-                  fontSize: '0.8rem',
-                  color: '#92400E',
-                  marginBottom: '16px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800 }}>
-                  <AlertTriangle size={16} />
-                  <span>Deduplication Radar Active ({nearbyCandidate.distanceMeters}m away)</span>
-                </div>
-                <p style={{ margin: '4px 0 0', lineHeight: 1.4 }}>
-                  A matching <strong>{nearbyCandidate.categoryLabel}</strong> is already open on this road.
-                  Submitting will cluster your report and boost ticket <strong>{nearbyCandidate.id}</strong> with an endorsement vote (+25 Karma).
-                </p>
-              </div>
-            )}
-
             <div
               style={{
                 background: '#F8FAFC',
@@ -2053,11 +1457,7 @@ function ReportIssueView({
                 marginBottom: '16px'
               }}
             >
-<<<<<<< HEAD
-              <strong>Target Jurisdiction:</strong> Ward 142 • Auto-routing to <strong>BBMP Fast-Response Team</strong>
-=======
-              <strong>Target Jurisdiction:</strong> Ward H/West (Bandra West) • Assigned to: <strong>Executive Engineer Rajesh Sawant</strong>
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
+              <strong>Target Jurisdiction:</strong> Ward H/West (Bandra West) • Auto-routing to <strong>BMC Fast-Response Team</strong>
             </div>
           </div>
 
