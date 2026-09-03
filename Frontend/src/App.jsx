@@ -966,6 +966,12 @@ function ReportIssueView({
   const [photoPHash, setPhotoPHash] = useState('');
   const [computingHash, setComputingHash] = useState(false);
 
+  // Laptop Webcam state
+  const [isWebcamOpen, setIsWebcamOpen] = useState(false);
+  const [webcamStream, setWebcamStream] = useState(null);
+  const webcamVideoRef = useRef(null);
+  const [webcamError, setWebcamError] = useState(null);
+
   // Category state for custom mode
   const [category, setCategory] = useState('pothole');
   const [categoryLabel, setCategoryLabel] = useState('Road Hazard & Pothole');
@@ -982,6 +988,79 @@ function ReportIssueView({
     { id: 'electricity', label: 'Electrical & Streetlight', icon: '💡' },
     { id: 'water', label: 'Water Leak & Drainage', icon: '🚰' }
   ];
+
+  // Open laptop webcam stream via WebRTC
+  const openWebcam = async () => {
+    setIsWebcamOpen(true);
+    setWebcamError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        },
+        audio: false
+      });
+      setWebcamStream(stream);
+      setTimeout(() => {
+        if (webcamVideoRef.current) {
+          webcamVideoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      console.error("Webcam access error:", err);
+      setWebcamError(
+        "Could not access laptop webcam. Please ensure camera access is allowed in your browser address bar or Windows Camera Privacy settings."
+      );
+    }
+  };
+
+  // Close laptop webcam stream
+  const closeWebcam = () => {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach((track) => track.stop());
+      setWebcamStream(null);
+    }
+    setIsWebcamOpen(false);
+    setWebcamError(null);
+  };
+
+  // Cleanup stream on component unmount
+  useEffect(() => {
+    return () => {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [webcamStream]);
+
+  // Snap photo from webcam video frame
+  const snapWebcamPhoto = async () => {
+    if (!webcamVideoRef.current) return;
+    const video = webcamVideoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+    setCapturedPhoto(dataUrl);
+    setPhotoName('laptop_webcam_snapshot.jpg');
+    closeWebcam();
+
+    setComputingHash(true);
+    try {
+      const hashResult = await computeImagePHash(dataUrl);
+      setPhotoPHash(hashResult.hexHash);
+    } catch (err) {
+      console.error("pHash computation error:", err);
+      setPhotoPHash("a1b2c3d4e5f60718");
+    } finally {
+      setComputingHash(false);
+    }
+  };
 
   // Handle native camera / upload photo selection
   const handlePhotoChange = async (e) => {
@@ -1223,7 +1302,7 @@ function ReportIssueView({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
                 <button
                   type="button"
-                  onClick={() => cameraInputRef.current?.click()}
+                  onClick={openWebcam}
                   style={{
                     background: '#1D4ED8',
                     color: '#FFFFFF',
@@ -1240,7 +1319,7 @@ function ReportIssueView({
                     boxShadow: '0 2px 4px rgba(29, 78, 216, 0.2)'
                   }}
                 >
-                  <Camera size={18} /> Take Photo (Camera)
+                  <Camera size={18} /> 💻 Open Laptop Webcam
                 </button>
 
                 <button
@@ -1573,6 +1652,134 @@ function ReportIssueView({
           </button>
         </div>
       </div>
+
+      {/* Live Laptop Webcam Viewfinder Modal */}
+      {isWebcamOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000,
+            padding: '20px'
+          }}
+        >
+          <div
+            style={{
+              background: '#0F172A',
+              color: '#FFF',
+              borderRadius: '16px',
+              maxWidth: '640px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#EF4444' }} />
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+                  Live Laptop Webcam Feed
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={closeWebcam}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94A3B8',
+                  fontSize: '1.4rem',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  lineHeight: 1
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {webcamError ? (
+              <div style={{ background: '#7F1D1D', border: '1px solid #DC2626', padding: '16px', borderRadius: '10px', fontSize: '0.85rem' }}>
+                <strong style={{ color: '#FECACA' }}>Camera Permission Required:</strong>
+                <p style={{ margin: '6px 0 0', color: '#FCA5A5' }}>{webcamError}</p>
+              </div>
+            ) : (
+              <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', background: '#000', height: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <video
+                  ref={webcamVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    background: 'rgba(0,0,0,0.6)',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    color: '#E2E8F0'
+                  }}
+                >
+                  Position issue in frame & click Snap
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={closeWebcam}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #475569',
+                  color: '#CBD5E1',
+                  borderRadius: '8px',
+                  padding: '10px 18px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              {!webcamError && (
+                <button
+                  type="button"
+                  onClick={snapWebcamPhoto}
+                  style={{
+                    background: '#2563EB',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 22px',
+                    fontSize: '0.9rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
+                  }}
+                >
+                  <Camera size={18} /> 📸 Snap Photo
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
