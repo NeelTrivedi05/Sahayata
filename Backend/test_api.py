@@ -1,42 +1,50 @@
 """
 Validation test suite for Sahayata FastAPI Backend.
+Supports both Pytest (`pytest Backend/test_api.py`) and Direct Execution (`python test_api.py`).
 """
 
-from fastapi.testclient import TestClient
-from main import app
+import os
+import sys
 import io
 import base64
 from PIL import Image
 
+# Ensure Backend directory is resolved regardless of working directory or IDE configuration
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from fastapi.testclient import TestClient
+from main import app
+
 client = TestClient(app)
 
-def test_all():
-    print("==================================================")
-    print("[TEST] SAHAYATA FASTAPI BACKEND VALIDATION SUITE")
-    print("==================================================")
 
-    # 1. Jurisdiction
+def test_jurisdiction():
+    """Verify BBMP Ward 142 jurisdiction data."""
     res = client.get("/api/jurisdiction")
-    assert res.status_code == 200, "Jurisdiction failed"
+    assert res.status_code == 200, "Jurisdiction endpoint failed"
     data = res.json()
     assert data["data"]["city"] == "Bengaluru", "City mismatch"
+    assert data["data"]["wardNumber"] == 142, "Ward number mismatch"
     print("[PASS] GET /api/jurisdiction (BBMP Ward 142 loaded)")
 
-    # 2. Reports with dynamic priority
+
+def test_reports_dynamic_priority():
+    """Verify in-memory reports return with anti-deadlock priority scores."""
     res = client.get("/api/reports")
-    assert res.status_code == 200, "Reports failed"
+    assert res.status_code == 200, "Reports endpoint failed"
     reports_data = res.json()
     assert reports_data["count"] >= 3, "Sample reports missing"
     assert "finalScore" in reports_data["data"][0]["priority"], "Priority calculation missing"
     print(f"[PASS] GET /api/reports ({reports_data['count']} reports with dynamic priority score)")
 
-    # 3. Duplicate Intercept (HTTP 409)
-    # Trying to report a pothole right at St. Mary's School (within 50m)
+
+def test_duplicate_intercept():
+    """Verify multi-factor deduplication intercepts proximity conflict within 50m (HTTP 409)."""
     duplicate_payload = {
         "title": "Another pothole here",
         "category": "pothole",
         "categoryLabel": "Road Hazard & Pothole",
-        "coords": [12.9724, 77.6419], # ~15m from CIVIC-2026-8921
+        "coords": [12.9724, 77.6419],  # ~15m from CIVIC-2026-8921
         "address": "St. Mary's High School Road",
         "phash": "a1b2c3d4e5f60718"
     }
@@ -46,12 +54,14 @@ def test_all():
     assert detail["isDuplicate"] is True, "isDuplicate flag missing"
     print(f"[PASS] POST /api/reports Duplicate Intercept (Caught duplicate {detail['duplicateReport']['id']} within {detail['duplicateReport']['distanceMeters']}m)")
 
-    # 4. Valid distinct report (HTTP 200)
+
+def test_create_valid_report():
+    """Verify submitting a distinct, non-duplicate civic issue (HTTP 200)."""
     new_payload = {
         "title": "Broken Streetlight near Metro Pillar 140",
         "category": "electricity",
         "categoryLabel": "Electrical Hazard",
-        "coords": [12.9850, 77.6550], # Far away
+        "coords": [12.9850, 77.6550],  # Far away
         "address": "Indiranagar Metro Corridor",
         "phash": "f1e2d3c4b5a60799"
     }
@@ -60,21 +70,27 @@ def test_all():
     new_ticket_id = res.json()["data"]["id"]
     print(f"[PASS] POST /api/reports Registered Ticket: {new_ticket_id}")
 
-    # 5. Endorse duplicate report
+
+def test_endorse_report():
+    """Verify citizen endorsement (+1 duplicateCount / boost)."""
     res = client.post("/api/reports/CIVIC-2026-8921/endorse", json={"voterId": "Citizen_42"})
     assert res.status_code == 200, "Endorsement failed"
     print(f"[PASS] POST /api/reports/CIVIC-2026-8921/endorse (Duplicate count: {res.json()['duplicateCount']})")
 
-    # 6. Progress ticket (Ward Engineer)
+
+def test_progress_report():
+    """Verify ward engineer updating complaint lifecycle to resolved."""
     res = client.patch("/api/reports/CIVIC-2026-8921/progress", json={
         "statusStep": 5,
         "status": "resolved",
         "note": "Pothole filled with Bitumen mix by Apex Infra."
     })
-    assert res.status_code == 200, "Progress failed"
+    assert res.status_code == 200, "Progress update failed"
     print("[PASS] PATCH /api/reports/CIVIC-2026-8921/progress (Status moved to resolved)")
 
-    # 7. Native AI pHash generation endpoint
+
+def test_phash_generation():
+    """Verify AI perceptual hash generation endpoint."""
     img = Image.new('RGB', (100, 100), color='red')
     buf = io.BytesIO()
     img.save(buf, format='JPEG')
@@ -82,12 +98,23 @@ def test_all():
 
     res = client.post("/api/ai/phash", json={"image_base64": b64})
     assert res.status_code == 200, "pHash generation failed"
-    hash_val = res.json()["hexHash"]
-    print(f"[PASS] POST /api/ai/phash (Computed 64-bit dHash: {hash_val})")
+    data = res.json()
+    assert data["success"] is True, "pHash response success flag false"
+    assert len(data["hexHash"]) == 16, "Expected 64-bit hex hash (16 chars)"
+    print(f"[PASS] POST /api/ai/phash (Computed 64-bit dHash: {data['hexHash']})")
 
+
+if __name__ == "__main__":
+    print("==================================================")
+    print("[TEST] SAHAYATA FASTAPI BACKEND VALIDATION SUITE")
+    print("==================================================")
+    test_jurisdiction()
+    test_reports_dynamic_priority()
+    test_duplicate_intercept()
+    test_create_valid_report()
+    test_endorse_report()
+    test_progress_report()
+    test_phash_generation()
     print("\n==================================================")
     print("[SUCCESS] ALL 7 FASTAPI ENDPOINTS FULLY VERIFIED AND WORKING!")
     print("==================================================")
-
-if __name__ == "__main__":
-    test_all()
