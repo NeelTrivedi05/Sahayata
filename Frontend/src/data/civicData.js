@@ -134,9 +134,11 @@ export const CIVIC_DATA = {
   reportingPresets: [
     {
       id: "preset_pothole",
-      name: "Pothole near St. Mary's School (Triggers Duplicate Clustering)",
+      name: "Deep Crater Pothole near St. Mary's School",
       category: "pothole",
       categoryLabel: "Road Hazard & Pothole",
+      baseSeverity: 35,
+      slaHours: 48,
       image: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
       coords: [12.9723, 77.6418],
       address: "St. Mary's High School Road, Indiranagar",
@@ -144,25 +146,27 @@ export const CIVIC_DATA = {
         question: "Is this pothole affecting the active school bus drop-off zone or pedestrian crosswalk?",
         options: [
           "Yes, directly at school bus gate (High Hazard)",
-          "Within 50m of crosswalk",
-          "On regular roadside shoulder"
+          "Within 50m of busy pedestrian crosswalk",
+          "On regular roadside shoulder / curb side"
         ]
       }
     },
     {
       id: "preset_light",
-      name: "Broken Streetlight on Ambulance Corridor",
+      name: "Broken Streetlight & Exposed Wire on Ambulance Corridor",
       category: "electricity",
       categoryLabel: "Electrical & Lighting",
+      baseSeverity: 42,
+      slaHours: 12,
       image: "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
       coords: [12.9785, 77.6440],
       address: "Ambulance Access Lane, Near Apollo Hospital",
       aiClarification: {
-        question: "Are live sparks or exposed cables accessible to pedestrians?",
+        question: "Are live sparks or exposed cables accessible to pedestrians or water pooling?",
         options: [
-          "Yes, exposed wire hanging dangerously low",
-          "Pole leaning towards roadway",
-          "Dark bulb only, no exposed wire"
+          "Yes, exposed live wire hanging low (Critical Hazard)",
+          "Pole leaning towards roadway / vehicle lane",
+          "Dark lamp bulb only, wiring enclosed"
         ]
       }
     },
@@ -170,16 +174,75 @@ export const CIVIC_DATA = {
       id: "preset_water",
       name: "Burst Water Main Flooding Street",
       category: "water",
-      categoryLabel: "Water Supply & Sewage",
+      categoryLabel: "Water Supply & Pipe Leakage",
+      baseSeverity: 30,
+      slaHours: 24,
       image: "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
       coords: [12.9740, 77.6390],
       address: "100 Feet Road, Junction 4, Indiranagar",
       aiClarification: {
-        question: "Is the water leakage clean potable water or contaminated sewage?",
+        question: "Is the water leakage clean drinking water pipe or contaminated sewage overflow?",
         options: [
-          "Potable clean drinking water (High Pressure)",
-          "Contaminated sewage / Drain overflow",
-          "Minor slow leak without pooling"
+          "High pressure drinking water pipe burst",
+          "Contaminated sewage / Open drain overflow",
+          "Slow seepage without road submergence"
+        ]
+      }
+    },
+    {
+      id: "preset_garbage",
+      name: "Overflowing Garbage Dump blocking Footpath",
+      category: "garbage",
+      categoryLabel: "Solid Waste & Sanitation",
+      baseSeverity: 28,
+      slaHours: 24,
+      image: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
+      coords: [12.9765, 77.6385],
+      address: "12th Main Corner, Near BDA Complex, Ward 142",
+      aiClarification: {
+        question: "Does the garbage dump contain bio-medical waste or block public access completely?",
+        options: [
+          "Bio-hazard / Medical waste mixed (Urgent Action)",
+          "Completely blocking pedestrian walkway",
+          "Overfilled bin, walkway partially clear"
+        ]
+      }
+    },
+    {
+      id: "preset_drainage",
+      name: "Clogged Stormwater Drain & Street Inundation",
+      category: "drainage",
+      categoryLabel: "Stormwater Drain & Flooding",
+      baseSeverity: 36,
+      slaHours: 18,
+      image: "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=800&q=80",
+      coords: [12.9750, 77.6410],
+      address: "8th Main Road, Ward 142 Low-lying Area",
+      aiClarification: {
+        question: "Is floodwater entering residential basements or commercial shops?",
+        options: [
+          "Water actively entering residential basements (Severe Flooding)",
+          "Waterlogging on main traffic lane",
+          "Slow drainage runoff along gutter"
+        ]
+      }
+    },
+    {
+      id: "preset_traffic",
+      name: "Fallen Tree Branch & Damaged Signal",
+      category: "traffic",
+      categoryLabel: "Traffic Hazard & Obstruction",
+      baseSeverity: 32,
+      slaHours: 24,
+      image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+      coords: [12.9730, 77.6430],
+      address: "Double Road Intersection, Ward 142",
+      aiClarification: {
+        question: "Is the obstruction completely blocking traffic flow or emergency vehicles?",
+        options: [
+          "Entire lane blocked on major transit artery (High Congestion)",
+          "Blind spot created near turning radius",
+          "Partial shoulder obstruction"
         ]
       }
     }
@@ -200,6 +263,15 @@ export function calculatePriorityScore(report) {
     trafficBonus = 14;
   }
 
+  // Dynamic AI Clarification Priority Bonus
+  let clarificationBonus = 0;
+  const clar = report.resolution?.note || report.clarificationAnswer || "";
+  if (clar.includes("High Hazard") || clar.includes("Critical") || clar.includes("Urgent") || clar.includes("Severe Flooding") || clar.includes("High Congestion")) {
+    clarificationBonus = 18;
+  } else if (clar.includes("crosswalk") || clar.includes("submerged") || clar.includes("blocking")) {
+    clarificationBonus = 10;
+  }
+
   // Anti-Deadlock Aging Engine
   let agingBonus = 0;
   const elapsed = report.elapsedHours || 0;
@@ -210,7 +282,7 @@ export function calculatePriorityScore(report) {
     agingBonus = (elapsed / sla) * 12;
   }
 
-  const rawScore = base + dupBonus + criticalBonus + trafficBonus + agingBonus;
+  const rawScore = base + dupBonus + criticalBonus + trafficBonus + clarificationBonus + agingBonus;
   const finalScore = Math.min(Math.round(rawScore), 100);
 
   return {
@@ -222,7 +294,9 @@ export function calculatePriorityScore(report) {
       dup: Math.round(dupBonus),
       critical: Math.round(criticalBonus),
       traffic: Math.round(trafficBonus),
+      clarification: Math.round(clarificationBonus),
       aging: Math.round(agingBonus)
     }
   };
 }
+
