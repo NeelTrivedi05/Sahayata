@@ -3,3 +3,8 @@
 Thumbs.db
 .jetro/
 .gemini/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
