@@ -22,13 +22,15 @@ import {
   Building
 } from 'lucide-react';
 import ComplaintMiniMap from '../map/ComplaintMiniMap';
+import { calculateTotalDuplicates } from '../../utils/deduplication';
 
 export default function WardDashboardView({
-  reports,
+  reports = [],
   onOpenReportDetail,
   onNavigateTab,
   onResolveTicket
 }) {
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'overdue' | 'pothole' | 'garbage' | 'water' | 'electricity'
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [timeFilter, setTimeFilter] = useState('30d');
@@ -48,7 +50,7 @@ export default function WardDashboardView({
   const resolvedReports = reports.filter(r => r.status === 'resolved' || r.status === 'verified').length;
   const resolutionRate = totalReports > 0 ? Math.round((resolvedReports / totalReports) * 100) : 0;
   
-  const totalDuplicates = reports.reduce((acc, r) => acc + (r.duplicateCount > 1 ? r.duplicateCount - 1 : 0), 0);
+  const totalDuplicates = calculateTotalDuplicates(reports);
   const inspectorHoursSaved = totalDuplicates * 1.5;
 
   const overdueReports = reports.filter(r => (r.elapsedHours || 0) > (r.slaHours || 48) && r.status !== 'verified');
