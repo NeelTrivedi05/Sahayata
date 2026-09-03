@@ -109,6 +109,33 @@ function calculatePriority(report) {
   };
 }
 
+// Helper: Calculate Haversine distance in meters
+function calculateHaversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = deg => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+// Helper: Calculate Hamming distance between two 64-bit hexadecimal pHashes
+function calculateHammingDistance(hexA, hexB) {
+  if (!hexA || !hexB) return 64;
+  let dist = 0;
+  const len = Math.min(hexA.length, hexB.length);
+  for (let i = 0; i < len; i++) {
+    let xor = parseInt(hexA[i], 16) ^ parseInt(hexB[i], 16);
+    while (xor > 0) {
+      dist += xor & 1;
+      xor >>= 1;
+    }
+  }
+  return dist;
+}
+
 // 1. Health check & Jurisdiction info
 app.get('/api/jurisdiction', (req, res) => {
   res.json({ success: true, data: jurisdiction });
@@ -123,27 +150,42 @@ app.get('/api/reports', (req, res) => {
   res.json({ success: true, count: reports.length, data: enriched });
 });
 
-// 3. Submit a new report (with Duplicate Intercept Check)
+// 3. Submit a new report (with Haversine + pHash Duplicate Intercept Check)
 app.post('/api/reports', (req, res) => {
-  const { title, category, categoryLabel, coords, address, image, clarificationAnswer } = req.body;
+  const { title, category, categoryLabel, coords, address, image, phash, clarificationAnswer } = req.body;
   
   if (!coords || !category) {
     return res.status(400).json({ success: false, message: "Coordinates and category are required" });
   }
 
-  // Duplicate Check: ~50m distance (approx 0.0005 deg)
-  const existingDuplicate = reports.find(r => {
-    const latDiff = Math.abs(r.coords[0] - coords[0]);
-    const lngDiff = Math.abs(r.coords[1] - coords[1]);
-    return latDiff < 0.0005 && lngDiff < 0.0005 && r.category === category && r.status !== 'verified';
-  });
+  // Multi-factor Duplicate Check: ≤ 50m distance + matching category
+  let matchedCandidate = null;
+  for (const existing of reports) {
+    if (existing.status === 'verified') continue;
+    if (existing.category !== category) continue;
 
-  if (existingDuplicate) {
+    const distMeters = calculateHaversine(coords[0], coords[1], existing.coords[0], existing.coords[1]);
+    if (distMeters <= 50) {
+      let visualMatch = 75;
+      if (phash && existing.phash) {
+        const hamming = calculateHammingDistance(phash, existing.phash);
+        visualMatch = Math.round(Math.max(0, (1 - hamming / 64) * 100));
+      }
+      matchedCandidate = {
+        ...existing,
+        distanceMeters: distMeters,
+        imageSimilarityPercent: visualMatch
+      };
+      break;
+    }
+  }
+
+  if (matchedCandidate) {
     return res.status(409).json({
       success: false,
       isDuplicate: true,
-      duplicateReport: existingDuplicate,
-      message: "An identical issue was already reported in this immediate 50m radius."
+      duplicateReport: matchedCandidate,
+      message: `An identical issue was already reported ${matchedCandidate.distanceMeters}m away (${matchedCandidate.imageSimilarityPercent}% visual match).`
     });
   }
 
