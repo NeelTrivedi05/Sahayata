@@ -56,6 +56,8 @@ import WardDashboardView from './components/ward/WardDashboardView';
 import PriorityQueueView from './components/priority/PriorityQueueView';
 import ToastNotification from './components/ui/ToastNotification';
 import InteractiveCivicMap from './components/map/InteractiveCivicMap';
+import LocationPickerMiniMap from './components/map/LocationPickerMiniMap';
+import ComplaintMiniMap from './components/map/ComplaintMiniMap';
 
 export default function App() {
   const { currentUser, login, signup, logout } = useAuth();
@@ -1071,6 +1073,15 @@ function ReportIssueView({
 
   // Geolocation Hook
   const geo = useGeolocation();
+  const [selectedLocationCoords, setSelectedLocationCoords] = useState(activePreset?.coords || [19.0558, 72.8295]);
+  const [selectedLocationAddress, setSelectedLocationAddress] = useState(activePreset?.address || 'Hill Road, Ward H/West, Bandra West, Mumbai');
+
+  useEffect(() => {
+    if (activePreset) {
+      if (activePreset.coords) setSelectedLocationCoords(activePreset.coords);
+      if (activePreset.address) setSelectedLocationAddress(activePreset.address);
+    }
+  }, [activePreset]);
 
   // Dynamic nearby duplicate detection candidate
   const [nearbyCandidate, setNearbyCandidate] = useState(null);
@@ -1204,20 +1215,21 @@ function ReportIssueView({
 
   // Handle final submission
   const handleFormSubmit = () => {
+    const finalCoords = selectedLocationCoords || (reportMode === 'preset' ? activePreset.coords : geo.coords) || [19.0558, 72.8295];
+    const finalAddress = selectedLocationAddress || (reportMode === 'preset' ? activePreset.address : geo.address) || "Hill Road, Ward H/West, Bandra West, Mumbai";
+
     if (reportMode === 'preset') {
       onSubmit({
         title: customDescription ? customDescription : activePreset.name,
         category: activePreset.category,
         categoryLabel: activePreset.categoryLabel,
-        coords: activePreset.coords,
-        address: activePreset.address,
+        coords: finalCoords,
+        address: finalAddress,
         image: activePreset.image,
         phash: activePreset.phash,
         clarificationAnswer: selectedClarification
       });
     } else {
-      const finalCoords = geo.coords || [19.0558, 72.8295];
-      const finalAddress = geo.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
       const finalImage =
         capturedPhoto ||
         (category === 'pothole'
@@ -1368,6 +1380,20 @@ function ReportIssueView({
                 <span><strong>64-bit pHash:</strong> <code style={{ color: '#1D4ED8', fontWeight: 700 }}>{activePreset.phash || "a1b2c3d4e5f60719"}</code></span>
                 <span style={{ color: '#059669', fontWeight: 700 }}>✓ Indexed</span>
               </div>
+
+              <div style={{ marginTop: '14px' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                  📍 Ward H/West Location (Nudge pin to adjust):
+                </div>
+                <LocationPickerMiniMap
+                  initialCoords={selectedLocationCoords}
+                  onLocationChange={(coords, address) => {
+                    setSelectedLocationCoords(coords);
+                    setSelectedLocationAddress(address);
+                  }}
+                  height="140px"
+                />
+              </div>
             </div>
           ) : (
             <div>
@@ -1513,60 +1539,25 @@ function ReportIssueView({
                 </div>
               )}
 
-              {/* 2. Geolocation Access (GPS) */}
+              {/* 2. Interactive Geolocation Map (Draggable Pin + GPS) */}
               <div style={{ marginTop: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A' }}>
-                    2. Location Access (GPS):
+                    2. Location Access (Draggable Map Pin):
                   </label>
-                  {geo.coords && (
-                    <span style={{ fontSize: '0.72rem', color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
-                      ✓ GPS Locked (±{geo.accuracyMeters}m)
-                    </span>
-                  )}
+                  <span style={{ fontSize: '0.72rem', color: '#1D4ED8', background: '#EFF6FF', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
+                    Live Leaflet Map
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={geo.requestLocation}
-                  disabled={geo.loading}
-                  style={{
-                    width: '100%',
-                    background: geo.coords ? '#ECFDF5' : '#FFFFFF',
-                    color: geo.coords ? '#065F46' : '#1D4ED8',
-                    border: geo.coords ? '1px solid #A7F3D0' : '1px solid #BFDBFE',
-                    borderRadius: '10px',
-                    padding: '12px 14px',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    transition: 'all 0.15s ease'
+                <LocationPickerMiniMap
+                  initialCoords={selectedLocationCoords}
+                  onLocationChange={(coords, address) => {
+                    setSelectedLocationCoords(coords);
+                    setSelectedLocationAddress(address);
                   }}
-                >
-                  <Navigation size={16} className={geo.loading ? 'animate-spin' : ''} />
-                  {geo.loading
-                    ? 'Acquiring High-Precision GPS Signal...'
-                    : geo.coords
-                    ? '📍 Location Detected (Click to Refresh)'
-                    : '📍 Detect My Current Location (GPS)'}
-                </button>
-
-                {geo.coords && (
-                  <div style={{ marginTop: '10px', background: '#FFFFFF', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.8rem', color: '#334155' }}>
-                    <div><strong>Coordinates:</strong> {geo.coords[0].toFixed(5)}° N, {geo.coords[1].toFixed(5)}° E</div>
-                    <div style={{ marginTop: '2px', color: '#64748B' }}><strong>Address:</strong> {geo.address}</div>
-                  </div>
-                )}
-
-                {geo.error && (
-                  <div style={{ marginTop: '10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '10px 12px', fontSize: '0.78rem', color: '#DC2626' }}>
-                    <strong>Location Error:</strong> {geo.error}
-                  </div>
-                )}
+                  height="190px"
+                />
               </div>
             </div>
           )}
@@ -1898,8 +1889,20 @@ function ReportIssueView({
 function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick }) {
   const [resolvingTicket, setResolvingTicket] = useState(null);
   const [afterPhoto, setAfterPhoto] = useState(null);
+  const [resolveGeofenceNotice, setResolveGeofenceNotice] = useState(null);
   const resolveCamInputRef = useRef(null);
   const resolveUploadInputRef = useRef(null);
+
+  const getDistanceMeters = (c1, c2) => {
+    if (!c1 || !c2) return 0;
+    const R = 6371e3;
+    const φ1 = (c1[0] * Math.PI) / 180;
+    const φ2 = (c2[0] * Math.PI) / 180;
+    const Δφ = ((c2[0] - c1[0]) * Math.PI) / 180;
+    const Δλ = ((c2[1] - c1[1]) * Math.PI) / 180;
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
 
   const steps = [
     { num: 1, label: 'Reported' },
@@ -1918,6 +1921,22 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
         setAfterPhoto(event.target.result);
       };
       reader.readAsDataURL(file);
+
+      if ('geolocation' in navigator && resolvingTicket?.coords) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const currentCoords = [pos.coords.latitude, pos.coords.longitude];
+            const dist = getDistanceMeters(currentCoords, resolvingTicket.coords);
+            if (dist > 100) {
+              setResolveGeofenceNotice(`⚠️ Geo-Fence Warning: Device is ~${dist}m from grievance location (100m radius). Confirming manual override.`);
+            } else {
+              setResolveGeofenceNotice(null);
+            }
+          },
+          (err) => console.warn("GPS lookup error:", err),
+          { timeout: 5000 }
+        );
+      }
     }
   };
 
@@ -1926,6 +1945,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
     onProgressStatus(resolvingTicket.id, afterPhoto);
     setResolvingTicket(null);
     setAfterPhoto(null);
+    setResolveGeofenceNotice(null);
   };
 
   return (
@@ -1999,9 +2019,27 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: '0 0 4px 0' }}>
                     {r.title}
                   </h3>
-                  <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
                     <MapPin size={14} />
                     <span>{r.address}</span>
+                  </div>
+
+                  {/* Grievance Location Mini-Map & Photo Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', maxWidth: '580px', marginBottom: '14px' }}>
+                    <div style={{ borderRadius: '10px', overflow: 'hidden', height: '130px', border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                      <img
+                        src={r.beforeImage}
+                        alt="Intake"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                    <ComplaintMiniMap
+                      coords={r.coords}
+                      status={r.status}
+                      priorityScore={p.finalScore}
+                      isOverdue={p.isOverdue}
+                      height="130px"
+                    />
                   </div>
                 </div>
 
@@ -2227,6 +2265,26 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
               Please take or upload an on-site post-repair photo. Citizens will inspect this image against the original before final sign-off.
             </p>
 
+            {/* Geo-Fence Warning if applicable */}
+            {resolveGeofenceNotice && (
+              <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', color: '#B91C1C', padding: '10px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '14px' }}>
+                {resolveGeofenceNotice}
+              </div>
+            )}
+
+            {/* Target Location Mini-Map */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                📍 Grievance Site: {resolvingTicket.address}
+              </div>
+              <ComplaintMiniMap
+                coords={resolvingTicket.coords}
+                status={resolvingTicket.status}
+                priorityScore={resolvingTicket.priorityScore}
+                height="120px"
+              />
+            </div>
+
             <input
               type="file"
               ref={resolveCamInputRef}
@@ -2444,6 +2502,29 @@ function VerificationView({
             >
               AI Resolution Match: {report.resolution.aiConfidence || "95.8% Cleared"}
             </span>
+          </div>
+        </div>
+
+        {/* Verification Geographic Confirmation Bar */}
+        <div style={{ padding: '12px 24px', background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ flex: 1, minWidth: '220px' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+              <MapPin size={15} color="#2563EB" /> Verified Grievance Site:
+            </div>
+            <div style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600 }}>
+              {report.address}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
+              Ward H/West (Bandra West) • GPS: {report.coords ? `${report.coords[0]?.toFixed(4)}° N, ${report.coords[1]?.toFixed(4)}° E` : '19.0558° N, 72.8295° E'}
+            </div>
+          </div>
+          <div style={{ width: '220px', flexShrink: 0 }}>
+            <ComplaintMiniMap
+              coords={report.coords}
+              status={report.status}
+              priorityScore={report.priorityScore}
+              height="110px"
+            />
           </div>
         </div>
 
@@ -2860,6 +2941,15 @@ function MlaDashboardView({ reports }) {
         </div>
       </div>
 
+      {/* Jurisdiction-Wide Constituency GIS Radar Map */}
+      <div style={{ marginBottom: '28px' }}>
+        <InteractiveCivicMap
+          reports={reports}
+          readOnly={true}
+          title="🏛️ Bandra West Constituency Jurisdiction Map (MLA Surveillance)"
+        />
+      </div>
+
       {/* MLA Hotspot Intervention Queue */}
       <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', padding: '24px' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 16px 0' }}>
@@ -2885,10 +2975,12 @@ function MlaDashboardView({ reports }) {
                     padding: '14px 18px',
                     background: p.isOverdue ? '#FFF5F5' : '#F8FAFC',
                     borderRadius: '10px',
-                    border: p.isOverdue ? '1px solid #FED7D7' : '1px solid #E2E8F0'
+                    border: p.isOverdue ? '1px solid #FED7D7' : '1px solid #E2E8F0',
+                    flexWrap: 'wrap',
+                    gap: '12px'
                   }}
                 >
-                  <div>
+                  <div style={{ flex: 1, minWidth: '220px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1D4ED8' }}>{r.id}</span>
                       <strong style={{ fontSize: '0.92rem' }}>{r.title}</strong>
@@ -2901,6 +2993,16 @@ function MlaDashboardView({ reports }) {
                     <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
                       {r.address} • Assigned to: {r.resolution.assignedTo}
                     </div>
+                  </div>
+
+                  <div style={{ width: '160px', flexShrink: 0 }}>
+                    <ComplaintMiniMap
+                      coords={r.coords}
+                      status={r.status}
+                      priorityScore={p.finalScore}
+                      isOverdue={p.isOverdue}
+                      height="80px"
+                    />
                   </div>
 
                   <div style={{ textAlign: 'right' }}>

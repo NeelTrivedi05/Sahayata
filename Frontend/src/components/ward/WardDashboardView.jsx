@@ -21,6 +21,7 @@ import {
   FileCheck,
   Building
 } from 'lucide-react';
+import ComplaintMiniMap from '../map/ComplaintMiniMap';
 
 export default function WardDashboardView({
   reports,
@@ -32,6 +33,8 @@ export default function WardDashboardView({
   const [statusFilter, setStatusFilter] = useState('all');
   const [timeFilter, setTimeFilter] = useState('30d');
   const [selectedReportForModal, setSelectedReportForModal] = useState(null);
+  const [selectedClusterFilter, setSelectedClusterFilter] = useState(null);
+  const [geofenceWarning, setGeofenceWarning] = useState(null);
 
   // Resolution photo modal state
   const [afterPhotoPreview, setAfterPhotoPreview] = useState(null);
@@ -53,6 +56,18 @@ export default function WardDashboardView({
     .filter(r => r.status !== 'verified')
     .sort((a, b) => (b.priorityScore || 0) - (a.priorityScore || 0));
 
+  // Helper for Haversine distance in meters
+  const getDistanceMeters = (coords1, coords2) => {
+    if (!coords1 || !coords2) return 0;
+    const R = 6371e3;
+    const φ1 = (coords1[0] * Math.PI) / 180;
+    const φ2 = (coords2[0] * Math.PI) / 180;
+    const Δφ = ((coords2[0] - coords1[0]) * Math.PI) / 180;
+    const Δλ = ((coords2[1] - coords1[1]) * Math.PI) / 180;
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
   // Filtered reports for table
   const filteredReports = reports.filter(r => {
     const matchesSearch =
@@ -67,10 +82,20 @@ export default function WardDashboardView({
       (statusFilter === 'resolved' && (r.status === 'resolved' || r.status === 'verified')) ||
       (statusFilter === 'overdue' && (r.elapsedHours || 0) > (r.slaHours || 48) && r.status !== 'verified');
 
-    return matchesSearch && matchesStatus;
+    const matchesCluster = !selectedClusterFilter
+      ? true
+      : selectedClusterFilter === 'Hill Road School Corridor'
+      ? r.address.toLowerCase().includes('hill') || r.address.toLowerCase().includes('st. andrew') || r.category === 'pothole'
+      : selectedClusterFilter === 'Linking Road Market Footfall'
+      ? r.address.toLowerCase().includes('linking') || r.category === 'garbage'
+      : selectedClusterFilter === 'Turner Road Station Transit'
+      ? r.address.toLowerCase().includes('turner') || r.category === 'water'
+      : true;
+
+    return matchesSearch && matchesStatus && matchesCluster;
   });
 
-  // Handle Photo Selection
+  // Handle Photo Selection with Geo-Fence validation
   const handlePhotoFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -79,6 +104,22 @@ export default function WardDashboardView({
         setAfterPhotoPreview(event.target.result);
       };
       reader.readAsDataURL(file);
+
+      if ('geolocation' in navigator && selectedReportForModal?.coords) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const currentCoords = [pos.coords.latitude, pos.coords.longitude];
+            const dist = getDistanceMeters(currentCoords, selectedReportForModal.coords);
+            if (dist > 100) {
+              setGeofenceWarning(`⚠️ Geo-Fence Notice: Photo captured ~${dist}m from complaint location (100m threshold). Officer verification required.`);
+            } else {
+              setGeofenceWarning(null);
+            }
+          },
+          (err) => console.warn("GPS lookup error:", err),
+          { timeout: 5000 }
+        );
+      }
     }
   };
 
@@ -303,38 +344,46 @@ export default function WardDashboardView({
               </button>
             </div>
 
-            {/* Ward Cluster Bubbles Summary */}
+            {/* Ward Cluster Bubbles Summary (Interactive Click-to-Filter) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
                 { name: 'Hill Road School Corridor', category: 'Potholes', count: 14, score: 100, color: '#DC2626' },
                 { name: 'Linking Road Market Footfall', category: 'Solid Waste', count: 8, score: 66, color: '#D97706' },
                 { name: 'Turner Road Station Transit', category: 'Water Pipeline', count: 11, score: 88, color: '#2563EB' }
-              ].map((c, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
-                    background: '#F8FAFC',
-                    border: '1px solid #E2E8F0'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '9999px', background: c.color }} />
-                    <div>
-                      <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1E293B' }}>{c.name}</div>
-                      <div style={{ fontSize: '0.74rem', color: '#64748B' }}>{c.category} • {c.count} citizen endorsements</div>
+              ].map((c, i) => {
+                const isActive = selectedClusterFilter === c.name;
+                return (
+                  <div
+                    key={i}
+                    onClick={() => setSelectedClusterFilter(prev => prev === c.name ? null : c.name)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      background: isActive ? '#EFF6FF' : '#F8FAFC',
+                      border: isActive ? '2px solid #2563EB' : '1px solid #E2E8F0',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '9999px', background: c.color }} />
+                      <div>
+                        <div style={{ fontSize: '0.84rem', fontWeight: 700, color: isActive ? '#1D4ED8' : '#1E293B' }}>
+                          {c.name} {isActive && '✓ (Active Filter)'}
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: '#64748B' }}>{c.category} • {c.count} citizen endorsements</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 900, color: c.color }}>{c.score}</span>
+                      <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>/100</span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.88rem', fontWeight: 900, color: c.color }}>{c.score}</span>
-                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>/100</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -517,6 +566,45 @@ export default function WardDashboardView({
           </div>
         </div>
 
+        {/* Active Cluster Filter Indicator Banner */}
+        {selectedClusterFilter && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#EFF6FF',
+              border: '1px solid #BFDBFE',
+              borderRadius: '10px',
+              padding: '8px 14px',
+              marginBottom: '16px',
+              fontSize: '0.82rem',
+              color: '#1D4ED8'
+            }}
+          >
+            <span>
+              📍 Filtered by Cluster: <strong>{selectedClusterFilter}</strong> (Showing {filteredReports.length} of {reports.length} tickets)
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedClusterFilter(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#1D4ED8',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              Clear Filter ✕
+            </button>
+          </div>
+        )}
+
         {/* The Table */}
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
@@ -687,6 +775,20 @@ export default function WardDashboardView({
                 </div>
               </div>
 
+              {/* Grievance Mini-Map & Impact Buffer */}
+              <div>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B', marginBottom: '6px' }}>
+                  📍 Grievance Location & 100m Impact Radius
+                </div>
+                <ComplaintMiniMap
+                  coords={selectedReportForModal.coords}
+                  status={selectedReportForModal.status}
+                  priorityScore={selectedReportForModal.priorityScore}
+                  isOverdue={(selectedReportForModal.elapsedHours || 0) > (selectedReportForModal.slaHours || 48)}
+                  height="130px"
+                />
+              </div>
+
               {/* Photos Comparison */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
@@ -742,6 +844,13 @@ export default function WardDashboardView({
                   <p style={{ fontSize: '0.78rem', color: '#B45309', margin: '0 0 12px', lineHeight: 1.4 }}>
                     Before this ticket can be resolved, municipal audit guidelines require an on-site photo demonstrating completed bitumen/repair work.
                   </p>
+
+                  {/* Geo-fence mismatch soft warning */}
+                  {geofenceWarning && (
+                    <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', color: '#B91C1C', padding: '10px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, marginBottom: '12px' }}>
+                      {geofenceWarning}
+                    </div>
+                  )}
 
                   <input
                     type="file"
