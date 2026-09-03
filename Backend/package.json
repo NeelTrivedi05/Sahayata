@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "py": "d:/Sahayata/venv/Scripts/python.exe main.py",
+    "test:py": "d:/Sahayata/venv/Scripts/python.exe test_api.py"
   },
   "dependencies": {
     "cors": "^2.8.5",

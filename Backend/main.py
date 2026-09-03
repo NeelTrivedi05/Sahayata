@@ -464,4 +464,6 @@ async def generate_phash(data: Dict[str, str] = Body(..., examples=[{"image_base
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    import os
+    port = int(os.getenv("PORT", 5000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
