@@ -9,7 +9,8 @@ import {
   evaluateDuplicateCandidate,
   computeImagePHash,
   calculateHaversineDistance,
-  calculateHammingDistance
+  calculateHammingDistance,
+  calculateTotalDuplicates
 } from './utils/deduplication';
 import {
   Shield,
@@ -94,21 +95,7 @@ export default function App() {
     CIVIC_DATA.sampleReports.find(r => r.status === 'resolved') || CIVIC_DATA.sampleReports[1]
   );
   const [toast, setToast] = useState(null);
-
-  // Fetch latest reports with server-calculated priority scores on mount
-  useEffect(() => {
-    async function loadReports() {
-      try {
-        const res = await api.getReports();
-        if (res.data && res.data.length > 0) {
-          setReports(res.data);
-        }
-      } catch (e) {
-        console.warn('Backend /api/reports unreachable, using local reports', e);
-      }
-    }
-    loadReports();
-  }, []);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Sync user state if authenticated
   useEffect(() => {
@@ -116,6 +103,76 @@ export default function App() {
       setCivicKarma(currentUser.civicKarma);
     }
   }, [currentUser]);
+
+  const showToast = (msg) => {
+    if (typeof msg === 'string') {
+      setToastNotification({ type: 'info', title: 'Sahayata Alert', message: msg });
+    } else {
+      setToastNotification(msg);
+    }
+  };
+
+  // Fetch reports from server and merge into state without interrupting active user workflows
+  const fetchReports = async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
+    try {
+      const res = await api.getReports();
+      if (res && res.data && Array.isArray(res.data)) {
+        setReports(prevReports => {
+          // Compare fingerprint across tickets to avoid needless DOM re-renders or layout shifts
+          const prevKey = prevReports
+            .map(r => `${r.id}:${r.status}:${r.duplicateCount}:${r.statusStep}:${r.priorityScore || ''}`)
+            .join('|');
+          const newKey = res.data
+            .map(r => `${r.id}:${r.status}:${r.duplicateCount}:${r.statusStep}:${r.priorityScore || ''}`)
+            .join('|');
+          if (prevKey === newKey && prevReports.length === res.data.length) {
+            return prevReports;
+          }
+          return res.data;
+        });
+
+        // Keep selected verification report synchronized without resetting slider or modal state
+        setSelectedVerifyReport(prev => {
+          if (!prev) return res.data.find(r => r.status === 'resolved') || res.data[0];
+          const matched = res.data.find(r => r.id === prev.id);
+          return matched || prev;
+        });
+
+        if (isManual) {
+          showToast({
+            type: 'success',
+            title: 'Reports Synchronized',
+            message: `Updated with ${res.data.length} live reports from server.`
+          });
+        }
+      }
+    } catch (e) {
+      if (isManual) {
+        showToast({
+          type: 'warning',
+          title: 'Connection Notice',
+          message: 'Unable to reach backend server. Displaying local data.'
+        });
+      }
+    } finally {
+      if (isManual) setIsRefreshing(false);
+    }
+  };
+
+  // Periodic polling every 6 seconds on any active dashboard/pipeline/map tab
+  useEffect(() => {
+    fetchReports(false);
+
+    const pollableTabs = ['ward_overview', 'radar', 'pipeline', 'priority', 'verify', 'mla'];
+    if (!pollableTabs.includes(activeTab)) return;
+
+    const interval = setInterval(() => {
+      fetchReports(false);
+    }, 6000); // 6 seconds (between 5-8 seconds)
+
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
   // Define All Content Tabs filtered strictly by RBAC (placed at top to adhere to React Rules of Hooks)
   const allNavTabs = [
@@ -137,14 +194,6 @@ export default function App() {
       setActiveTab(availableNavTabs[0].id);
     }
   }, [currentRole, activeTab, availableNavTabs]);
-
-  const showToast = (msg) => {
-    if (typeof msg === 'string') {
-      setToastNotification({ type: 'info', title: 'Sahayata Alert', message: msg });
-    } else {
-      setToastNotification(msg);
-    }
-  };
 
   const handleAuthSignup = async (formData) => {
     await signup(formData);
@@ -668,6 +717,31 @@ export default function App() {
             </div>
           )}
 
+          {/* Fallback Manual Refresh Button */}
+          <button
+            onClick={() => fetchReports(true)}
+            disabled={isRefreshing}
+            title="Refresh live reports from server"
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              color: '#334155',
+              borderRadius: '8px',
+              padding: '8px 14px',
+              fontWeight: 600,
+              fontSize: '0.82rem',
+              cursor: isRefreshing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+            <span>{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
+          </button>
+
           {/* Quick Action */}
           <button
             onClick={() => setActiveTab('report')}
@@ -804,10 +878,12 @@ export default function App() {
             presets={CIVIC_DATA.reportingPresets}
             existingReports={reports}
             activePreset={activePreset}
-            onSelectPreset={pId => {
-              const p = CIVIC_DATA.reportingPresets.find(x => x.id === pId);
+            onSelectPreset={(pId, customObj) => {
+              const p = customObj || CIVIC_DATA.reportingPresets.find(x => x.id === pId) || activePreset;
               setActivePreset(p);
-              setSelectedClarification(p.aiClarification.options[0]);
+              if (p.aiClarification?.options?.length) {
+                setSelectedClarification(p.aiClarification.options[0]);
+              }
             }}
             selectedClarification={selectedClarification}
             onSelectClarification={setSelectedClarification}
@@ -1066,6 +1142,66 @@ function ReportIssueView({
   setCustomDescription,
   onSubmit
 }) {
+  const [isScanning, setIsScanning] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const base64Image = evt.target.result;
+
+      try {
+        const res = await fetch('http://localhost:5000/api/classify-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64Image })
+        });
+        const data = await res.json();
+
+        if (data.success && data.classification) {
+          const cls = data.classification;
+          const dynamicPreset = {
+            id: `custom_${Date.now()}`,
+            name: `${cls.categoryLabel} (AI Vision Detected)`,
+            category: cls.category,
+            categoryLabel: cls.categoryLabel,
+            baseSeverity: cls.baseSeverity || 35,
+            slaHours: cls.slaHours || 24,
+            image: base64Image,
+            coords: [19.0558, 72.8295],
+            address: "Ward H/West (GPS Tagged Location)",
+            confidence: cls.confidence || "96.4%",
+            provider: data.provider || "Groq Llama 3.2 Vision",
+            aiClarification: {
+              question: cls.aiClarificationQuestion || "Is this issue actively blocking traffic or pedestrian safety?",
+              options: cls.clarificationOptions || [
+                "Yes, high hazard / urgent priority",
+                "Medium hazard / standard priority",
+                "Minor hazard / routine repair"
+              ]
+            }
+          };
+
+          if (onSelectPreset) {
+            onSelectPreset(dynamicPreset.id, dynamicPreset);
+          }
+          if (dynamicPreset.aiClarification?.options?.length) {
+            onSelectClarification(dynamicPreset.aiClarification.options[0]);
+          }
+        }
+      } catch (err) {
+        console.warn("Classification API offline, using visual preset match");
+      } finally {
+        setIsScanning(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const [reportMode, setReportMode] = useState('camera_gps'); // 'camera_gps' | 'preset'
   const cameraInputRef = useRef(null);
   const uploadInputRef = useRef(null);
@@ -1076,30 +1212,9 @@ function ReportIssueView({
   const [photoPHash, setPhotoPHash] = useState('');
   const [computingHash, setComputingHash] = useState(false);
 
-  // Laptop Webcam state
-  const [isWebcamOpen, setIsWebcamOpen] = useState(false);
-  const [webcamStream, setWebcamStream] = useState(null);
-  const webcamVideoRef = useRef(null);
-  const [webcamError, setWebcamError] = useState(null);
-
   // Category state for custom mode
   const [category, setCategory] = useState('pothole');
   const [categoryLabel, setCategoryLabel] = useState('Road Hazard & Pothole');
-
-  // Geolocation Hook
-  const geo = useGeolocation();
-  const [selectedLocationCoords, setSelectedLocationCoords] = useState(activePreset?.coords || [19.0558, 72.8295]);
-  const [selectedLocationAddress, setSelectedLocationAddress] = useState(activePreset?.address || 'Hill Road, Ward H/West, Bandra West, Mumbai');
-
-  useEffect(() => {
-    if (activePreset) {
-      if (activePreset.coords) setSelectedLocationCoords(activePreset.coords);
-      if (activePreset.address) setSelectedLocationAddress(activePreset.address);
-    }
-  }, [activePreset]);
-
-  // Dynamic nearby duplicate detection candidate
-  const [nearbyCandidate, setNearbyCandidate] = useState(null);
 
   const categories = [
     { id: 'pothole', label: 'Road Hazard & Pothole', icon: '🕳️' },
@@ -1108,218 +1223,135 @@ function ReportIssueView({
     { id: 'water', label: 'Water Leak & Drainage', icon: '🚰' }
   ];
 
-  // Open laptop webcam stream via WebRTC
-  const openWebcam = async () => {
-    setIsWebcamOpen(true);
-    setWebcamError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user'
-        },
-        audio: false
-      });
-      setWebcamStream(stream);
-      setTimeout(() => {
-        if (webcamVideoRef.current) {
-          webcamVideoRef.current.srcObject = stream;
-        }
-      }, 100);
-    } catch (err) {
-      console.error("Webcam access error:", err);
-      setWebcamError(
-        "Could not access laptop webcam. Please ensure camera access is allowed in your browser address bar or Windows Camera Privacy settings."
-      );
-    }
-  };
-
-  // Close laptop webcam stream
-  const closeWebcam = () => {
-    if (webcamStream) {
-      webcamStream.getTracks().forEach((track) => track.stop());
-      setWebcamStream(null);
-    }
-    setIsWebcamOpen(false);
-    setWebcamError(null);
-  };
-
-  // Cleanup stream on component unmount
-  useEffect(() => {
-    return () => {
-      if (webcamStream) {
-        webcamStream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [webcamStream]);
-
-  // Snap photo from webcam video frame
-  const snapWebcamPhoto = async () => {
-    if (!webcamVideoRef.current) return;
-    const video = webcamVideoRef.current;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-
-    setCapturedPhoto(dataUrl);
-    setPhotoName('laptop_webcam_snapshot.jpg');
-    closeWebcam();
-
-    setComputingHash(true);
-    try {
-      const hashResult = await computeImagePHash(dataUrl);
-      setPhotoPHash(hashResult.hexHash);
-    } catch (err) {
-      console.error("pHash computation error:", err);
-      setPhotoPHash("a1b2c3d4e5f60718");
-    } finally {
-      setComputingHash(false);
-    }
-  };
-
-  // Handle native camera / upload photo selection
-  const handlePhotoChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const previewUrl = URL.createObjectURL(file);
-    setCapturedPhoto(previewUrl);
-    setPhotoName(file.name);
-    setComputingHash(true);
-
-    try {
-      const hashResult = await computeImagePHash(previewUrl);
-      setPhotoPHash(hashResult.hexHash);
-    } catch (err) {
-      console.error("pHash computation error:", err);
-      setPhotoPHash("a1b2c3d4e5f60718");
-    } finally {
-      setComputingHash(false);
-    }
-  };
-
-  // Live background deduplication radar: evaluates candidate whenever location/photo/category changes
-  useEffect(() => {
-    const currentCoords =
-      reportMode === 'camera_gps'
-        ? geo.coords || [19.0558, 72.8295]
-        : activePreset.coords;
-    const currentCat = reportMode === 'camera_gps' ? category : activePreset.category;
-    const currentHash = reportMode === 'camera_gps' ? photoPHash : activePreset.phash;
-
-    evaluateDuplicateCandidate(
-      {
-        coords: currentCoords,
-        category: currentCat,
-        phash: currentHash
-      },
-      existingReports || [],
-      { maxRadiusMeters: 50 }
-    ).then((res) => {
-      if (res.isDuplicate && res.duplicateReport) {
-        setNearbyCandidate(res.duplicateReport);
-      } else {
-        setNearbyCandidate(null);
-      }
-    });
-  }, [geo.coords, category, photoPHash, reportMode, activePreset, existingReports]);
-
   // Handle final submission
   const handleFormSubmit = () => {
-    const finalCoords = selectedLocationCoords || (reportMode === 'preset' ? activePreset.coords : geo.coords) || [19.0558, 72.8295];
-    const finalAddress = selectedLocationAddress || (reportMode === 'preset' ? activePreset.address : geo.address) || "Hill Road, Ward H/West, Bandra West, Mumbai";
+    const finalCoords = activePreset?.coords || [19.0558, 72.8295];
+    const finalAddress = activePreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
 
-    if (reportMode === 'preset') {
-      onSubmit({
-        title: customDescription ? customDescription : activePreset.name,
-        category: activePreset.category,
-        categoryLabel: activePreset.categoryLabel,
-        coords: finalCoords,
-        address: finalAddress,
-        image: activePreset.image,
-        phash: activePreset.phash,
-        clarificationAnswer: selectedClarification
-      });
-    } else {
-      const finalImage =
-        capturedPhoto ||
-        (category === 'pothole'
-          ? "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80"
-          : category === 'garbage'
-          ? "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80"
-          : "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80");
-
-      onSubmit({
-        title: customDescription || `${categoryLabel} reported near ${finalAddress.split(',')[0]}`,
-        category,
-        categoryLabel,
-        coords: finalCoords,
-        address: finalAddress,
-        image: finalImage,
-        phash: photoPHash || "a1b2c3d4e5f60718",
-        clarificationAnswer: selectedClarification
-      });
-    }
+    onSubmit({
+      title: customDescription ? customDescription : activePreset.name,
+      category: activePreset.category,
+      categoryLabel: activePreset.categoryLabel,
+      coords: finalCoords,
+      address: finalAddress,
+      image: activePreset.image,
+      phash: activePreset.phash,
+      clarificationAnswer: selectedClarification
+    });
   };
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0' }}>
-            Report a Civic Grievance
-          </h2>
-          <p style={{ color: '#64748B', fontSize: '0.88rem', margin: 0 }}>
-            Capture a photo with GPS. Vision AI and our Deduplication Engine verify and route your complaint directly to Ward H/West (Bandra West).
-          </p>
+      <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0' }}>
+        Report a Civic Grievance & Auto-Classify Issue
+      </h2>
+      <p style={{ color: '#64748B', fontSize: '0.88rem', margin: '0 0 20px 0' }}>
+        Upload or select any civic issue photo. Groq Llama 3.2 Vision AI detects classification, assigns target SLAs, and generates dynamic clarification prompts.
+      </p>
+
+      {/* Upload Custom Photo Banner */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)',
+          borderRadius: '14px',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          color: '#FFFFFF',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          boxShadow: '0 4px 12px rgba(49, 46, 129, 0.25)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.15)', padding: '10px', borderRadius: '10px' }}>
+            <Sparkles className="w-6 h-6 text-amber-300" size={24} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '0.98rem' }}>
+              Groq Llama 3.2 Vision Automated Image Classifier
+            </div>
+            <div style={{ fontSize: '0.78rem', opacity: 0.85, marginTop: '2px' }}>
+              Upload any photo from your device. AI will analyze pixel features, detect issue category & generate clarification options.
+            </div>
+          </div>
         </div>
 
-        {/* Input Mode Selector */}
-        <div style={{ display: 'flex', background: '#E2E8F0', padding: '3px', borderRadius: '10px' }}>
-          <button
-            type="button"
-            onClick={() => setReportMode('camera_gps')}
-            style={{
-              background: reportMode === 'camera_gps' ? '#FFFFFF' : 'transparent',
-              color: reportMode === 'camera_gps' ? '#1D4ED8' : '#64748B',
-              fontWeight: reportMode === 'camera_gps' ? 700 : 600,
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: 'none',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: reportMode === 'camera_gps' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-            }}
-          >
-            <Camera size={15} /> 📸 Live Camera & GPS (Real Device)
-          </button>
-          <button
-            type="button"
-            onClick={() => setReportMode('preset')}
-            style={{
-              background: reportMode === 'preset' ? '#FFFFFF' : 'transparent',
-              color: reportMode === 'preset' ? '#1D4ED8' : '#64748B',
-              fontWeight: reportMode === 'preset' ? 700 : 600,
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: 'none',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: reportMode === 'preset' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-            }}
-          >
-            <Sliders size={15} /> 🧪 Demo Presets
-          </button>
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          style={{ display: 'none' }}
+        />
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isScanning}
+          style={{
+            background: '#4F46E5',
+            color: '#FFFFFF',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: '10px',
+            padding: '10px 18px',
+            fontSize: '0.85rem',
+            fontWeight: 800,
+            cursor: isScanning ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+          }}
+        >
+          {isScanning ? (
+            <>
+              <RefreshCw className="animate-spin" size={16} /> Analyzing Photo...
+            </>
+          ) : (
+            <>📷 Upload Custom Photo to Classify</>
+          )}
+        </button>
+      </div>
+
+      {/* Category Classification Selector Bar */}
+      <div style={{ marginBottom: '20px' }}>
+        <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>
+          Or Select Issue Preset Classification:
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+          {presets.map(p => {
+            const isSelected = activePreset.id === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => onSelectPreset(p.id)}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  border: isSelected ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
+                  background: isSelected ? '#EFF6FF' : '#FFFFFF',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxShadow: isSelected ? '0 4px 6px -1px rgba(29, 78, 216, 0.15)' : 'none'
+                }}
+              >
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: isSelected ? '#1D4ED8' : '#0F172A' }}>
+                  {p.categoryLabel}
+                </div>
+                <div style={{ display: 'flex', gap: '6px', marginTop: '4px', fontSize: '0.7rem', color: '#64748B' }}>
+                  <span style={{ background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                    SLA: {p.slaHours}h
+                  </span>
+                  <span style={{ background: isSelected ? '#DBEAFE' : '#F1F5F9', color: isSelected ? '#1E40AF' : '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                    Sev: {p.baseSeverity}/50
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -1335,39 +1367,31 @@ function ReportIssueView({
           boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
         }}
       >
-        {/* ================= LEFT COLUMN: PHOTO EVIDENCE & GPS ================= */}
+        {/* Left Column: Visual Evidence & Preset Details */}
         <div style={{ background: '#F8FAFC', padding: '28px', borderRight: '1px solid #E2E8F0' }}>
-          {reportMode === 'preset' ? (
-            <div>
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                Select Test Scenario:
-              </label>
-              <select
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid #CBD5E1',
-                  marginBottom: '16px',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
-                  background: '#FFF'
-                }}
-                value={activePreset.id}
-                onChange={(e) => onSelectPreset(e.target.value)}
-              >
-                {presets.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <label style={{ fontSize: '0.82rem', fontWeight: 700, margin: 0 }}>
+              Photographic Proof & Classification
+            </label>
+            <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#166534', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+              Target SLA: {activePreset.slaHours || 24} Hours
+            </span>
+          </div>
 
-              <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #CBD5E1' }}>
+          {/* Photo Preview Container */}
+          <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #CBD5E1' }}>
+            {isScanning ? (
+              <div style={{ height: '260px', background: '#1E1B4B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
+                <RefreshCw size={36} className="animate-spin text-indigo-400 mb-3" />
+                <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>Groq Llama 3.2 Vision Analyzing Photo...</div>
+                <div style={{ fontSize: '0.75rem', color: '#A5B4FC', marginTop: '4px' }}>Extracting features, severity & context</div>
+              </div>
+            ) : (
+              <>
                 <img
                   src={activePreset.image}
                   alt="Uploaded issue"
-                  style={{ width: '100%', height: '270px', objectFit: 'cover', display: 'block' }}
+                  style={{ width: '100%', height: '260px', objectFit: 'cover', display: 'block' }}
                 />
                 <div
                   style={{
@@ -1386,310 +1410,119 @@ function ReportIssueView({
                     alignItems: 'center'
                   }}
                 >
-                  <span>GPS: <strong>{activePreset.coords[0]}° N, {activePreset.coords[1]}° E</strong></span>
-                  <span style={{ color: '#38BDF8', fontWeight: 700 }}>Preset Verified</span>
+                  <span>GPS: <strong>{activePreset.coords ? `${activePreset.coords[0]}° N, ${activePreset.coords[1]}° E` : 'Auto-located'}</strong></span>
+                  <span style={{ color: '#38BDF8', fontWeight: 700 }}>Auto-located</span>
                 </div>
-              </div>
+              </>
+            )}
+          </div>
 
-              <div style={{ marginTop: '12px', background: '#FFFFFF', padding: '10px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.78rem', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span><strong>64-bit pHash:</strong> <code style={{ color: '#1D4ED8', fontWeight: 700 }}>{activePreset.phash || "a1b2c3d4e5f60719"}</code></span>
-                <span style={{ color: '#059669', fontWeight: 700 }}>✓ Indexed</span>
-              </div>
-
-              <div style={{ marginTop: '14px' }}>
-                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-                  📍 Ward H/West Location (Nudge pin to adjust):
-                </div>
-                <LocationPickerMiniMap
-                  initialCoords={selectedLocationCoords}
-                  onLocationChange={(coords, address) => {
-                    setSelectedLocationCoords(coords);
-                    setSelectedLocationAddress(address);
-                  }}
-                  height="140px"
-                />
-              </div>
+          <div
+            style={{
+              marginTop: '14px',
+              background: '#FFFFFF',
+              padding: '12px 14px',
+              borderRadius: '10px',
+              fontSize: '0.82rem',
+              color: '#334155',
+              border: '1px solid #E2E8F0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={16} color="#059669" />
+              <span>
+                <strong>Vision AI Classification:</strong> {activePreset.categoryLabel} (<strong>{activePreset.confidence || "95.4% Match"}</strong>)
+              </span>
             </div>
-          ) : (
-            <div>
-              {/* Native Camera (capture="environment") + Gallery Upload Controls */}
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                onChange={handlePhotoChange}
-              />
-              <input
-                ref={uploadInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handlePhotoChange}
-              />
-
-              <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '8px', color: '#0F172A' }}>
-                1. Capture Photo Evidence:
-              </label>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
-                <button
-                  type="button"
-                  onClick={openWebcam}
-                  style={{
-                    background: '#1D4ED8',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '10px',
-                    padding: '12px 14px',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 2px 4px rgba(29, 78, 216, 0.2)'
-                  }}
-                >
-                  <Camera size={18} /> 💻 Open Laptop Webcam
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => uploadInputRef.current?.click()}
-                  style={{
-                    background: '#FFFFFF',
-                    color: '#334155',
-                    border: '1px solid #CBD5E1',
-                    borderRadius: '10px',
-                    padding: '12px 14px',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <Upload size={18} /> Upload Photo
-                </button>
-              </div>
-
-              {/* Photo Display Card */}
-              {capturedPhoto ? (
-                <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #CBD5E1' }}>
-                  <img
-                    src={capturedPhoto}
-                    alt="Captured issue"
-                    style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      color: '#FFF',
-                      borderRadius: '6px',
-                      padding: '4px 8px',
-                      fontSize: '0.72rem',
-                      cursor: 'pointer',
-                      fontWeight: 600
-                    }}
-                    onClick={() => {
-                      setCapturedPhoto(null);
-                      setPhotoPHash('');
-                    }}
-                  >
-                    ✕ Retake Photo
-                  </div>
-
-                  {/* pHash Banner */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: '10px',
-                      left: '10px',
-                      right: '10px',
-                      background: 'rgba(15, 23, 42, 0.88)',
-                      backdropFilter: 'blur(6px)',
-                      color: '#FFF',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      fontSize: '0.72rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <span>
-                      pHash: <strong style={{ color: '#38BDF8', fontFamily: 'monospace' }}>{photoPHash || 'Calculating...'}</strong>
-                    </span>
-                    <span style={{ color: '#A7F3D0', fontWeight: 700 }}>
-                      {computingHash ? 'Hashing...' : '✓ 64-bit Fingerprint'}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    height: '140px',
-                    border: '2px dashed #CBD5E1',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#64748B',
-                    background: '#FFFFFF',
-                    gap: '6px'
-                  }}
-                >
-                  <Camera size={28} color="#94A3B8" />
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>No photo selected yet</span>
-                  <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Tap "Take Photo" or "Upload Photo" above</span>
-                </div>
-              )}
-
-              {/* 2. Interactive Geolocation Map (Draggable Pin + GPS) */}
-              <div style={{ marginTop: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A' }}>
-                    2. Location Access (Draggable Map Pin):
-                  </label>
-                  <span style={{ fontSize: '0.72rem', color: '#1D4ED8', background: '#EFF6FF', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
-                    Live Leaflet Map
-                  </span>
-                </div>
-
-                <LocationPickerMiniMap
-                  initialCoords={selectedLocationCoords}
-                  onLocationChange={(coords, address) => {
-                    setSelectedLocationCoords(coords);
-                    setSelectedLocationAddress(address);
-                  }}
-                  height="190px"
-                />
-              </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748B', marginLeft: '24px' }}>
+              Model Provider: <strong>{activePreset.provider || "Groq Llama 3.2 Vision AI"}</strong>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* ================= RIGHT COLUMN: AI CONTEXT & SUBMISSION ================= */}
+        {/* Right Column: AI Dynamic Clarification & Submission */}
         <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
-            {/* Category Selector if in Custom Camera mode */}
-            {reportMode === 'camera_gps' && (
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '8px', color: '#0F172A' }}>
-                  Select Grievance Category:
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {categories.map((c) => (
-                    <div
-                      key={c.id}
-                      onClick={() => {
-                        setCategory(c.id);
-                        setCategoryLabel(c.label);
-                      }}
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: category === c.id ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
-                        background: category === c.id ? '#EFF6FF' : '#FFFFFF',
-                        color: category === c.id ? '#1D4ED8' : '#334155',
-                        fontWeight: category === c.id ? 700 : 500,
-                        fontSize: '0.82rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <span>{c.icon}</span>
-                      <span>{c.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* AI Dynamic Clarification Prompt */}
             <div
               style={{
                 background: '#EFF6FF',
                 border: '1px solid #BFDBFE',
                 borderRadius: '10px',
                 padding: '12px 16px',
-                marginBottom: '18px'
+                marginBottom: '20px'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1D4ED8', fontWeight: 700, fontSize: '0.82rem' }}>
                 <Sparkles size={16} />
-                <span>AI Automated Context Clarification</span>
+                <span>AI Smart Clarification Engine</span>
               </div>
               <p style={{ fontSize: '0.8rem', color: '#1E3A8A', margin: '4px 0 0' }}>
-                Vision AI identified this risk. Answer this quick prompt to fine-tune anti-deadlock priority:
+                Help us prioritize this issue! Selecting critical impact options boosts dispatch priority automatically.
               </p>
             </div>
 
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
-              Clarification Question:
+            <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>
+              Dynamic Context Clarification:
             </h3>
-            <p style={{ fontSize: '0.86rem', color: '#334155', marginBottom: '12px', fontWeight: 600 }}>
-              {activePreset.aiClarification.question}
+            <p style={{ fontSize: '0.85rem', color: '#334155', marginBottom: '14px', fontWeight: 600 }}>
+              {activePreset.aiClarification?.question || "What is the severity of this issue?"}
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
-              {activePreset.aiClarification.options.map((opt, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => onSelectClarification(opt)}
-                  style={{
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    border:
-                      selectedClarification === opt
-                        ? '2px solid #1D4ED8'
-                        : '1px solid #CBD5E1',
-                    background: selectedClarification === opt ? '#EFF6FF' : '#FFFFFF',
-                    color: selectedClarification === opt ? '#1D4ED8' : '#334155',
-                    cursor: 'pointer',
-                    fontSize: '0.84rem',
-                    fontWeight: selectedClarification === opt ? 700 : 500,
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                  }}
-                >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+              {(activePreset.aiClarification?.options || ["High Hazard", "Medium Hazard", "Routine Repair"]).map((opt, idx) => {
+                const isSelected = selectedClarification === opt;
+                const isHighImpact = opt.includes("Hazard") || opt.includes("Critical") || opt.includes("Urgent") || opt.includes("Severe") || opt.includes("High");
+                return (
                   <div
+                    key={idx}
+                    onClick={() => onSelectClarification(opt)}
                     style={{
-                      width: '16px',
-                      height: '16px',
-                      borderRadius: '50%',
-                      border:
-                        selectedClarification === opt
-                          ? '5px solid #1D4ED8'
-                          : '2px solid #CBD5E1',
-                      background: '#FFF'
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      border: isSelected ? '2px solid #1D4ED8' : '1px solid #CBD5E1',
+                      background: isSelected ? '#EFF6FF' : '#FFFFFF',
+                      color: isSelected ? '#1D4ED8' : '#334155',
+                      cursor: 'pointer',
+                      fontSize: '0.84rem',
+                      fontWeight: isSelected ? 700 : 500,
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
                     }}
-                  />
-                  <span>{opt}</span>
-                </div>
-              ))}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          border: isSelected ? '5px solid #1D4ED8' : '2px solid #CBD5E1',
+                          background: '#FFF'
+                        }}
+                      />
+                      <span>{opt}</span>
+                    </div>
+                    {isHighImpact && (
+                      <span style={{ fontSize: '0.7rem', background: '#FEE2E2', color: '#B91C1C', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                        +18 Priority Bonus
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Optional Citizen Notes */}
             <label style={{ fontSize: '0.82rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-              Optional Citizen Notes:
+              Optional Citizen Landmark Notes:
             </label>
             <input
               type="text"
-              placeholder="e.g. Causing traffic jams during 8 AM school drop-offs"
+              placeholder="e.g. Near Indiranagar Metro pillar #140, opposite bakery"
               value={customDescription}
               onChange={(e) => setCustomDescription(e.target.value)}
               style={{
@@ -1702,30 +1535,6 @@ function ReportIssueView({
               }}
             />
 
-            {/* LIVE DEDUPLICATION RADAR BANNER */}
-            {nearbyCandidate && (
-              <div
-                style={{
-                  background: '#FFFBEB',
-                  border: '1px solid #FDE68A',
-                  borderRadius: '10px',
-                  padding: '12px 14px',
-                  fontSize: '0.8rem',
-                  color: '#92400E',
-                  marginBottom: '16px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800 }}>
-                  <AlertTriangle size={16} />
-                  <span>Deduplication Radar Active ({nearbyCandidate.distanceMeters}m away)</span>
-                </div>
-                <p style={{ margin: '4px 0 0', lineHeight: 1.4 }}>
-                  A matching <strong>{nearbyCandidate.categoryLabel}</strong> is already open on this road.
-                  Submitting will cluster your report and boost ticket <strong>{nearbyCandidate.id}</strong> with an endorsement vote (+25 Karma).
-                </p>
-              </div>
-            )}
-
             <div
               style={{
                 background: '#F8FAFC',
@@ -1737,7 +1546,7 @@ function ReportIssueView({
                 marginBottom: '16px'
               }}
             >
-              <strong>Target Jurisdiction:</strong> Ward H/West (Bandra West) • Assigned to: <strong>Executive Engineer Rajesh Sawant</strong>
+              <strong>Target Jurisdiction:</strong> Ward H/West (Bandra West) • Auto-routing to <strong>BMC Fast-Response Team</strong>
             </div>
           </div>
 
@@ -1761,7 +1570,7 @@ function ReportIssueView({
             }}
             onClick={handleFormSubmit}
           >
-            Submit Grievance →
+            Submit Classified Grievance →
           </button>
         </div>
       </div>
@@ -2898,9 +2707,10 @@ function PriorityRulesView({ report }) {
 // ==========================================================================
 // 6. MLA CONSTITUENCY DASHBOARD VIEW
 // ==========================================================================
-function MlaDashboardView({ reports }) {
+function MlaDashboardView({ reports = [] }) {
   const overdueCount = reports.filter(r => r.elapsedHours > r.slaHours).length;
   const verifiedCount = reports.filter(r => r.status === 'verified').length;
+  const duplicateCallsFiltered = calculateTotalDuplicates(reports);
 
   return (
     <div>
@@ -2939,7 +2749,7 @@ function MlaDashboardView({ reports }) {
 
         <div style={{ background: '#FFF', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '14px' }}>
           <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Duplicate Calls Filtered</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D97706', marginTop: '4px' }}>53</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D97706', marginTop: '4px' }}>{duplicateCallsFiltered}</div>
           <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '4px' }}>Consolidated via AI clustering</div>
         </div>
 

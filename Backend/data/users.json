@@ -1,0 +1,38 @@
+[
+  {
+    "id": "usr-1",
+    "fullName": "Aarav Sharma",
+    "email": "aarav.sharma@example.com",
+    "phone": "+91 98765 43210",
+    "password": "Password@123",
+    "role": "citizen",
+    "civicKarma": 340
+  },
+  {
+    "id": "usr-2",
+    "fullName": "Er. Rajesh Sawant",
+    "email": "rajesh.sawant@mcgm.gov.in",
+    "phone": "+91 98111 22233",
+    "password": "Engineer@2026",
+    "role": "ward_engineer",
+    "civicKarma": 850
+  },
+  {
+    "id": "usr-3",
+    "fullName": "Shri Ashish Shelar",
+    "email": "ashish.shelar@maharashtra.gov.in",
+    "phone": "+91 99000 11223",
+    "password": "MLA@2026",
+    "role": "mla",
+    "civicKarma": 1200
+  },
+  {
+    "id": "usr-1788474432239",
+    "fullName": "Suresh Patil",
+    "email": "citizen1788474432@example.com",
+    "phone": "+91 9822233445",
+    "password": "Password@123",
+    "role": "citizen",
+    "civicKarma": 50
+  }
+]
