@@ -1,0 +1,5 @@
+# IDE and OS
+.DS_Store
+Thumbs.db
+.jetro/
+.gemini/
