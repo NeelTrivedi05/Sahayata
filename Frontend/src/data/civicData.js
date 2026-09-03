@@ -1,46 +1,46 @@
 export const CIVIC_DATA = {
   jurisdiction: {
-    city: "Bengaluru",
-    corporation: "BBMP (Bruhat Bengaluru Mahanagara Palike)",
-    wardNumber: 142,
-    wardName: "Indiranagar Central",
-    zone: "East Zone",
+    city: "Mumbai",
+    corporation: "BMC (Brihanmumbai Municipal Corporation)",
+    wardNumber: "H/West",
+    wardName: "Bandra West / Khar",
+    zone: "Zone 3 (Western Suburbs)",
     mla: {
-      name: "Shri K. Venkatesh",
-      constituency: "Shantinagar / Indiranagar",
-      onTimeRate: "94.2%",
-      activeComplaints: 24,
-      resolvedThisMonth: 184,
+      name: "Shri Ashish Shelar",
+      constituency: "Bandra West / Mumbai Suburban",
+      onTimeRate: "95.4%",
+      activeComplaints: 28,
+      resolvedThisMonth: 212,
       hotspotsIdentified: 3
     },
-    engineer: "Er. Ravi Kumar (Executive Engineer, Ward 142)",
-    helpline: "1533"
+    engineer: "Er. Rajesh Sawant (Executive Engineer, Ward H/West)",
+    helpline: "1916"
   },
 
   criticalZones: [
     {
       id: "cz_1",
-      name: "St. Mary's Girls High School",
+      name: "St. Andrew's High School (Bandra)",
       type: "school",
-      coords: [12.9719, 77.6412],
+      coords: [19.0558, 72.8290],
       bufferRadius: 180,
       multiplier: 2.2,
       tag: "School Zone (Child Safety Corridor)"
     },
     {
       id: "cz_2",
-      name: "Apollo Lifeline Emergency Hospital",
+      name: "Lilavati Hospital & Research Centre",
       type: "hospital",
-      coords: [12.9785, 77.6440],
+      coords: [19.0514, 72.8296],
       bufferRadius: 250,
       multiplier: 2.5,
       tag: "Hospital Ambulance Corridor"
     },
     {
       id: "cz_3",
-      name: "Indiranagar Metro Station Transit Hub",
+      name: "Bandra Railway & Bus Transit Hub",
       type: "transit",
-      coords: [12.9783, 77.6387],
+      coords: [19.0595, 72.8405],
       bufferRadius: 150,
       multiplier: 1.8,
       tag: "High Pedestrian Transit Zone"
@@ -53,15 +53,15 @@ export const CIVIC_DATA = {
       title: "Deep Crater Pothole causing two-wheeler skids",
       category: "pothole",
       categoryLabel: "Road Hazard & Pothole",
-      coords: [12.9723, 77.6418],
-      address: "Opposite Gate 2, St. Mary's High School Road, Indiranagar",
+      coords: [19.0558, 72.8295],
+      address: "Near St. Andrew's High School, Hill Road, Bandra West, Mumbai",
       status: "assigned",
       statusStep: 4, // 1: Reported, 2: Clustered, 3: Prioritized, 4: Assigned, 5: Resolved, 6: Citizen Verified
       slaHours: 48,
       elapsedHours: 54, // Overdue! Deadlock breaker active
       duplicateCount: 14,
       impactRadiusMeters: 140,
-      criticalZone: "St. Mary's Girls High School (60m)",
+      criticalZone: "St. Andrew's High School (60m)",
       trafficDensity: "High (School Bus Route)",
       baseSeverity: 35,
       reportedBy: "Priya S. & 14 others",
@@ -69,10 +69,10 @@ export const CIVIC_DATA = {
       beforeImage: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
       afterImage: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
       resolution: {
-        assignedTo: "Er. Ravi Kumar (Ward 142)",
-        contractor: "Falcon Road Infrastructure Ltd.",
-        note: "Compaction scheduled with emergency cold-mix bitumen.",
-        inspectionStatus: "Work Order #BBMP-4481 Dispatched"
+        assignedTo: "Er. Rajesh Sawant (Ward H/West)",
+        contractor: "Falcon Mumbai Infrastructure Ltd.",
+        note: "Compaction scheduled with emergency mastic asphalt.",
+        inspectionStatus: "Work Order #BMC-4481 Dispatched"
       }
     },
     {
@@ -80,8 +80,8 @@ export const CIVIC_DATA = {
       title: "Overflowing Garbage Dump on Footpath",
       category: "garbage",
       categoryLabel: "Solid Waste Management",
-      coords: [12.9765, 77.6385],
-      address: "12th Main Corner, Near BDA Complex, Ward 142",
+      coords: [19.0585, 72.8315],
+      address: "Linking Road Corner, Near National College, Bandra West, Mumbai",
       status: "resolved",
       statusStep: 5, // Awaiting citizen verification
       slaHours: 24,
@@ -96,8 +96,8 @@ export const CIVIC_DATA = {
       beforeImage: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
       afterImage: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
       resolution: {
-        assignedTo: "Er. Ravi Kumar",
-        contractor: "CleanCity BBMP Waste Marshall Squad #4",
+        assignedTo: "Er. Rajesh Sawant",
+        contractor: "CleanMumbai BMC Solid Waste Marshall Squad #3",
         note: "Waste cleared, footpath washed and sanitized.",
         aiConfidence: "95.8% Cleanliness Cleared"
       }
@@ -107,15 +107,15 @@ export const CIVIC_DATA = {
       title: "Broken Streetlight & Hanging Live Wire",
       category: "electricity",
       categoryLabel: "Electrical & Lighting",
-      coords: [12.9785, 77.6440],
-      address: "Ambulance Access Lane, Near Apollo Hospital",
+      coords: [19.0514, 72.8296],
+      address: "Lilavati Hospital Emergency Access Lane, Bandra West, Mumbai",
       status: "verified",
       statusStep: 6, // Completed & verified
       slaHours: 12,
       elapsedHours: 11,
       duplicateCount: 5,
       impactRadiusMeters: 80,
-      criticalZone: "Apollo Hospital Ambulance Corridor",
+      criticalZone: "Lilavati Hospital Ambulance Corridor",
       trafficDensity: "High (Ambulance Route)",
       baseSeverity: 40,
       reportedBy: "Dr. Ananya Rao",
@@ -123,8 +123,8 @@ export const CIVIC_DATA = {
       beforeImage: "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
       afterImage: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
       resolution: {
-        assignedTo: "Er. Ramesh Gowda (BESCOM Lineman)",
-        contractor: "BESCOM Emergency Wing",
+        assignedTo: "Er. Ramesh Patil (BEST Electrical Dept)",
+        contractor: "BEST Emergency Wing",
         note: "Insulated junction replaced, 120W LED lamp installed and tested.",
         aiConfidence: "98.2% Illumination Restored"
       }
@@ -134,12 +134,12 @@ export const CIVIC_DATA = {
   reportingPresets: [
     {
       id: "preset_pothole",
-      name: "Pothole near St. Mary's School (Triggers Duplicate Clustering)",
+      name: "Pothole near St. Andrew's School (Triggers Duplicate Clustering)",
       category: "pothole",
       categoryLabel: "Road Hazard & Pothole",
       image: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
-      coords: [12.9723, 77.6418],
-      address: "St. Mary's High School Road, Indiranagar",
+      coords: [19.0558, 72.8295],
+      address: "Hill Road, Near St. Andrew's Church, Bandra West, Mumbai",
       aiClarification: {
         question: "Is this pothole affecting the active school bus drop-off zone or pedestrian crosswalk?",
         options: [
@@ -151,12 +151,12 @@ export const CIVIC_DATA = {
     },
     {
       id: "preset_light",
-      name: "Broken Streetlight on Ambulance Corridor",
+      name: "Broken Streetlight on Lilavati Hospital Corridor",
       category: "electricity",
       categoryLabel: "Electrical & Lighting",
       image: "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
-      coords: [12.9785, 77.6440],
-      address: "Ambulance Access Lane, Near Apollo Hospital",
+      coords: [19.0514, 72.8296],
+      address: "Lilavati Hospital Emergency Access Lane, Bandra West, Mumbai",
       aiClarification: {
         question: "Are live sparks or exposed cables accessible to pedestrians?",
         options: [
@@ -172,8 +172,8 @@ export const CIVIC_DATA = {
       category: "water",
       categoryLabel: "Water Supply & Sewage",
       image: "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
-      coords: [12.9740, 77.6390],
-      address: "100 Feet Road, Junction 4, Indiranagar",
+      coords: [19.0610, 72.8350],
+      address: "Turner Road Junction, Near Bandra Station, Mumbai",
       aiClarification: {
         question: "Is the water leakage clean potable water or contaminated sewage?",
         options: [
@@ -186,43 +186,3 @@ export const CIVIC_DATA = {
   ]
 };
 
-export function calculatePriorityScore(report) {
-  const base = report.baseSeverity || 25;
-  const dupBonus = Math.min((report.duplicateCount || 1) * 3.5, 35);
-
-  let criticalBonus = 0;
-  if (report.criticalZone && (report.criticalZone.includes("School") || report.criticalZone.includes("Hospital"))) {
-    criticalBonus = 24;
-  }
-
-  let trafficBonus = 0;
-  if (report.trafficDensity && (report.trafficDensity.includes("High") || report.trafficDensity.includes("Ambulance"))) {
-    trafficBonus = 14;
-  }
-
-  // Anti-Deadlock Aging Engine
-  let agingBonus = 0;
-  const elapsed = report.elapsedHours || 0;
-  const sla = report.slaHours || 48;
-  if (elapsed > sla) {
-    agingBonus = Math.min(18 + (elapsed - sla) * 2.2, 45); // Surges priority when neglected
-  } else {
-    agingBonus = (elapsed / sla) * 12;
-  }
-
-  const rawScore = base + dupBonus + criticalBonus + trafficBonus + agingBonus;
-  const finalScore = Math.min(Math.round(rawScore), 100);
-
-  return {
-    finalScore,
-    isOverdue: elapsed > sla,
-    overdueHours: Math.max(0, elapsed - sla),
-    breakdown: {
-      base: Math.round(base),
-      dup: Math.round(dupBonus),
-      critical: Math.round(criticalBonus),
-      traffic: Math.round(trafficBonus),
-      aging: Math.round(agingBonus)
-    }
-  };
-}
