@@ -19,7 +19,8 @@ import {
   Eye,
   CheckCircle2,
   RefreshCw,
-  Search
+  Search,
+  Lock
 } from 'lucide-react';
 import { CIVIC_DATA } from '../../data/civicData';
 
@@ -122,7 +123,9 @@ export default function InteractiveCivicMap({
   reports = [],
   onSelectReport,
   onReportAtLocation,
-  onEndorseReport
+  onEndorseReport,
+  readOnly = false,
+  title = "🗺️ Civic Radar & Ward GIS Command Map"
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -147,11 +150,15 @@ export default function InteractiveCivicMap({
   const [droppedPin, setDroppedPin] = useState(null);
   const [basemapMenuOpen, setBasemapMenuOpen] = useState(false);
 
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchFeedback, setSearchFeedback] = useState(null);
+
   // 1. Initialize Map ONCE (Mount / Unmount only)
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Safety cleanup for hot reloading
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
@@ -167,10 +174,8 @@ export default function InteractiveCivicMap({
       markerZoomAnimation: true
     }).setView([19.0560, 72.8340], 15);
 
-    // Zoom control at bottom right
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Initial Base Tile Layer
     const base = BASEMAPS.find(b => b.id === activeBasemap) || BASEMAPS[0];
     const tileLayer = L.tileLayer(base.url, {
       maxZoom: base.maxZoom,
@@ -179,16 +184,17 @@ export default function InteractiveCivicMap({
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
-    // Initialize Persistent Layer Groups in correct z-order
     zonesLayerRef.current = L.layerGroup().addTo(map);
     radiiLayerRef.current = L.layerGroup().addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
 
-    // Click anywhere on map to drop a pin for pinpoint reporting
-    map.on('click', (e) => {
-      const { lat, lng } = e.latlng;
-      handleMapClick(lat, lng, map);
-    });
+    // Only allow pin-drop if NOT read-only
+    if (!readOnly) {
+      map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        handleMapClick(lat, lng, map);
+      });
+    }
 
     mapInstanceRef.current = map;
 
@@ -199,9 +205,9 @@ export default function InteractiveCivicMap({
       }
       markersByIdRef.current.clear();
     };
-  }, []);
+  }, [readOnly]);
 
-  // 2. Switch Basemap Layer dynamically without touching markers or layers
+  // 2. Switch Basemap Layer dynamically
   useEffect(() => {
     if (!mapInstanceRef.current || !tileLayerRef.current) return;
     const base = BASEMAPS.find(b => b.id === activeBasemap) || BASEMAPS[0];
@@ -210,6 +216,8 @@ export default function InteractiveCivicMap({
 
   // 3. Handle Pin Drop on Map Click
   const handleMapClick = (lat, lng, map) => {
+    if (readOnly) return;
+
     if (droppedPinRef.current) {
       droppedPinRef.current.remove();
       droppedPinRef.current = null;
@@ -277,7 +285,6 @@ export default function InteractiveCivicMap({
     radiiLayerRef.current.clearLayers();
 
     if (showImpactRadius) {
-      // Only plot impact radii for visible, non-verified reports
       reports.forEach(r => {
         const isVerified = r.status === 'verified' || r.status === 'resolved';
         if (isVerified) return;
@@ -299,11 +306,10 @@ export default function InteractiveCivicMap({
     }
   }, [showImpactRadius, reports]);
 
-  // 6. Fast Marker Diffing & Rendering (ZERO map tear-down)
+  // 6. Fast Marker Diffing & Rendering
   useEffect(() => {
     if (!markersLayerRef.current || !mapInstanceRef.current) return;
 
-    // Filter visible reports based on activeCategory
     const visibleReports = reports.filter(r => {
       const p = r.priority || { finalScore: r.priorityScore || 70, isOverdue: (r.elapsedHours || 0) > (r.slaHours || 24) };
       if (activeCategory === 'all') return true;
@@ -315,7 +321,6 @@ export default function InteractiveCivicMap({
     const visibleIds = new Set(visibleReports.map(r => r.id));
     const cachedMap = markersByIdRef.current;
 
-    // A. Remove markers that are no longer visible or removed
     for (const [id, entry] of cachedMap.entries()) {
       if (!visibleIds.has(id)) {
         markersLayerRef.current.removeLayer(entry.marker);
@@ -323,22 +328,18 @@ export default function InteractiveCivicMap({
       }
     }
 
-    // B. Add or Update visible markers
     visibleReports.forEach(r => {
       const { icon, dataHash, score, isVerified, baseColor } = createMarkerIcon(r);
       const existing = cachedMap.get(r.id);
 
       if (existing) {
-        // Only update icon if status or score actually changed
         if (existing.dataHash !== dataHash) {
           existing.marker.setIcon(icon);
           existing.dataHash = dataHash;
         }
       } else {
-        // Create new marker instance
         const marker = L.marker(r.coords, { icon });
 
-        // Lazy popup / click handler
         marker.on('click', () => {
           setSelectedReport(r);
           if (mapInstanceRef.current) {
@@ -346,7 +347,6 @@ export default function InteractiveCivicMap({
           }
         });
 
-        // Fast tooltip
         marker.bindTooltip(`
           <div style="font-family:system-ui; padding:2px;">
             <strong style="color:${baseColor};">${r.id}</strong>: ${r.title}
@@ -362,7 +362,59 @@ export default function InteractiveCivicMap({
     });
   }, [reports, activeCategory]);
 
-  // 7. Real-time "Locate Me" GPS Center
+  // 7. Search Handler (Debounced local + Nominatim)
+  const handleSearchSubmit = async (e) => {
+    e?.preventDefault();
+    if (!searchQuery.trim() || !mapInstanceRef.current) return;
+    const q = searchQuery.toLowerCase().trim();
+
+    // A. Check local hotspots first
+    const foundHotspot = HOTSPOTS.find(h => h.name.toLowerCase().includes(q));
+    if (foundHotspot) {
+      mapInstanceRef.current.flyTo(foundHotspot.coords, foundHotspot.zoom, { duration: 1.2 });
+      setSearchFeedback(`📍 Flew to ${foundHotspot.name}`);
+      setTimeout(() => setSearchFeedback(null), 3000);
+      return;
+    }
+
+    // B. Check visible reports
+    const foundReport = reports.find(
+      r => r.title?.toLowerCase().includes(q) || r.address?.toLowerCase().includes(q) || r.id?.toLowerCase().includes(q)
+    );
+    if (foundReport) {
+      mapInstanceRef.current.flyTo(foundReport.coords, 17, { duration: 1.2 });
+      setSelectedReport(foundReport);
+      setSearchFeedback(`📍 Found Ticket ${foundReport.id}`);
+      setTimeout(() => setSearchFeedback(null), 3000);
+      return;
+    }
+
+    // C. Fallback: Free OpenStreetMap Nominatim Geocoder
+    try {
+      setSearchLoading(true);
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ' Bandra West Mumbai')}&limit=1`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setSearchLoading(false);
+
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        mapInstanceRef.current.flyTo([lat, lon], 16, { duration: 1.2 });
+        setSearchFeedback(`📍 Found: ${data[0].display_name.split(',')[0]}`);
+        setTimeout(() => setSearchFeedback(null), 3500);
+      } else {
+        setSearchFeedback("No match found in Ward H/West.");
+        setTimeout(() => setSearchFeedback(null), 2500);
+      }
+    } catch (err) {
+      setSearchLoading(false);
+      setSearchFeedback("Search unavailable.");
+      setTimeout(() => setSearchFeedback(null), 2500);
+    }
+  };
+
+  // 8. Real-time "Locate Me" GPS Center
   const handleLocateMe = () => {
     if (!('geolocation' in navigator)) {
       alert("Geolocation is not supported by your browser.");
@@ -415,7 +467,7 @@ export default function InteractiveCivicMap({
     );
   };
 
-  // 8. Hotspot Quick Jump
+  // 9. Hotspot Quick Jump
   const handleFlyToHotspot = (coords, zoom) => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo(coords, zoom, { duration: 1.2 });
@@ -424,23 +476,68 @@ export default function InteractiveCivicMap({
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
-      {/* Top Controls Bar: Category Filters & Hotspot Quick Jumps */}
+      {/* Top Controls Bar */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>🗺️ Civic Radar & Ward GIS Command Map</span>
-              <span style={{ fontSize: '0.75rem', background: '#ECFDF5', color: '#065F46', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
-                60fps Live Diff
-              </span>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{title}</span>
+              {readOnly ? (
+                <span style={{ fontSize: '0.72rem', background: '#F1F5F9', color: '#475569', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Lock size={12} /> Read-Only Surveillance
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.72rem', background: '#ECFDF5', color: '#065F46', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
+                  60fps Live GIS
+                </span>
+              )}
             </h2>
-            <p style={{ color: '#64748B', fontSize: '0.85rem', margin: 0 }}>
-              Pulsing markers reflect live status. Unresolved issues pulse red, overdue issues pulse rapidly, and verified issues pulse green.
+            <p style={{ color: '#64748B', fontSize: '0.84rem', margin: 0 }}>
+              {readOnly
+                ? "Constuency-wide civic status overview. Read-only spatial monitoring for administrative oversight."
+                : "Click anywhere to drop a pin & report. Pulsing status markers indicate live priority and SLA urgency."}
             </p>
           </div>
 
-          {/* Layer Toggles & Basemap Switcher Button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Layer Toggles & Search Bar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Search Input Form */}
+            <form onSubmit={handleSearchSubmit} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search address, landmark, ticket..."
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '8px',
+                  padding: '6px 30px 6px 10px',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                  width: '210px',
+                  color: '#1E293B'
+                }}
+              />
+              <button
+                type="submit"
+                disabled={searchLoading}
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#64748B',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Search size={15} className={searchLoading ? 'animate-spin' : ''} />
+              </button>
+            </form>
+
             <button
               type="button"
               onClick={() => setShowCriticalZones(!showCriticalZones)}
@@ -549,6 +646,13 @@ export default function InteractiveCivicMap({
           </div>
         </div>
 
+        {/* Search Feedback Notification Toast */}
+        {searchFeedback && (
+          <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', padding: '6px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600 }}>
+            {searchFeedback}
+          </div>
+        )}
+
         {/* Filter Pills Bar */}
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
           {[
@@ -618,7 +722,7 @@ export default function InteractiveCivicMap({
           overflow: 'hidden',
           boxShadow: '0 8px 20px -4px rgba(0,0,0,0.08)',
           position: 'relative',
-          height: '600px'
+          height: '560px'
         }}
       >
         <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
@@ -649,8 +753,8 @@ export default function InteractiveCivicMap({
           <Crosshair size={20} className={locatingUser ? 'animate-spin' : ''} />
         </button>
 
-        {/* Dropped Pin Quick Action Card */}
-        {droppedPin && (
+        {/* Dropped Pin Quick Action Card (Only if NOT read-only) */}
+        {!readOnly && droppedPin && (
           <div
             style={{
               position: 'absolute',
@@ -858,33 +962,35 @@ export default function InteractiveCivicMap({
                 </div>
               </div>
 
-              {/* Endorse Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (onEndorseReport) {
-                    onEndorseReport(selectedReport.id);
-                  }
-                }}
-                style={{
-                  background: '#ECFDF5',
-                  color: '#065F46',
-                  border: '1px solid #A7F3D0',
-                  borderRadius: '10px',
-                  padding: '10px',
-                  fontSize: '0.84rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <ThumbsUp size={16} />
-                <span>Endorse Issue (+1 Boost • +25 Karma)</span>
-              </button>
+              {/* Endorse Button (Hidden in readOnly mode) */}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onEndorseReport) {
+                      onEndorseReport(selectedReport.id);
+                    }
+                  }}
+                  style={{
+                    background: '#ECFDF5',
+                    color: '#065F46',
+                    border: '1px solid #A7F3D0',
+                    borderRadius: '10px',
+                    padding: '10px',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <ThumbsUp size={16} />
+                  <span>Endorse Issue (+1 Boost • +25 Karma)</span>
+                </button>
+              )}
 
               {/* View in Pipeline Action */}
               <button
