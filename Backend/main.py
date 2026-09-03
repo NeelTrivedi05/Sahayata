@@ -256,7 +256,7 @@ class ReportCreateSchema(BaseModel):
     title: Optional[str] = None
     category: str = Field(..., description="pothole | garbage | electricity | water")
     categoryLabel: Optional[str] = None
-    coords: List[float] = Field(..., min_items=2, max_items=2, description="[latitude, longitude]")
+    coords: List[float] = Field(..., min_length=2, max_length=2, description="[latitude, longitude]")
     address: Optional[str] = None
     image: Optional[str] = None
     phash: Optional[str] = Field(None, description="64-bit hexadecimal dHash/pHash")
@@ -464,4 +464,6 @@ async def generate_phash(data: Dict[str, str] = Body(..., examples=[{"image_base
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    import os
+    port = int(os.getenv("PORT", 5000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
