@@ -59,6 +59,7 @@ import ToastNotification from './components/ui/ToastNotification';
 import InteractiveCivicMap from './components/map/InteractiveCivicMap';
 import LocationPickerMiniMap from './components/map/LocationPickerMiniMap';
 import ComplaintMiniMap from './components/map/ComplaintMiniMap';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 
 export default function App() {
   const { currentUser, login, signup, logout } = useAuth();
@@ -874,23 +875,29 @@ export default function App() {
         )}
         
         {activeTab === 'report' && (
-          <ReportIssueView
-            presets={CIVIC_DATA.reportingPresets}
-            existingReports={reports}
-            activePreset={activePreset}
-            onSelectPreset={(pId, customObj) => {
-              const p = customObj || CIVIC_DATA.reportingPresets.find(x => x.id === pId) || activePreset;
-              setActivePreset(p);
-              if (p.aiClarification?.options?.length) {
-                setSelectedClarification(p.aiClarification.options[0]);
-              }
-            }}
-            selectedClarification={selectedClarification}
-            onSelectClarification={setSelectedClarification}
-            customDescription={customDescription}
-            setCustomDescription={setCustomDescription}
-            onSubmit={handleReportSubmit}
-          />
+          <ErrorBoundary
+            fallbackTitle="Report Issue View Error"
+            fallbackMessage="An unexpected issue occurred while rendering the grievance form. You can return to the radar map or retry."
+            onBack={() => setActiveTab('radar')}
+          >
+            <ReportIssueView
+              presets={CIVIC_DATA.reportingPresets}
+              existingReports={reports}
+              activePreset={activePreset}
+              onSelectPreset={(pId, customObj) => {
+                const p = customObj || CIVIC_DATA.reportingPresets.find(x => x.id === pId) || activePreset;
+                setActivePreset(p);
+                if (p.aiClarification?.options?.length) {
+                  setSelectedClarification(p.aiClarification.options[0]);
+                }
+              }}
+              selectedClarification={selectedClarification}
+              onSelectClarification={setSelectedClarification}
+              customDescription={customDescription}
+              setCustomDescription={setCustomDescription}
+              onSubmit={handleReportSubmit}
+            />
+          </ErrorBoundary>
         )}
 
         {activeTab === 'pipeline' && (
@@ -1132,7 +1139,7 @@ function CivicRadarMapView({ reports, onSelectReport, onReportAtLocation, onEndo
 // 2. REPORT ISSUE VIEW (With Real Camera Capture, File Upload & Live GPS)
 // ==========================================================================
 function ReportIssueView({
-  presets,
+  presets = [],
   existingReports = [],
   activePreset,
   onSelectPreset,
@@ -1142,67 +1149,153 @@ function ReportIssueView({
   setCustomDescription,
   onSubmit
 }) {
+  const currentPreset = activePreset || presets?.[0] || CIVIC_DATA.reportingPresets?.[0] || {};
   const [isScanning, setIsScanning] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Webcam state
+  const [isWebcamOpen, setIsWebcamOpen] = useState(false);
+  const [webcamStream, setWebcamStream] = useState(null);
+  const [webcamError, setWebcamError] = useState(null);
+  const webcamVideoRef = useRef(null);
+
+  // Geographic coordinates & address state for pinpointing
+  const [selectedCoords, setSelectedCoords] = useState(currentPreset?.coords || [19.0558, 72.8295]);
+  const [selectedAddress, setSelectedAddress] = useState(currentPreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai");
+
+  useEffect(() => {
+    if (currentPreset?.coords && Array.isArray(currentPreset.coords)) {
+      setSelectedCoords(currentPreset.coords);
+    }
+    if (currentPreset?.address) {
+      setSelectedAddress(currentPreset.address);
+    }
+  }, [currentPreset?.id]);
+
+  // Open laptop webcam stream via WebRTC
+  const openWebcam = async () => {
+    setIsWebcamOpen(true);
+    setWebcamError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        },
+        audio: false
+      });
+      setWebcamStream(stream);
+      setTimeout(() => {
+        if (webcamVideoRef.current) {
+          webcamVideoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      console.error("Webcam access error:", err);
+      setWebcamError(
+        "Could not access laptop webcam. Please ensure camera access is allowed in your browser address bar or Windows Camera Privacy settings."
+      );
+    }
+  };
+
+  // Close laptop webcam stream
+  const closeWebcam = () => {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach((track) => track.stop());
+      setWebcamStream(null);
+    }
+    setIsWebcamOpen(false);
+    setWebcamError(null);
+  };
+
+  // Cleanup stream on component unmount
+  useEffect(() => {
+    return () => {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [webcamStream]);
+
+  // AI Classification Pipeline
+  const processImageForClassification = async (base64Image) => {
+    setIsScanning(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/classify-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64Image })
+      });
+      const data = await res.json();
+
+      if (data.success && data.classification) {
+        const cls = data.classification;
+        const dynamicPreset = {
+          id: `custom_${Date.now()}`,
+          name: `${cls.categoryLabel} (AI Vision Detected)`,
+          category: cls.category,
+          categoryLabel: cls.categoryLabel,
+          baseSeverity: cls.baseSeverity || 35,
+          slaHours: cls.slaHours || 24,
+          image: base64Image,
+          coords: selectedCoords || [19.0558, 72.8295],
+          address: selectedAddress || "Ward H/West (GPS Tagged Location)",
+          confidence: cls.confidence || "96.4%",
+          provider: data.provider || "Groq Llama 3.2 Vision",
+          aiClarification: {
+            question: cls.aiClarificationQuestion || "Is this issue actively blocking traffic or pedestrian safety?",
+            options: cls.clarificationOptions || [
+              "Yes, high hazard / urgent priority",
+              "Medium hazard / standard priority",
+              "Minor hazard / routine repair"
+            ]
+          }
+        };
+
+        if (onSelectPreset) {
+          onSelectPreset(dynamicPreset.id, dynamicPreset);
+        }
+        if (dynamicPreset.aiClarification?.options?.length && onSelectClarification) {
+          onSelectClarification(dynamicPreset.aiClarification.options[0]);
+        }
+      }
+    } catch (err) {
+      console.warn("Classification API offline, using visual preset match");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Snap photo from webcam video frame
+  const snapWebcamPhoto = async () => {
+    if (!webcamVideoRef.current) return;
+    const video = webcamVideoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+    setCapturedPhoto(dataUrl);
+    setPhotoName('laptop_webcam_snapshot.jpg');
+    closeWebcam();
+
+    processImageForClassification(dataUrl);
+  };
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    setIsScanning(true);
     const reader = new FileReader();
     reader.onload = async (evt) => {
-      const base64Image = evt.target.result;
-
-      try {
-        const res = await fetch('http://localhost:5000/api/classify-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64Image })
-        });
-        const data = await res.json();
-
-        if (data.success && data.classification) {
-          const cls = data.classification;
-          const dynamicPreset = {
-            id: `custom_${Date.now()}`,
-            name: `${cls.categoryLabel} (AI Vision Detected)`,
-            category: cls.category,
-            categoryLabel: cls.categoryLabel,
-            baseSeverity: cls.baseSeverity || 35,
-            slaHours: cls.slaHours || 24,
-            image: base64Image,
-            coords: [19.0558, 72.8295],
-            address: "Ward H/West (GPS Tagged Location)",
-            confidence: cls.confidence || "96.4%",
-            provider: data.provider || "Groq Llama 3.2 Vision",
-            aiClarification: {
-              question: cls.aiClarificationQuestion || "Is this issue actively blocking traffic or pedestrian safety?",
-              options: cls.clarificationOptions || [
-                "Yes, high hazard / urgent priority",
-                "Medium hazard / standard priority",
-                "Minor hazard / routine repair"
-              ]
-            }
-          };
-
-          if (onSelectPreset) {
-            onSelectPreset(dynamicPreset.id, dynamicPreset);
-          }
-          if (dynamicPreset.aiClarification?.options?.length) {
-            onSelectClarification(dynamicPreset.aiClarification.options[0]);
-          }
-        }
-      } catch (err) {
-        console.warn("Classification API offline, using visual preset match");
-      } finally {
-        setIsScanning(false);
-      }
+      processImageForClassification(evt.target.result);
     };
     reader.readAsDataURL(file);
   };
 
-  const [reportMode, setReportMode] = useState('camera_gps'); // 'camera_gps' | 'preset'
+  const [reportMode, setReportMode] = useState('camera_gps');
   const cameraInputRef = useRef(null);
   const uploadInputRef = useRef(null);
 
@@ -1225,17 +1318,17 @@ function ReportIssueView({
 
   // Handle final submission
   const handleFormSubmit = () => {
-    const finalCoords = activePreset?.coords || [19.0558, 72.8295];
-    const finalAddress = activePreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
+    const finalCoords = selectedCoords || currentPreset?.coords || [19.0558, 72.8295];
+    const finalAddress = selectedAddress || currentPreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
 
     onSubmit({
-      title: customDescription ? customDescription : activePreset.name,
-      category: activePreset.category,
-      categoryLabel: activePreset.categoryLabel,
+      title: customDescription ? customDescription : (currentPreset?.name || "Civic Grievance"),
+      category: currentPreset?.category || 'pothole',
+      categoryLabel: currentPreset?.categoryLabel || 'Road Hazard & Pothole',
       coords: finalCoords,
       address: finalAddress,
-      image: activePreset.image,
-      phash: activePreset.phash,
+      image: currentPreset?.image,
+      phash: currentPreset?.phash,
       clarificationAnswer: selectedClarification
     });
   };
@@ -1274,7 +1367,7 @@ function ReportIssueView({
               Groq Llama 3.2 Vision Automated Image Classifier
             </div>
             <div style={{ fontSize: '0.78rem', opacity: 0.85, marginTop: '2px' }}>
-              Upload any photo from your device. AI will analyze pixel features, detect issue category & generate clarification options.
+              Upload any photo or open webcam. AI will analyze pixel features, detect issue category & generate clarification options.
             </div>
           </div>
         </div>
@@ -1287,32 +1380,57 @@ function ReportIssueView({
           style={{ display: 'none' }}
         />
 
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isScanning}
-          style={{
-            background: '#4F46E5',
-            color: '#FFFFFF',
-            border: '1px solid rgba(255,255,255,0.3)',
-            borderRadius: '10px',
-            padding: '10px 18px',
-            fontSize: '0.85rem',
-            fontWeight: 800,
-            cursor: isScanning ? 'wait' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-          }}
-        >
-          {isScanning ? (
-            <>
-              <RefreshCw className="animate-spin" size={16} /> Analyzing Photo...
-            </>
-          ) : (
-            <>📷 Upload Custom Photo to Classify</>
-          )}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={openWebcam}
+            disabled={isScanning}
+            style={{
+              background: '#2563EB',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '10px',
+              padding: '10px 16px',
+              fontSize: '0.85rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+            }}
+          >
+            <Camera size={16} /> 💻 Open Webcam
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isScanning}
+            style={{
+              background: '#4F46E5',
+              color: '#FFFFFF',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '10px',
+              padding: '10px 18px',
+              fontSize: '0.85rem',
+              fontWeight: 800,
+              cursor: isScanning ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+            }}
+          >
+            {isScanning ? (
+              <>
+                <RefreshCw className="animate-spin" size={16} /> Analyzing Photo...
+              </>
+            ) : (
+              <>📷 Upload Custom Photo</>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Category Classification Selector Bar */}
@@ -1321,8 +1439,8 @@ function ReportIssueView({
           Or Select Issue Preset Classification:
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-          {presets.map(p => {
-            const isSelected = activePreset.id === p.id;
+          {(presets || []).map(p => {
+            const isSelected = currentPreset?.id === p.id;
             return (
               <button
                 key={p.id}
@@ -1374,14 +1492,14 @@ function ReportIssueView({
               Photographic Proof & Classification
             </label>
             <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#166534', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-              Target SLA: {activePreset.slaHours || 24} Hours
+              Target SLA: {currentPreset?.slaHours || 24} Hours
             </span>
           </div>
 
           {/* Photo Preview Container */}
           <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #CBD5E1' }}>
             {isScanning ? (
-              <div style={{ height: '260px', background: '#1E1B4B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
+              <div style={{ height: '240px', background: '#1E1B4B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
                 <RefreshCw size={36} className="animate-spin text-indigo-400 mb-3" />
                 <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>Groq Llama 3.2 Vision Analyzing Photo...</div>
                 <div style={{ fontSize: '0.75rem', color: '#A5B4FC', marginTop: '4px' }}>Extracting features, severity & context</div>
@@ -1389,9 +1507,9 @@ function ReportIssueView({
             ) : (
               <>
                 <img
-                  src={activePreset.image}
+                  src={currentPreset?.image || "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80"}
                   alt="Uploaded issue"
-                  style={{ width: '100%', height: '260px', objectFit: 'cover', display: 'block' }}
+                  style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }}
                 />
                 <div
                   style={{
@@ -1410,8 +1528,8 @@ function ReportIssueView({
                     alignItems: 'center'
                   }}
                 >
-                  <span>GPS: <strong>{activePreset.coords ? `${activePreset.coords[0]}° N, ${activePreset.coords[1]}° E` : 'Auto-located'}</strong></span>
-                  <span style={{ color: '#38BDF8', fontWeight: 700 }}>Auto-located</span>
+                  <span>GPS: <strong>{selectedCoords ? `${selectedCoords[0]?.toFixed(4)}° N, ${selectedCoords[1]?.toFixed(4)}° E` : 'Auto-located'}</strong></span>
+                  <span style={{ color: '#38BDF8', fontWeight: 700 }}>Interactive Pin</span>
                 </div>
               </>
             )}
@@ -1434,12 +1552,32 @@ function ReportIssueView({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <CheckCircle2 size={16} color="#059669" />
               <span>
-                <strong>Vision AI Classification:</strong> {activePreset.categoryLabel} (<strong>{activePreset.confidence || "95.4% Match"}</strong>)
+                <strong>Vision AI Classification:</strong> {currentPreset?.categoryLabel || "Civic Hazard"} (<strong>{currentPreset?.confidence || "95.4% Match"}</strong>)
               </span>
             </div>
             <div style={{ fontSize: '0.76rem', color: '#64748B', marginLeft: '24px' }}>
-              Model Provider: <strong>{activePreset.provider || "Groq Llama 3.2 Vision AI"}</strong>
+              Model Provider: <strong>{currentPreset?.provider || "Groq Llama 3.2 Vision AI"}</strong>
             </div>
+          </div>
+
+          {/* Real Interactive Location Picker Mini Map */}
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 700, margin: 0, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <MapPin size={14} color="#2563EB" /> Pinpoint Location on Map
+              </label>
+              <span style={{ fontSize: '0.7rem', color: '#64748B' }}>
+                Drag pin or click GPS
+              </span>
+            </div>
+            <LocationPickerMiniMap
+              initialCoords={selectedCoords}
+              onLocationChange={(coords, address) => {
+                setSelectedCoords(coords);
+                setSelectedAddress(address);
+              }}
+              height="180px"
+            />
           </div>
         </div>
 
@@ -1468,17 +1606,17 @@ function ReportIssueView({
               Dynamic Context Clarification:
             </h3>
             <p style={{ fontSize: '0.85rem', color: '#334155', marginBottom: '14px', fontWeight: 600 }}>
-              {activePreset.aiClarification?.question || "What is the severity of this issue?"}
+              {currentPreset?.aiClarification?.question || "What is the severity of this issue?"}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-              {(activePreset.aiClarification?.options || ["High Hazard", "Medium Hazard", "Routine Repair"]).map((opt, idx) => {
+              {(currentPreset?.aiClarification?.options || ["High Hazard", "Medium Hazard", "Routine Repair"]).map((opt, idx) => {
                 const isSelected = selectedClarification === opt;
                 const isHighImpact = opt.includes("Hazard") || opt.includes("Critical") || opt.includes("Urgent") || opt.includes("Severe") || opt.includes("High");
                 return (
                   <div
                     key={idx}
-                    onClick={() => onSelectClarification(opt)}
+                    onClick={() => onSelectClarification && onSelectClarification(opt)}
                     style={{
                       padding: '12px 16px',
                       borderRadius: '10px',
