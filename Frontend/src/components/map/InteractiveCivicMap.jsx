@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
@@ -56,6 +56,68 @@ const HOTSPOTS = [
   { name: "Bandra Fort Promenade", coords: [19.0416, 72.8188], type: "Coastal Ward Edge", zoom: 16 }
 ];
 
+// Helper to build marker HTML with pulsing ring
+function createMarkerIcon(r) {
+  const p = r.priority || { finalScore: r.priorityScore || 70, isOverdue: (r.elapsedHours || 0) > (r.slaHours || 24) };
+  const score = p.finalScore || 70;
+  const isVerified = r.status === 'verified' || r.status === 'resolved';
+  const isOverdue = Boolean(p.isOverdue);
+
+  // Status Pulse Animation: Red for unresolved, Green for verified, Urgent Red for Overdue SLA
+  const pulseClass = isVerified
+    ? 'civic-pulse-resolved'
+    : isOverdue
+    ? 'civic-pulse-overdue'
+    : 'civic-pulse-unresolved';
+
+  // Base dot color by severity
+  const baseColor = isVerified
+    ? '#059669'
+    : score >= 80
+    ? '#DC2626'
+    : score >= 50
+    ? '#D97706'
+    : '#2563EB';
+
+  const markerHtml = `
+    <div class="civic-radar-marker" style="position:relative; width:36px; height:36px; cursor:pointer;">
+      <div class="civic-pulse-ring ${pulseClass}"></div>
+      ${isOverdue && !isVerified ? `<div class="civic-pulse-ring civic-pulse-overdue" style="animation-delay: 0.55s;"></div>` : ''}
+      <div class="civic-marker-dot" style="
+        position:relative;
+        width:34px;
+        height:34px;
+        background:${baseColor};
+        border:2.5px solid #FFFFFF;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#FFFFFF;
+        font-weight:800;
+        font-size:12px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.35);
+        transition:transform 0.15s ease;
+      ">
+        ${isVerified ? '✓' : score}
+      </div>
+    </div>
+  `;
+
+  return {
+    icon: L.divIcon({
+      html: markerHtml,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      className: 'civic-leaflet-div-icon'
+    }),
+    dataHash: `${r.status}-${score}-${isOverdue}-${baseColor}`,
+    score,
+    isVerified,
+    baseColor
+  };
+}
+
 export default function InteractiveCivicMap({
   reports = [],
   onSelectReport,
@@ -65,8 +127,12 @@ export default function InteractiveCivicMap({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const tileLayerRef = useRef(null);
-  const markersLayerRef = useRef(null);
+
+  // Persistent Leaflet Layer Groups (Never destroyed on filter/data changes)
   const zonesLayerRef = useRef(null);
+  const radiiLayerRef = useRef(null);
+  const markersLayerRef = useRef(null);
+  const markersByIdRef = useRef(new Map()); // id -> { marker, dataHash }
   const userMarkerRef = useRef(null);
   const droppedPinRef = useRef(null);
 
@@ -81,10 +147,11 @@ export default function InteractiveCivicMap({
   const [droppedPin, setDroppedPin] = useState(null);
   const [basemapMenuOpen, setBasemapMenuOpen] = useState(false);
 
-  // 1. Initialize Map Once
+  // 1. Initialize Map ONCE (Mount / Unmount only)
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
+    // Safety cleanup for hot reloading
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
@@ -95,10 +162,12 @@ export default function InteractiveCivicMap({
 
     const map = L.map(mapContainerRef.current, {
       zoomControl: false,
-      attributionControl: true
+      attributionControl: true,
+      fadeAnimation: true,
+      markerZoomAnimation: true
     }).setView([19.0560, 72.8340], 15);
 
-    // Zoom control in bottom right
+    // Zoom control at bottom right
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     // Initial Base Tile Layer
@@ -110,11 +179,12 @@ export default function InteractiveCivicMap({
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
-    // Layer Groups
+    // Initialize Persistent Layer Groups in correct z-order
     zonesLayerRef.current = L.layerGroup().addTo(map);
+    radiiLayerRef.current = L.layerGroup().addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
 
-    // Click anywhere on map to drop a pin for new report
+    // Click anywhere on map to drop a pin for pinpoint reporting
     map.on('click', (e) => {
       const { lat, lng } = e.latlng;
       handleMapClick(lat, lng, map);
@@ -127,10 +197,11 @@ export default function InteractiveCivicMap({
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      markersByIdRef.current.clear();
     };
   }, []);
 
-  // 2. Switch Basemap Layer dynamically
+  // 2. Switch Basemap Layer dynamically without touching markers or layers
   useEffect(() => {
     if (!mapInstanceRef.current || !tileLayerRef.current) return;
     const base = BASEMAPS.find(b => b.id === activeBasemap) || BASEMAPS[0];
@@ -154,7 +225,8 @@ export default function InteractiveCivicMap({
         </div>
       `,
       iconSize: [36, 40],
-      iconAnchor: [18, 40]
+      iconAnchor: [18, 40],
+      className: 'civic-leaflet-div-icon'
     });
 
     const marker = L.marker([lat, lng], { icon: pinIcon }).addTo(map);
@@ -172,7 +244,7 @@ export default function InteractiveCivicMap({
     setDroppedPin(null);
   };
 
-  // 4. Update Critical Zones
+  // 4. Update Critical Zones Non-Destructively
   useEffect(() => {
     if (!zonesLayerRef.current) return;
     zonesLayerRef.current.clearLayers();
@@ -199,97 +271,98 @@ export default function InteractiveCivicMap({
     }
   }, [showCriticalZones]);
 
-  // 5. Filter & Plot Grievance Markers
+  // 5. Update Impact Radii Non-Destructively
   useEffect(() => {
-    if (!markersLayerRef.current || !mapInstanceRef.current) return;
-    markersLayerRef.current.clearLayers();
+    if (!radiiLayerRef.current) return;
+    radiiLayerRef.current.clearLayers();
 
-    // Filter reports
-    const filtered = reports.filter(r => {
-      const p = r.priority || { finalScore: r.priorityScore || 70, isOverdue: r.elapsedHours > (r.slaHours || 24) };
-      if (activeCategory === 'all') return true;
-      if (activeCategory === 'critical') return (p.finalScore || 0) >= 80;
-      if (activeCategory === 'overdue') return p.isOverdue;
-      return r.category === activeCategory;
-    });
+    if (showImpactRadius) {
+      // Only plot impact radii for visible, non-verified reports
+      reports.forEach(r => {
+        const isVerified = r.status === 'verified' || r.status === 'resolved';
+        if (isVerified) return;
 
-    filtered.forEach(r => {
-      const p = r.priority || { finalScore: r.priorityScore || 70, isOverdue: r.elapsedHours > (r.slaHours || 24) };
-      const score = p.finalScore || 70;
-      const isVerified = r.status === 'verified';
-      const color = isVerified
-        ? '#059669'
-        : score >= 80
-        ? '#DC2626'
-        : score >= 50
-        ? '#D97706'
-        : '#2563EB';
+        const p = r.priority || { finalScore: r.priorityScore || 70 };
+        const score = p.finalScore || 70;
+        const color = score >= 80 ? '#DC2626' : score >= 50 ? '#D97706' : '#2563EB';
 
-      // Impact Radius
-      if (showImpactRadius && !isVerified) {
-        const radiusCircle = L.circle(r.coords, {
+        const circle = L.circle(r.coords, {
           radius: r.impactRadiusMeters || 100,
           color,
           fillColor: color,
-          fillOpacity: 0.1,
+          fillOpacity: 0.09,
           weight: 1.5
         });
-        markersLayerRef.current.addLayer(radiusCircle);
-      }
 
-      // Marker Icon
-      const pulseAnimation = score >= 80 ? 'animation: radarPulse 2s infinite;' : '';
-      const markerHtml = `
-        <div style="position:relative; width:36px; height:36px; cursor:pointer;">
-          ${score >= 80 ? `<div style="position:absolute; inset:-4px; border-radius:50%; background:${color}; opacity:0.4; ${pulseAnimation}"></div>` : ''}
-          <div style="
-            position:relative;
-            width:34px;
-            height:34px;
-            background:${color};
-            border:2.5px solid #FFFFFF;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#FFFFFF;
-            font-weight:800;
-            font-size:12px;
-            box-shadow:0 4px 10px rgba(0,0,0,0.35);
-            transition:transform 0.15s ease;
-          ">
-            ${isVerified ? '✓' : score}
-          </div>
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        html: markerHtml,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
+        radiiLayerRef.current.addLayer(circle);
       });
+    }
+  }, [showImpactRadius, reports]);
 
-      const marker = L.marker(r.coords, { icon: customIcon });
+  // 6. Fast Marker Diffing & Rendering (ZERO map tear-down)
+  useEffect(() => {
+    if (!markersLayerRef.current || !mapInstanceRef.current) return;
 
-      marker.on('click', () => {
-        setSelectedReport(r);
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo(r.coords, 16, { duration: 0.8 });
-        }
-      });
-
-      marker.bindTooltip(`
-        <div style="font-family:system-ui; padding:2px;">
-          <strong style="color:${color};">${r.id}</strong>: ${r.title}
-          <div style="font-size:11px; color:#64748B;">Priority ${score}/100 • ${r.duplicateCount || 1} votes</div>
-        </div>
-      `, { sticky: true });
-
-      markersLayerRef.current.addLayer(marker);
+    // Filter visible reports based on activeCategory
+    const visibleReports = reports.filter(r => {
+      const p = r.priority || { finalScore: r.priorityScore || 70, isOverdue: (r.elapsedHours || 0) > (r.slaHours || 24) };
+      if (activeCategory === 'all') return true;
+      if (activeCategory === 'critical') return (p.finalScore || 0) >= 80;
+      if (activeCategory === 'overdue') return Boolean(p.isOverdue);
+      return r.category === activeCategory;
     });
-  }, [reports, activeCategory, showImpactRadius]);
 
-  // 6. User Live GPS Trigger
+    const visibleIds = new Set(visibleReports.map(r => r.id));
+    const cachedMap = markersByIdRef.current;
+
+    // A. Remove markers that are no longer visible or removed
+    for (const [id, entry] of cachedMap.entries()) {
+      if (!visibleIds.has(id)) {
+        markersLayerRef.current.removeLayer(entry.marker);
+        cachedMap.delete(id);
+      }
+    }
+
+    // B. Add or Update visible markers
+    visibleReports.forEach(r => {
+      const { icon, dataHash, score, isVerified, baseColor } = createMarkerIcon(r);
+      const existing = cachedMap.get(r.id);
+
+      if (existing) {
+        // Only update icon if status or score actually changed
+        if (existing.dataHash !== dataHash) {
+          existing.marker.setIcon(icon);
+          existing.dataHash = dataHash;
+        }
+      } else {
+        // Create new marker instance
+        const marker = L.marker(r.coords, { icon });
+
+        // Lazy popup / click handler
+        marker.on('click', () => {
+          setSelectedReport(r);
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo(r.coords, 16, { duration: 0.7 });
+          }
+        });
+
+        // Fast tooltip
+        marker.bindTooltip(`
+          <div style="font-family:system-ui; padding:2px;">
+            <strong style="color:${baseColor};">${r.id}</strong>: ${r.title}
+            <div style="font-size:11px; color:#64748B;">
+              ${isVerified ? '✅ Verified Resolved' : `Priority ${score}/100 • ${r.duplicateCount || 1} endorsements`}
+            </div>
+          </div>
+        `, { sticky: true, className: 'civic-map-tooltip' });
+
+        markersLayerRef.current.addLayer(marker);
+        cachedMap.set(r.id, { marker, dataHash });
+      }
+    });
+  }, [reports, activeCategory]);
+
+  // 7. Real-time "Locate Me" GPS Center
   const handleLocateMe = () => {
     if (!('geolocation' in navigator)) {
       alert("Geolocation is not supported by your browser.");
@@ -305,9 +378,8 @@ export default function InteractiveCivicMap({
         setUserLocation({ coords, accuracy: Math.round(accuracy) });
 
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo(coords, 17, { duration: 1.5 });
+          mapInstanceRef.current.flyTo(coords, 17, { duration: 1.4 });
 
-          // Draw accuracy ring and pulsing user marker
           if (userMarkerRef.current) {
             userMarkerRef.current.remove();
           }
@@ -316,12 +388,13 @@ export default function InteractiveCivicMap({
           const userIcon = L.divIcon({
             html: `
               <div style="position:relative; width:24px; height:24px;">
-                <div style="position:absolute; inset:-6px; background:#3B82F6; border-radius:50%; opacity:0.4; animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
+                <div style="position:absolute; inset:-6px; background:#3B82F6; border-radius:50%; opacity:0.4; animation: civicPulseRedUrgent 1.5s infinite;"></div>
                 <div style="width:20px; height:20px; background:#2563EB; border:3px solid #FFFFFF; border-radius:50%; box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>
               </div>
             `,
             iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            iconAnchor: [12, 12],
+            className: 'civic-leaflet-div-icon'
           });
 
           L.marker(coords, { icon: userIcon }).bindPopup("<strong>📍 You Are Here</strong>").addTo(userGroup);
@@ -342,7 +415,7 @@ export default function InteractiveCivicMap({
     );
   };
 
-  // 7. Hotspot Quick Jump
+  // 8. Hotspot Quick Jump
   const handleFlyToHotspot = (coords, zoom) => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo(coords, zoom, { duration: 1.2 });
@@ -358,11 +431,11 @@ export default function InteractiveCivicMap({
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>🗺️ Civic Radar & Ward GIS Command Map</span>
               <span style={{ fontSize: '0.75rem', background: '#ECFDF5', color: '#065F46', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
-                Live GIS
+                60fps Live Diff
               </span>
             </h2>
             <p style={{ color: '#64748B', fontSize: '0.85rem', margin: 0 }}>
-              Click anywhere on the map to drop a pin & report. Click markers for full photos and priority analytics.
+              Pulsing markers reflect live status. Unresolved issues pulse red, overdue issues pulse rapidly, and verified issues pulse green.
             </p>
           </div>
 
@@ -657,18 +730,27 @@ export default function InteractiveCivicMap({
             gap: '6px'
           }}
         >
-          <strong style={{ fontSize: '0.8rem', color: '#0F172A' }}>Severity Index:</strong>
+          <strong style={{ fontSize: '0.8rem', color: '#0F172A' }}>Live Status Radar:</strong>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#DC2626' }}></div>
-            <span>Critical Priority (≥ 80)</span>
+            <div style={{ position: 'relative', width: '12px', height: '12px' }}>
+              <div style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: '#EF4444', opacity: 0.6, animation: 'civicPulseRed 2.2s infinite' }}></div>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#DC2626' }}></div>
+            </div>
+            <span>Unresolved (Pulsing Red)</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#D97706' }}></div>
-            <span>Medium-High Priority (50–79)</span>
+            <div style={{ position: 'relative', width: '12px', height: '12px' }}>
+              <div style={{ position: 'absolute', inset: -3, borderRadius: '50%', background: '#DC2626', opacity: 0.9, animation: 'civicPulseRedUrgent 1.1s infinite' }}></div>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#991B1B' }}></div>
+            </div>
+            <span>SLA Overdue (Fast Red Pulse)</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#059669' }}></div>
-            <span>Citizen Verified Fixed</span>
+            <div style={{ position: 'relative', width: '12px', height: '12px' }}>
+              <div style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: '#10B981', opacity: 0.6, animation: 'civicPulseGreen 2.4s infinite' }}></div>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#059669' }}></div>
+            </div>
+            <span>Verified Resolved (Pulsing Green)</span>
           </div>
         </div>
 
@@ -724,7 +806,7 @@ export default function InteractiveCivicMap({
                     position: 'absolute',
                     top: '10px',
                     left: '10px',
-                    background: 'rgba(15, 23, 42, 0.85)',
+                    background: selectedReport.status === 'verified' ? 'rgba(5, 150, 105, 0.9)' : 'rgba(15, 23, 42, 0.85)',
                     color: '#FFF',
                     fontSize: '0.72rem',
                     padding: '3px 8px',
@@ -732,7 +814,7 @@ export default function InteractiveCivicMap({
                     fontWeight: 700
                   }}
                 >
-                  {selectedReport.status?.toUpperCase()}
+                  {selectedReport.status === 'verified' ? '✓ VERIFIED FIXED' : selectedReport.status?.toUpperCase()}
                 </span>
               </div>
 
@@ -749,7 +831,7 @@ export default function InteractiveCivicMap({
               {/* Priority Metric Badge */}
               <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569' }}>Calculated Priority Score</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569' }}>Priority Score</span>
                   <span
                     style={{
                       fontSize: '0.9rem',

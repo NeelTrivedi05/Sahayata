@@ -725,3 +725,77 @@ button, input, select, textarea {
   border-top-color: rgba(15, 23, 42, 0.92) !important;
 }
 
+/* Marker Status Pulse Animations (Red = Unresolved, Urgent = Overdue SLA, Green = Verified) */
+@keyframes civicPulseRed {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.85;
+  }
+  65% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes civicPulseRedUrgent {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@keyframes civicPulseGreen {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.75;
+  }
+  70% {
+    transform: scale(2.0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.0);
+    opacity: 0;
+  }
+}
+
+/* Marker Ring Classes for Leaflet divIcons */
+.civic-pulse-ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.civic-pulse-unresolved {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.45) 0%, rgba(220, 38, 38, 0.15) 70%, transparent 100%);
+  border: 1.5px solid rgba(239, 68, 68, 0.65);
+  animation: civicPulseRed 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+.civic-pulse-overdue {
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.6) 0%, rgba(185, 28, 28, 0.25) 70%, transparent 100%);
+  border: 2px solid rgba(220, 38, 38, 0.9);
+  animation: civicPulseRedUrgent 1.1s cubic-bezier(0.2, 0, 0.2, 1) infinite;
+  box-shadow: 0 0 14px rgba(220, 38, 38, 0.5);
+}
+
+.civic-pulse-resolved {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(5, 150, 105, 0.15) 70%, transparent 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.65);
+  animation: civicPulseGreen 2.4s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+
