@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   BarChart3,
   TrendingUp,
@@ -24,13 +24,27 @@ import {
   HardHat,
   ShieldCheck,
   Check,
-  RefreshCw
+  RefreshCw,
+  HelpCircle,
+  Info,
+  Sparkles,
+  ExternalLink,
+  FileText,
+  Database
 } from 'lucide-react';
 import { api } from '../../api/client';
 
 export default function HistoricalBmcView({ onSelectComplaintForMap }) {
   // Navigation sub-tabs within Historical View
   const [activeSubTab, setActiveSubTab] = useState('overview'); // 'overview' | 'wards' | 'categories' | 'departments' | 'explorer'
+
+  // Ref to smoothly scroll to the explorer section
+  const explorerSectionRef = useRef(null);
+
+  // Modal & banner states
+  const [showRoleExplanationModal, setShowRoleExplanationModal] = useState(false);
+  const [highlightBanner, setHighlightBanner] = useState(null);
+  const [heroSearchInput, setHeroSearchInput] = useState('');
 
   // Global & filtered dataset state
   const [stats, setStats] = useState(null);
@@ -134,7 +148,29 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
     setFilterStatus('');
     setFilterYear('');
     setSearchQuery('');
+    setHighlightBanner(null);
     setExplorerPage(1);
+  };
+
+  const jumpToExplorerWithFilter = (filters = {}, bannerText = '') => {
+    if (filters.severity !== undefined) setFilterSeverity(filters.severity);
+    if (filters.ward !== undefined) setFilterWard(filters.ward);
+    if (filters.category !== undefined) setFilterCategory(filters.category);
+    if (filters.status !== undefined) setFilterStatus(filters.status);
+    if (filters.year !== undefined) setFilterYear(filters.year);
+    if (filters.search !== undefined) setSearchQuery(filters.search);
+    setExplorerPage(1);
+    setActiveSubTab('explorer');
+
+    if (bannerText) {
+      setHighlightBanner(bannerText);
+    }
+
+    setTimeout(() => {
+      if (explorerSectionRef.current) {
+        explorerSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
   };
 
   const handleOpenDetailModal = async (complaintId) => {
@@ -278,13 +314,12 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button
-              onClick={() => {
-                setActiveSubTab('explorer');
-                setFilterSeverity('Critical');
-                setExplorerPage(1);
-              }}
+              onClick={() => jumpToExplorerWithFilter(
+                { severity: 'Critical', ward: '', category: '', status: '', year: '', search: '' },
+                '🔥 Active Filter: 76,843 Critical Historical Grievances (Top Severity Cases across Mumbai)'
+              )}
               style={{
                 background: '#EF4444',
                 color: '#FFF',
@@ -292,16 +327,39 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
                 borderRadius: '8px',
                 padding: '9px 16px',
                 fontWeight: 700,
-                fontSize: '0.82rem',
+                fontSize: '0.84rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '6px',
+                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)'
               }}
             >
               <AlertTriangle size={15} />
-              <span>Explore Critical Grievances</span>
+              <span>Explore Critical Grievances (76.8k)</span>
             </button>
+
+            <button
+              onClick={() => setShowRoleExplanationModal(true)}
+              style={{
+                background: '#2563EB',
+                color: '#FFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '9px 16px',
+                fontWeight: 700,
+                fontSize: '0.84rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.4)'
+              }}
+            >
+              <HelpCircle size={15} />
+              <span>Why BMC Historical Data? (Role & Purpose)</span>
+            </button>
+
             <button
               onClick={loadOverviewData}
               style={{
@@ -320,6 +378,106 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
             >
               <RefreshCw size={14} />
               <span>Refresh Stats</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Hero Interactive Search & Filter Strip */}
+        <div
+          style={{
+            marginTop: '20px',
+            paddingTop: '16px',
+            borderTop: '1px solid #334155',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (heroSearchInput.trim()) {
+                jumpToExplorerWithFilter(
+                  { search: heroSearchInput.trim(), ward: '', category: '', severity: '', status: '', year: '' },
+                  `🔍 Search results for: "${heroSearchInput.trim()}" across 960,000 historical records`
+                );
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: '#1E293B',
+              borderRadius: '8px',
+              border: '1px solid #475569',
+              padding: '2px 8px',
+              flex: '1',
+              maxWidth: '460px'
+            }}
+          >
+            <Search size={15} color="#94A3B8" />
+            <input
+              type="text"
+              placeholder="Search by ID (e.g. BMC20240166260), Area, or Keyword..."
+              value={heroSearchInput}
+              onChange={(e) => setHeroSearchInput(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: '#FFFFFF',
+                padding: '8px 10px',
+                fontSize: '0.82rem',
+                width: '100%'
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                background: '#3B82F6',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '5px 12px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Search Cases →
+            </button>
+          </form>
+
+          {/* Quick Category Jump Chips */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>
+              Quick Filters:
+            </span>
+            <button
+              onClick={() => jumpToExplorerWithFilter({ category: 'Potholes and Road Surface Damage', ward: '', severity: '', status: '', year: '', search: '' }, '🛣️ Filtered by: Potholes & Road Surface Damage (172,475 cases)')}
+              style={{ background: '#1E293B', color: '#60A5FA', border: '1px solid #3B82F6', borderRadius: '20px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              🛣️ Potholes (172k)
+            </button>
+            <button
+              onClick={() => jumpToExplorerWithFilter({ category: 'Water Supply Contamination and Pressure', ward: '', severity: '', status: '', year: '', search: '' }, '🚰 Filtered by: Water Supply Contamination & Pressure (74,103 cases)')}
+              style={{ background: '#1E293B', color: '#38BDF8', border: '1px solid #0284C7', borderRadius: '20px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              🚰 Water Supply (74k)
+            </button>
+            <button
+              onClick={() => jumpToExplorerWithFilter({ category: 'Garbage Dump Overflow and Uncollected Waste', ward: '', severity: '', status: '', year: '', search: '' }, '🗑️ Filtered by: Garbage Dump Overflow (148,820 cases)')}
+              style={{ background: '#1E293B', color: '#34D399', border: '1px solid #059669', borderRadius: '20px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              🗑️ Garbage Waste (148k)
+            </button>
+            <button
+              onClick={() => jumpToExplorerWithFilter({ status: 'Overdue / Escalated', ward: '', category: '', severity: '', year: '', search: '' }, '⚠️ Filtered by: Overdue & Escalated Cases')}
+              style={{ background: '#1E293B', color: '#F87171', border: '1px solid #EF4444', borderRadius: '20px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              ⚠️ Overdue / Escalated
             </button>
           </div>
         </div>
@@ -716,9 +874,10 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
                     <td style={{ padding: '12px 16px' }}>
                       <button
                         onClick={() => {
-                          setFilterWard(w.wardCode);
-                          setActiveSubTab('explorer');
-                          setExplorerPage(1);
+                          jumpToExplorerWithFilter(
+                            { ward: w.wardCode, category: '', severity: '', status: '', year: '', search: '' },
+                            `🏛️ Filtered by: Ward ${w.wardCode} (${w.wardFullName || w.wardArea}) — ${w.totalComplaints?.toLocaleString()} Total Historical Complaints`
+                          );
                         }}
                         style={{
                           background: '#EFF6FF',
@@ -731,7 +890,7 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
                           cursor: 'pointer'
                         }}
                       >
-                        View Cases
+                        View Cases →
                       </button>
                     </td>
                   </tr>
@@ -791,23 +950,25 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
 
               <button
                 onClick={() => {
-                  setFilterCategory(c.category);
-                  setActiveSubTab('explorer');
-                  setExplorerPage(1);
+                  jumpToExplorerWithFilter(
+                    { category: c.category, ward: '', severity: '', status: '', year: '', search: '' },
+                    `📂 Filtered by Category: "${c.category}" — ${(c.totalComplaints || 0).toLocaleString()} Total Historical Records`
+                  );
                 }}
                 style={{
                   width: '100%',
                   background: '#F1F5F9',
-                  color: '#334155',
-                  border: '1px solid #CBD5E1',
+                  color: '#1D4ED8',
+                  border: '1px solid #BFDBFE',
                   borderRadius: '6px',
                   padding: '7px 0',
                   fontSize: '0.8rem',
                   fontWeight: 700,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                Inspect Category Complaints →
+                Inspect {c.totalComplaints?.toLocaleString()} Category Records →
               </button>
             </div>
           ))}
@@ -876,7 +1037,48 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
 
       {/* VIEW 5: PAGINATED 35-FIELD COMPLAINT EXPLORER */}
       {activeSubTab === 'explorer' && (
-        <div>
+        <div ref={explorerSectionRef} style={{ scrollMarginTop: '20px' }}>
+          {/* Active Highlight Banner */}
+          {highlightBanner && (
+            <div
+              style={{
+                background: '#EFF6FF',
+                border: '1.5px solid #3B82F6',
+                borderRadius: '10px',
+                padding: '12px 18px',
+                marginBottom: '16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '10px',
+                boxShadow: '0 2px 5px rgba(59, 130, 246, 0.15)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={18} color="#1D4ED8" />
+                <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1E3A8A' }}>
+                  {highlightBanner}
+                </span>
+              </div>
+              <button
+                onClick={resetFilters}
+                style={{
+                  background: '#1D4ED8',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '5px 12px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Clear Filter & View All 960k Cases
+              </button>
+            </div>
+          )}
+
           {/* Multi-Filter Bar */}
           <div
             style={{
@@ -1058,7 +1260,19 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
                     explorerData.map((item, idx) => {
                       const h = item.historicalData || {};
                       return (
-                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9', background: idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA' }}>
+                        <tr
+                          key={idx}
+                          onClick={() => handleOpenDetailModal(h.complaint_id)}
+                          title="Click row to inspect all 35 BMC historical fields"
+                          style={{
+                            borderBottom: '1px solid #F1F5F9',
+                            background: idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA',
+                            cursor: 'pointer',
+                            transition: 'background 0.12s ease'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#EFF6FF'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA'}
+                        >
                           <td style={{ padding: '10px 14px', fontWeight: 700, color: '#1D4ED8', fontFamily: 'monospace' }}>
                             {h.complaint_id}
                           </td>
@@ -1389,6 +1603,225 @@ export default function HistoricalBmcView({ onSelectComplaintForMap }) {
                 }}
               >
                 Close Audit Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 6. ROLE & PURPOSE OF BMC HISTORICAL DATA EXPLANATORY MODAL */}
+      {showRoleExplanationModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '20px'
+          }}
+          onClick={() => setShowRoleExplanationModal(false)}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              maxWidth: '860px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #CBD5E1'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '24px 28px',
+                background: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)',
+                color: '#FFFFFF',
+                borderRadius: '16px 16px 0 0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ background: '#2563EB', color: '#FFF', padding: '3px 10px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase' }}>
+                    Architecture & Civic Intelligence
+                  </span>
+                  <span style={{ color: '#93C5FD', fontSize: '0.8rem', fontWeight: 600 }}>
+                    960,000 Records • 24 Wards • 2018–2024
+                  </span>
+                </div>
+                <h2 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                  The Strategic Role of BMC Historical Grievance Data
+                </h2>
+                <p style={{ margin: '6px 0 0 0', color: '#CBD5E1', fontSize: '0.86rem', lineHeight: '1.45' }}>
+                  Why this 960,000-record dataset was integrated into Sahayata and how it empowers Citizens, Engineers, and MLAs.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowRoleExplanationModal(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  color: '#FFF',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+              {/* Executive Summary */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '16px 20px', borderRadius: '12px' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Building2 size={18} color="#1D4ED8" />
+                  What is this Dataset?
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#334155', lineHeight: '1.55' }}>
+                  This dataset comprises <strong>960,000 real municipal complaints</strong> logged across all <strong>24 administrative wards (A to T) of Mumbai</strong> from 2018 through 2024. Each record contains <strong>35 detailed municipal attributes</strong>, including resolution days, departmental reassignments, contractor work quality ratings, material costs in INR, infrastructure age, and citizen satisfaction outcomes.
+                </p>
+              </div>
+
+              {/* Three Stakeholder Roles */}
+              <div>
+                <h4 style={{ margin: '0 0 14px 0', fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  How Each Stakeholder Uses This Historical Intelligence
+                </h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                  {/* Citizen Card */}
+                  <div style={{ background: '#EFF6FF', border: '1.5px solid #BFDBFE', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>👤</span>
+                      <strong style={{ color: '#1D4ED8', fontSize: '0.9rem' }}>For Citizens</strong>
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.8rem', color: '#1E3A8A', lineHeight: '1.5' }}>
+                      <li><strong>Realistic SLA Expectations:</strong> Know that road potholes take on average 15.4 days across Mumbai before filing.</li>
+                      <li><strong>Ward Track Record:</strong> Compare your ward's satisfaction rate against other wards.</li>
+                      <li><strong>Seasonal Awareness:</strong> Understand the 33.4% monsoon complaint surge and track recurring drainage choke points.</li>
+                    </ul>
+                  </div>
+
+                  {/* Ward Engineer Card */}
+                  <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>👷</span>
+                      <strong style={{ color: '#D97706', fontSize: '0.9rem' }}>For Ward Engineers</strong>
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.8rem', color: '#92400E', lineHeight: '1.5' }}>
+                      <li><strong>Budget & Material Forecasting:</strong> Reference 7-year historical costs to accurately budget asphalt and pipeline repairs.</li>
+                      <li><strong>Contractor Accountability:</strong> Check past work quality ratings (Poor, Fair, Good, Excellent) and defect liability claims.</li>
+                      <li><strong>Preventive Maintenance:</strong> Correlate aging infrastructure (10+ years) with chronic failure frequency.</li>
+                    </ul>
+                  </div>
+
+                  {/* MLA Card */}
+                  <div style={{ background: '#F5F3FF', border: '1.5px solid #DDD6FE', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>🏛️</span>
+                      <strong style={{ color: '#7C3AED' , fontSize: '0.9rem' }}>For MLAs & Legislators</strong>
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.8rem', color: '#5B21B6', lineHeight: '1.5' }}>
+                      <li><strong>Legislative Assembly Inquiries:</strong> Cite empirical BMC complaint volume and resolution rates during assembly debates.</li>
+                      <li><strong>Inter-Departmental Deadlocks:</strong> Audit cases with high reassignment counts (pass-the-buck between PWD, Drainage, and Power).</li>
+                      <li><strong>Equity & Slum Auditing:</strong> Review grievance response times across high slum-density wards.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Integrity & Technical Architecture */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '16px 20px', borderRadius: '12px' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={18} color="#059669" />
+                  Source Separation & Engineering Guarantees
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.8rem', color: '#475569' }}>
+                  <div>
+                    <strong style={{ color: '#0F172A' }}>• Strict Source Separation:</strong> All 960k records are read-only and strictly labeled <code>SOURCE: BMC_HISTORICAL</code>, keeping live citizen submissions (<code>SAHAYATA_LIVE</code>) completely distinct.
+                  </div>
+                  <div>
+                    <strong style={{ color: '#0F172A' }}>• No Fake GPS or Images:</strong> BMC data only provides ward codes and boolean flags. Sahayata maps wards by official centroids without fabricating artificial pinpoint coordinates.
+                  </div>
+                  <div>
+                    <strong style={{ color: '#0F172A' }}>• 9 B-Tree Indexes:</strong> Queries execute in ~20ms in SQLite without loading the raw 226 MB CSV into the browser bundle.
+                  </div>
+                  <div>
+                    <strong style={{ color: '#0F172A' }}>• 35-Field Dual Model:</strong> Every complaint preserves both the 35 original BMC columns and a normalized Sahayata adapter.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                padding: '16px 28px',
+                borderTop: '1px solid #E2E8F0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: '#F8FAFC',
+                borderRadius: '0 0 16px 16px',
+                flexWrap: 'wrap',
+                gap: '10px'
+              }}
+            >
+              <button
+                onClick={() => {
+                  setShowRoleExplanationModal(false);
+                  jumpToExplorerWithFilter(
+                    { severity: 'Critical' },
+                    '🔥 Showing 76,843 Critical Historical Grievances (Top Severity Cases across Mumbai)'
+                  );
+                }}
+                style={{
+                  background: '#EF4444',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  fontWeight: 700,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <AlertTriangle size={15} />
+                <span>Explore Critical Grievances Now →</span>
+              </button>
+
+              <button
+                onClick={() => setShowRoleExplanationModal(false)}
+                style={{
+                  background: '#0F172A',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '9px 20px',
+                  fontWeight: 700,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Close Explanation
               </button>
             </div>
           </div>
