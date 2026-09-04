@@ -228,9 +228,11 @@ export default function AuthCard({
     <div className="auth-main-content">
       {/* Brand Header */}
       <div className="auth-brand-header">
-        <div className="auth-logo-icon">
-          <Shield size={32} color="#F59E0B" />
-        </div>
+        <img 
+          src="/sahayata-logo.jpg" 
+          alt="Sahayata Logo" 
+          style={{ height: '56px', width: 'auto', margin: '0 auto 10px', display: 'block', objectFit: 'contain', borderRadius: '6px' }}
+        />
         <h1 className="auth-brand-title">Sahayata</h1>
         <p className="auth-brand-tagline">
           Help at Hand — <strong>Your Problem, Our Responsibility</strong>
@@ -453,8 +455,9 @@ export default function AuthCard({
                   </p>
                 </div>
               ) : (
-                <div className="auth-card-footer" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#64748B' }}>
-                  🔒 Official {selectedRole === 'mla' ? 'MLA' : 'Ward Official'} portal. Public registration is restricted.
+                <div className="auth-card-footer" style={{ textAlign: 'center', fontSize: '0.78rem', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <Lock size={13} />
+                  <span>Official {selectedRole === 'mla' ? 'MLA' : 'Ward Official'} portal. Public registration is restricted.</span>
                 </div>
               )}
             </div>

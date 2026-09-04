@@ -20,21 +20,27 @@ import {
   CheckCircle2,
   RefreshCw,
   Search,
-  Lock
+  Lock,
+  Bell,
+  Check,
+  Trash2,
+  Lightbulb,
+  Droplets,
+  HelpCircle
 } from 'lucide-react';
 import { CIVIC_DATA } from '../../data/civicData';
 
 const BASEMAPS = [
   {
     id: 'streets',
-    label: '🗺️ Daylight Streets',
+    label: 'Daylight Streets',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 19
   },
   {
     id: 'dark',
-    label: '🌙 Command Dark',
+    label: 'Command Dark',
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution: '&copy; CartoDB &copy; OpenStreetMap',
     subdomains: 'abcd',
@@ -42,7 +48,7 @@ const BASEMAPS = [
   },
   {
     id: 'satellite',
-    label: '🛰️ Satellite Aerial',
+    label: 'Satellite Aerial',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution: '&copy; Esri, Maxar, Earthstar Geographics',
     maxZoom: 18
@@ -97,10 +103,11 @@ function createMarkerIcon(r) {
         color:#FFFFFF;
         font-weight:800;
         font-size:12px;
+        font-family:var(--font-mono), monospace;
         box-shadow:0 4px 12px rgba(0,0,0,0.35);
         transition:transform 0.15s ease;
       ">
-        ${isVerified ? '✓' : score}
+        ${isVerified ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : score}
       </div>
     </div>
   `;
@@ -127,7 +134,7 @@ export default function InteractiveCivicMap({
   onReportAtLocation,
   onEndorseReport,
   readOnly = false,
-  title = "🗺️ Civic Radar & Ward GIS Command Map"
+  title = "Civic Radar & Ward GIS Command Map"
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -229,7 +236,7 @@ export default function InteractiveCivicMap({
       html: `
         <div style="position:relative; width:36px; height:36px; animation: bounceIn 0.3s ease;">
           <div style="width:36px; height:36px; background:#1D4ED8; border:3px solid #FFFFFF; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#FFF; box-shadow:0 6px 15px rgba(29,78,216,0.5);">
-            📍
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
           </div>
           <div style="position:absolute; bottom:-4px; left:14px; width:8px; height:8px; background:#1D4ED8; transform:rotate(45deg); border-right:2px solid #FFF; border-bottom:2px solid #FFF;"></div>
         </div>
@@ -350,10 +357,10 @@ export default function InteractiveCivicMap({
         });
 
         marker.bindTooltip(`
-          <div style="font-family:system-ui; padding:2px;">
-            <strong style="color:${baseColor};">${r.id}</strong>: ${r.title}
+          <div style="font-family:var(--font-sans), sans-serif; padding:2px;">
+            <strong style="color:${baseColor}; font-family:var(--font-mono);">${r.id}</strong>: ${r.title}
             <div style="font-size:11px; color:#64748B;">
-              ${isVerified ? '✅ Verified Resolved' : `Priority ${score}/100 • ${r.duplicateCount || 1} endorsements`}
+              ${isVerified ? 'Verified Resolved' : `Priority ${score}/100 • ${r.duplicateCount || 1} endorsements`}
             </div>
           </div>
         `, { sticky: true, className: 'civic-map-tooltip' });
@@ -374,7 +381,7 @@ export default function InteractiveCivicMap({
     const foundHotspot = HOTSPOTS.find(h => h.name.toLowerCase().includes(q));
     if (foundHotspot) {
       mapInstanceRef.current.flyTo(foundHotspot.coords, foundHotspot.zoom, { duration: 1.2 });
-      setSearchFeedback(`📍 Flew to ${foundHotspot.name}`);
+      setSearchFeedback(`Flew to ${foundHotspot.name}`);
       setTimeout(() => setSearchFeedback(null), 3000);
       return;
     }
@@ -386,7 +393,7 @@ export default function InteractiveCivicMap({
     if (foundReport) {
       mapInstanceRef.current.flyTo(foundReport.coords, 17, { duration: 1.2 });
       setSelectedReport(foundReport);
-      setSearchFeedback(`📍 Found Ticket ${foundReport.id}`);
+      setSearchFeedback(`Found Ticket ${foundReport.id}`);
       setTimeout(() => setSearchFeedback(null), 3000);
       return;
     }
@@ -403,7 +410,7 @@ export default function InteractiveCivicMap({
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
         mapInstanceRef.current.flyTo([lat, lon], 16, { duration: 1.2 });
-        setSearchFeedback(`📍 Found: ${data[0].display_name.split(',')[0]}`);
+        setSearchFeedback(`Found: ${data[0].display_name.split(',')[0]}`);
         setTimeout(() => setSearchFeedback(null), 3500);
       } else {
         setSearchFeedback("No match found in Ward H/West.");
@@ -451,7 +458,7 @@ export default function InteractiveCivicMap({
             className: 'civic-leaflet-div-icon'
           });
 
-          L.marker(coords, { icon: userIcon }).bindPopup("<strong>📍 You Are Here</strong>").addTo(userGroup);
+          L.marker(coords, { icon: userIcon }).bindPopup("<strong>You Are Here</strong>").addTo(userGroup);
           L.circle(coords, { radius: accuracy, color: '#3B82F6', fillColor: '#3B82F6', fillOpacity: 0.1, weight: 1 }).addTo(userGroup);
 
           userGroup.addTo(mapInstanceRef.current);
@@ -639,7 +646,7 @@ export default function InteractiveCivicMap({
                       }}
                     >
                       <span>{b.label}</span>
-                      {activeBasemap === b.id && <span>✓</span>}
+                      {activeBasemap === b.id && <Check size={14} />}
                     </div>
                   ))}
                 </div>
@@ -650,8 +657,9 @@ export default function InteractiveCivicMap({
 
         {/* Search Feedback Notification Toast */}
         {searchFeedback && (
-          <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', padding: '6px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600 }}>
-            {searchFeedback}
+          <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', padding: '6px 12px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <MapPin size={13} />
+            <span>{searchFeedback}</span>
           </div>
         )}
 
@@ -659,40 +667,49 @@ export default function InteractiveCivicMap({
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
           {[
             { id: 'all', label: `All Complaints (${reports.length})` },
-            { id: 'pothole', label: '🕳️ Potholes' },
-            { id: 'garbage', label: '🗑️ Garbage Dumps' },
-            { id: 'electricity', label: '💡 Streetlights' },
-            { id: 'water', label: '🚰 Water Leaks' },
-            { id: 'others', label: '📌 Others' },
-            { id: 'critical', label: '🚨 Critical Priority (≥80)' },
-            { id: 'overdue', label: '⏳ Overdue SLA' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveCategory(tab.id)}
-              style={{
-                background: activeCategory === tab.id ? '#1D4ED8' : '#FFFFFF',
-                color: activeCategory === tab.id ? '#FFFFFF' : '#475569',
-                border: activeCategory === tab.id ? '1px solid #1D4ED8' : '1px solid #CBD5E1',
-                padding: '6px 14px',
-                borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: activeCategory === tab.id ? 700 : 500,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease',
-                boxShadow: activeCategory === tab.id ? '0 2px 5px rgba(29, 78, 216, 0.25)' : 'none'
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+            { id: 'pothole', label: 'Potholes', Icon: AlertTriangle },
+            { id: 'garbage', label: 'Garbage Dumps', Icon: Trash2 },
+            { id: 'electricity', label: 'Streetlights', Icon: Lightbulb },
+            { id: 'water', label: 'Water Leaks', Icon: Droplets },
+            { id: 'others', label: 'Others', Icon: HelpCircle },
+            { id: 'critical', label: 'Critical Priority (≥80)', Icon: Flame },
+            { id: 'overdue', label: 'Overdue SLA', Icon: Clock }
+          ].map(tab => {
+            const Icon = tab.Icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveCategory(tab.id)}
+                style={{
+                  background: activeCategory === tab.id ? '#1D4ED8' : '#FFFFFF',
+                  color: activeCategory === tab.id ? '#FFFFFF' : '#475569',
+                  border: activeCategory === tab.id ? '1px solid #1D4ED8' : '1px solid #CBD5E1',
+                  padding: '6px 14px',
+                  borderRadius: '9999px',
+                  fontSize: '0.8rem',
+                  fontWeight: activeCategory === tab.id ? 700 : 500,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                  boxShadow: activeCategory === tab.id ? '0 2px 5px rgba(29, 78, 216, 0.25)' : 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
+                {Icon && <Icon size={13} />}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Hotspots Quick-Jump Bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', fontSize: '0.78rem', color: '#64748B' }}>
-          <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>📍 Quick Jump:</span>
+          <span style={{ fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <MapPin size={12} /> Quick Jump:
+          </span>
           {HOTSPOTS.map(h => (
             <button
               key={h.name}
@@ -783,7 +800,7 @@ export default function InteractiveCivicMap({
                 onClick={clearDroppedPin}
                 style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 0 }}
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
             <p style={{ fontSize: '0.78rem', color: '#475569', margin: '0 0 10px 0', lineHeight: 1.4 }}>
@@ -885,7 +902,7 @@ export default function InteractiveCivicMap({
             {/* Drawer Header */}
             <div style={{ padding: '14px 16px', background: '#0F172A', color: '#FFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <span style={{ fontSize: '0.72rem', color: '#38BDF8', fontWeight: 800 }}>{selectedReport.id}</span>
+                <span style={{ fontSize: '0.72rem', color: '#38BDF8', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{selectedReport.id}</span>
                 <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#FFF' }}>
                   {selectedReport.categoryLabel}
                 </h4>
@@ -893,9 +910,9 @@ export default function InteractiveCivicMap({
               <button
                 type="button"
                 onClick={() => setSelectedReport(null)}
-                style={{ background: 'transparent', border: 'none', color: '#94A3B8', fontSize: '1.2rem', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 
@@ -921,7 +938,13 @@ export default function InteractiveCivicMap({
                     fontWeight: 700
                   }}
                 >
-                  {selectedReport.status === 'verified' ? '✓ VERIFIED FIXED' : selectedReport.status?.toUpperCase()}
+                  {selectedReport.status === 'verified' ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <Check size={11} /> VERIFIED FIXED
+                    </span>
+                  ) : (
+                    selectedReport.status?.toUpperCase()
+                  )}
                 </span>
               </div>
 
@@ -943,6 +966,7 @@ export default function InteractiveCivicMap({
                     style={{
                       fontSize: '0.9rem',
                       fontWeight: 800,
+                      fontFamily: 'var(--font-display)',
                       color: (selectedReport.priority?.finalScore || selectedReport.priorityScore || 70) >= 80 ? '#DC2626' : '#D97706'
                     }}
                   >
@@ -960,7 +984,9 @@ export default function InteractiveCivicMap({
                   />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748B', marginTop: '6px' }}>
-                  <span>{selectedReport.criticalZone ? `🏫 ${selectedReport.criticalZone}` : 'Ward Corridor'}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <Shield size={11} /> {selectedReport.criticalZone || 'Ward Corridor'}
+                  </span>
                   <span>{selectedReport.duplicateCount || 1} Community Endorsements</span>
                 </div>
               </div>
@@ -1033,7 +1059,7 @@ export default function InteractiveCivicMap({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
                       {isSevere && (
                         <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          ⚠️ Recommended — high severity
+                          <AlertTriangle size={12} /> Recommended — high severity
                         </div>
                       )}
                       <button
@@ -1060,7 +1086,10 @@ export default function InteractiveCivicMap({
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        <span>{selectedReport.mlaEscalated ? '🔔 Ward Notified (Escalated)' : '🔔 Notify Ward (Escalate)'}</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <Bell size={14} />
+                          {selectedReport.mlaEscalated ? 'Ward Notified (Escalated)' : 'Notify Ward (Escalate)'}
+                        </span>
                       </button>
                     </div>
                   );

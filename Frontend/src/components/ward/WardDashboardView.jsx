@@ -24,7 +24,11 @@ import {
   HardHat,
   Truck,
   Layers,
-  RefreshCw
+  RefreshCw,
+  Bell,
+  Package,
+  Settings,
+  Check
 } from 'lucide-react';
 import { api } from '../../api/client';
 import ComplaintMiniMap from '../map/ComplaintMiniMap';
@@ -196,7 +200,7 @@ export default function WardDashboardView({
             const currentCoords = [pos.coords.latitude, pos.coords.longitude];
             const dist = getDistanceMeters(currentCoords, selectedReportForModal.coords);
             if (dist > 100) {
-              setGeofenceWarning(`⚠️ Geo-Fence Notice: Photo captured ~${dist}m from complaint location (100m threshold). Officer verification required.`);
+              setGeofenceWarning(`Geo-Fence Notice: Photo captured ~${dist}m from complaint location (100m threshold). Officer verification required.`);
             } else {
               setGeofenceWarning(null);
             }
@@ -504,8 +508,9 @@ export default function WardDashboardView({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{ width: '10px', height: '10px', borderRadius: '9999px', background: c.color }} />
                       <div>
-                        <div style={{ fontSize: '0.84rem', fontWeight: 700, color: isActive ? '#1D4ED8' : '#1E293B' }}>
-                          {c.name} {isActive && '✓ (Active Filter)'}
+                        <div style={{ fontSize: '0.84rem', fontWeight: 700, color: isActive ? '#1D4ED8' : '#1E293B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>{c.name}</span>
+                          {isActive && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.74rem' }}><Check size={12} /> (Active Filter)</span>}
                         </div>
                         <div style={{ fontSize: '0.74rem', color: '#64748B' }}>{c.category} • {c.count} citizen endorsements</div>
                       </div>
@@ -606,12 +611,12 @@ export default function WardDashboardView({
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', fontFamily: 'monospace' }}>
+                        <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', fontFamily: 'var(--font-mono)' }}>
                           {r.id}
                         </span>
                         {r.mlaEscalated && (
-                          <span style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '1px 6px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800 }}>
-                            🔔 MLA Escalated
+                          <span style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '1px 6px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <Bell size={10} /> MLA Escalated
                           </span>
                         )}
                       </div>
@@ -622,10 +627,19 @@ export default function WardDashboardView({
                           padding: '2px 8px',
                           borderRadius: '9999px',
                           background: isOverdue ? '#FEE2E2' : '#EFF6FF',
-                          color: isOverdue ? '#DC2626' : '#2563EB'
+                          color: isOverdue ? '#DC2626' : '#2563EB',
+                          fontFamily: 'var(--font-mono)'
                         }}
                       >
-                        {isOverdue ? `🚨 Overdue by ${r.elapsedHours - r.slaHours}h` : `⏳ ${remaining}h remaining`}
+                        {isOverdue ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <AlertTriangle size={11} /> Overdue by {r.elapsedHours - r.slaHours}h
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <Clock size={11} /> {remaining}h remaining
+                          </span>
+                        )}
                       </span>
                     </div>
 
@@ -722,8 +736,8 @@ export default function WardDashboardView({
               color: '#1D4ED8'
             }}
           >
-            <span>
-              📍 Filtered by Cluster: <strong>{selectedClusterFilter}</strong> (Showing {filteredReports.length} of {reports.length} tickets)
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <MapPin size={13} /> Filtered by Cluster: <strong>{selectedClusterFilter}</strong> (Showing {filteredReports.length} of {reports.length} tickets)
             </span>
             <button
               type="button"
@@ -740,7 +754,7 @@ export default function WardDashboardView({
                 gap: '4px'
               }}
             >
-              Clear Filter ✕
+              Clear Filter <X size={13} />
             </button>
           </div>
         )}
@@ -769,12 +783,12 @@ export default function WardDashboardView({
                     onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td style={{ padding: '14px 16px', fontWeight: 700, fontFamily: 'monospace', color: '#1E3A5F' }}>
+                    <td style={{ padding: '14px 16px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#1E3A5F' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
                         <span>{r.id}</span>
                         {r.mlaEscalated && (
-                          <span style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
-                            🔔 MLA Escalated
+                          <span style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <Bell size={10} /> MLA Escalated
                           </span>
                         )}
                       </div>
@@ -791,7 +805,8 @@ export default function WardDashboardView({
                           borderRadius: '9999px',
                           fontSize: '0.76rem',
                           background: (r.priorityScore || 70) >= 80 ? '#FEE2E2' : '#FEF3C7',
-                          color: (r.priorityScore || 70) >= 80 ? '#DC2626' : '#D97706'
+                          color: (r.priorityScore || 70) >= 80 ? '#DC2626' : '#D97706',
+                          fontFamily: 'var(--font-display)'
                         }}
                       >
                         {r.priorityScore || 75}/100
@@ -799,12 +814,12 @@ export default function WardDashboardView({
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       {isOverdue ? (
-                        <span style={{ color: '#DC2626', fontWeight: 700 }}>
-                          🚨 Overdue ({r.elapsedHours}h / {r.slaHours}h)
+                        <span style={{ color: '#DC2626', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)' }}>
+                          <AlertTriangle size={13} /> Overdue ({r.elapsedHours}h / {r.slaHours}h)
                         </span>
                       ) : (
-                        <span style={{ color: '#059669', fontWeight: 600 }}>
-                          On Track ({r.elapsedHours}h / {r.slaHours}h)
+                        <span style={{ color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)' }}>
+                          <Clock size={13} /> On Track ({r.elapsedHours}h / {r.slaHours}h)
                         </span>
                       )}
                     </td>
@@ -896,12 +911,12 @@ export default function WardDashboardView({
             <div style={{ padding: '20px 24px', background: '#1E3A5F', color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '0.74rem', background: '#F59E0B', color: '#0F172A', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                  <span style={{ fontSize: '0.74rem', background: '#F59E0B', color: '#0F172A', padding: '2px 8px', borderRadius: '4px', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
                     {selectedReportForModal.id}
                   </span>
                   {selectedReportForModal.mlaEscalated && (
-                    <span style={{ fontSize: '0.72rem', background: '#DC2626', color: '#FFFFFF', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
-                      🔔 MLA Escalated
+                    <span style={{ fontSize: '0.72rem', background: '#DC2626', color: '#FFFFFF', padding: '2px 8px', borderRadius: '4px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <Bell size={10} /> MLA Escalated
                     </span>
                   )}
                 </div>
@@ -927,8 +942,8 @@ export default function WardDashboardView({
                 <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <ShieldAlert size={20} color="#DC2626" />
                   <div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#991B1B' }}>
-                      🔔 MLA Escalation Notice
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#991B1B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Bell size={14} /> MLA Escalation Notice
                     </div>
                     <div style={{ fontSize: '0.76rem', color: '#B91C1C' }}>
                       Constituency MLA flagged this issue for urgent ward priority intervention and fast-track contractor resolution.
@@ -1097,10 +1112,13 @@ export default function WardDashboardView({
                                     color: '#3730A3',
                                     border: '1px solid #C7D2FE',
                                     padding: '3px 8px',
-                                    borderRadius: '6px'
+                                    borderRadius: '6px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
                                   }}
                                 >
-                                  ⚙️ {item}
+                                  <Settings size={11} /> {item}
                                 </span>
                               ))}
                             </div>
@@ -1125,10 +1143,13 @@ export default function WardDashboardView({
                                     color: '#065F46',
                                     border: '1px solid #A7F3D0',
                                     padding: '3px 8px',
-                                    borderRadius: '6px'
+                                    borderRadius: '6px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
                                   }}
                                 >
-                                  📦 {item}
+                                  <Package size={11} /> {item}
                                 </span>
                               ))}
                             </div>
@@ -1158,8 +1179,8 @@ export default function WardDashboardView({
 
               {/* Grievance Mini-Map & Impact Buffer */}
               <div>
-                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B', marginBottom: '6px' }}>
-                  📍 Grievance Location & 100m Impact Radius
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <MapPin size={13} /> Grievance Location & 100m Impact Radius
                 </div>
                 <ComplaintMiniMap
                   coords={selectedReportForModal.coords}
@@ -1228,8 +1249,9 @@ export default function WardDashboardView({
 
                   {/* Geo-fence mismatch soft warning */}
                   {geofenceWarning && (
-                    <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', color: '#B91C1C', padding: '10px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, marginBottom: '12px' }}>
-                      {geofenceWarning}
+                    <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', color: '#B91C1C', padding: '10px 12px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                      <span>{geofenceWarning}</span>
                     </div>
                   )}
 
@@ -1519,7 +1541,7 @@ export default function WardDashboardView({
                   const currentCoords = [pos.coords.latitude, pos.coords.longitude];
                   const dist = getDistanceMeters(currentCoords, selectedReportForModal.coords);
                   if (dist > 100) {
-                    setGeofenceWarning(`⚠️ Geo-Fence Notice: Photo captured ~${dist}m from complaint location (100m threshold). Officer verification required.`);
+                    setGeofenceWarning(`Geo-Fence Notice: Photo captured ~${dist}m from complaint location (100m threshold). Officer verification required.`);
                   } else {
                     setGeofenceWarning(null);
                   }
