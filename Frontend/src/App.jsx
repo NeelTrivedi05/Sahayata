@@ -50,7 +50,20 @@ import {
   Check,
   RotateCcw,
   Hash,
-  EyeOff
+  EyeOff,
+  HardHat,
+  Bell,
+  Trash2,
+  Zap,
+  Droplets,
+  BarChart3,
+  FileText,
+  Lightbulb,
+  CheckSquare,
+  Send,
+  Sprout,
+  HelpCircle,
+  Database
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import RoleSelectLanding from './components/auth/RoleSelectLanding';
@@ -205,7 +218,7 @@ export default function App() {
               });
               showToast({
                 type: 'info',
-                title: '🚨 Live Complaint Filed',
+                title: 'Live Complaint Filed',
                 message: `${newRep.categoryLabel || newRep.category}: ${newRep.title} (${newRep.address || 'Ward 142'})`
               });
             } else if (payload.event === 'REPORT_UPDATED' && payload.data) {
@@ -214,7 +227,7 @@ export default function App() {
               setSelectedVerifyReport(prev => prev && prev.id === updatedRep.id ? { ...prev, ...updatedRep } : prev);
               showToast({
                 type: 'info',
-                title: '⚡ Live Status Updated',
+                title: 'Live Status Updated',
                 message: `Ticket ${updatedRep.id} updated to ${updatedRep.status} (${updatedRep.categoryLabel || updatedRep.category})`
               });
             }
@@ -266,14 +279,14 @@ export default function App() {
 
   // Define All Content Tabs filtered strictly by RBAC (Citizen has Report Issue as Tab #1)
   const allNavTabs = [
-    { id: 'report', label: '📸 Report an Issue', roles: ['citizen'] },
-    { id: 'ward_overview', label: '📊 Ward Overview Desk', roles: ['ward_engineer'] },
-    { id: 'mla', label: '🏛️ MLA Oversight Radar', roles: ['mla'] },
-    { id: 'radar', label: '🗺️ Civic Radar & Map', roles: ['citizen', 'ward_engineer', 'mla'] },
-    { id: 'pipeline', label: `📋 Track Complaints (${reports.length})`, roles: ['citizen', 'ward_engineer', 'mla'] },
-    { id: 'priority', label: '⚡ Priority Queue', roles: ['ward_engineer', 'mla'] },
-    { id: 'verify', label: '🔍 Verify Resolutions', roles: ['citizen'] },
-    { id: 'bmc_historical', label: '🏛️ BMC Historical Intel (960k)', roles: ['citizen', 'ward_engineer', 'mla'] }
+    { id: 'report', label: 'Report an Issue', icon: Camera, roles: ['citizen'] },
+    { id: 'ward_overview', label: 'Ward Overview Desk', icon: BarChart3, roles: ['ward_engineer'] },
+    { id: 'mla', label: 'MLA Oversight Radar', icon: Landmark, roles: ['mla'] },
+    { id: 'radar', label: 'Civic Radar & Map', icon: Compass, roles: ['citizen', 'ward_engineer', 'mla'] },
+    { id: 'pipeline', label: `Track Complaints (${reports.length})`, icon: FileText, roles: ['citizen', 'ward_engineer', 'mla'] },
+    { id: 'priority', label: 'Priority Queue', icon: Zap, roles: ['ward_engineer', 'mla'] },
+    { id: 'verify', label: 'Verify Resolutions', icon: CheckSquare, roles: ['citizen'] },
+    { id: 'bmc_historical', label: 'BMC Historical Intel (960k)', icon: Database, roles: ['citizen', 'ward_engineer', 'mla'] }
   ];
 
   const availableNavTabs = allNavTabs.filter(t => t.roles.includes(currentRole));
@@ -545,7 +558,7 @@ export default function App() {
         )
       );
     }
-    showToast(`🔔 Ward Notified! Ticket ${reportId} escalated directly to Executive Engineer.`);
+    showToast(`Ward Notified! Ticket ${reportId} escalated directly to Executive Engineer.`);
   };
 
   // 1. Role-Select Landing Screen (shown if !currentUser and showLanding is true)
@@ -584,7 +597,7 @@ export default function App() {
             ← Back to Role Select
           </button>
           <div className="auth-brand-badge">
-            <span>🏛️ BMC & Govt. of Maharashtra Portal</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Building2 size={14} /> BMC & Govt. of Maharashtra Portal</span>
           </div>
         </div>
         <AuthCard
@@ -605,39 +618,12 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', color: '#0F172A' }}>
-      {/* 1. National/Municipal Public Service Bar */}
-      <div
-        style={{
-          background: '#0F172A',
-          color: '#94A3B8',
-          padding: '8px 32px',
-          fontSize: '0.78rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '8px',
-          borderBottom: '1px solid #1E293B'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '1rem' }}>🇮🇳</span>
-          <span>
-            <strong style={{ color: '#E2E8F0' }}>Govt. of Maharashtra & BMC</strong> • Citizen Civic Redressal & Anti-Deadlock Portal
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span>Constituency: <strong>Bandra West / Mumbai Suburban</strong></span>
-          <span>Municipal Helpline: <strong style={{ color: '#38BDF8' }}>1916</strong></span>
-        </div>
-      </div>
-
-      {/* 2. Main App Header */}
+      {/* Main App Header */}
       <header
         style={{
           background: '#FFFFFF',
           borderBottom: '1px solid #E2E8F0',
-          padding: '16px 32px',
+          padding: '14px 32px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -647,48 +633,22 @@ export default function App() {
         }}
       >
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
           onClick={() => setActiveTab('radar')}
         >
-          <div
-            style={{
-              width: '42px',
-              height: '42px',
-              background: 'linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%)',
-              color: '#FFF',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: '1.25rem',
-              boxShadow: '0 4px 10px rgba(29, 78, 216, 0.3)'
-            }}
-          >
-            S
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#0F172A', margin: 0 }}>
-                Sahayata
-              </h1>
-              <span
-                style={{
-                  background: '#EFF6FF',
-                  color: '#1D4ED8',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  border: '1px solid #BFDBFE'
-                }}
-              >
-                CivicCare v2.0
-              </span>
-            </div>
-            <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
-              AI Issue Classification • Duplicate Intercept • Anti-Deadlock SLAs
-            </p>
+          <img 
+            src="/sahayata-logo.jpg" 
+            alt="Sahayata Logo" 
+            className="h-8 w-auto object-contain rounded-md shadow-sm"
+          />
+          <div className="flex items-center gap-2">
+            <span style={{ fontFamily: 'var(--font-display)' }} className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Sahayata
+            </span>
+            <span className="text-slate-300 dark:text-slate-600 font-light">|</span>
+            <span style={{ fontFamily: 'var(--font-display)' }} className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Civic Action, Resolved.
+            </span>
           </div>
         </div>
 
@@ -706,10 +666,10 @@ export default function App() {
               borderRadius: '10px'
             }}
           >
-            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: currentRole === 'ward_engineer' ? '#D97706' : currentRole === 'mla' ? '#7C3AED' : '#1D4ED8' }}>
-              {currentRole === 'ward_engineer' && '👷 Ward H/West Engineering Desk'}
-              {currentRole === 'mla' && '🏛️ MLA Oversight (Shri Ashish Shelar)'}
-              {currentRole === 'citizen' && '👤 Citizen Auditor'}
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 700, color: currentRole === 'ward_engineer' ? '#D97706' : currentRole === 'mla' ? '#7C3AED' : '#1D4ED8' }}>
+              {currentRole === 'ward_engineer' && <><HardHat size={14} /> Ward H/West Engineering Desk</>}
+              {currentRole === 'mla' && <><Landmark size={14} /> MLA Oversight (Shri Ashish Shelar)</>}
+              {currentRole === 'citizen' && <><User size={14} /> Citizen Auditor</>}
             </span>
           </div>
 
@@ -730,7 +690,7 @@ export default function App() {
             title="Civic Karma earned by reporting and verifying neighborhood issues"
           >
             <Star size={14} fill="#059669" color="#059669" />
-            <span>{civicKarma} Karma</span>
+            <span style={{ fontFamily: 'var(--font-display)' }}>{civicKarma} Karma</span>
           </div>
 
           {/* User Auth Section */}
@@ -923,25 +883,33 @@ export default function App() {
             whiteSpace: 'nowrap'
           }}
         >
-          {availableNavTabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderBottom: activeTab === tab.id ? '3px solid #1D4ED8' : '3px solid transparent',
-                color: activeTab === tab.id ? '#1D4ED8' : '#64748B',
-                padding: '14px 4px',
-                fontSize: '0.88rem',
-                fontWeight: activeTab === tab.id ? 700 : 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {availableNavTabs.map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: activeTab === tab.id ? '3px solid #1D4ED8' : '3px solid transparent',
+                  color: activeTab === tab.id ? '#1D4ED8' : '#64748B',
+                  padding: '14px 4px',
+                  fontSize: '0.88rem',
+                  fontWeight: activeTab === tab.id ? 700 : 600,
+                  fontFamily: 'var(--font-display)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                {Icon && <Icon size={16} />}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </nav>
       )}
 
@@ -964,12 +932,12 @@ export default function App() {
           gap: '8px'
         }}
       >
-        <span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
           Current Workspace:{' '}
-          <strong>
-            {currentRole === 'citizen' && '👤 Citizen Portal (Report issues, endorse duplicates, verify repairs)'}
-            {currentRole === 'ward_engineer' && '👷 Ward H/West Engineering Desk (Inspect intake, assign contractors, upload post-fix proof)'}
-            {currentRole === 'mla' && '🏛️ Legislative Oversight Desk (Monitor SLA compliance, overdue hotspots, contractor accountability)'}
+          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            {currentRole === 'citizen' && <><User size={13} /> Citizen Portal (Report issues, endorse duplicates, verify repairs)</>}
+            {currentRole === 'ward_engineer' && <><HardHat size={13} /> Ward H/West Engineering Desk (Inspect intake, assign contractors, upload post-fix proof)</>}
+            {currentRole === 'mla' && <><Landmark size={13} /> Legislative Oversight Desk (Monitor SLA compliance, overdue hotspots, contractor accountability)</>}
           </strong>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1026,7 +994,7 @@ export default function App() {
                 address
               }));
               setActiveTab('report');
-              showToast(`📍 Selected location on map: ${address.split('(')[0]}`);
+              showToast(`Selected location on map: ${address.split('(')[0]}`);
             }}
             onEndorseReport={async (reportId) => {
               try {
@@ -1367,7 +1335,7 @@ function ReportIssueView({
       category: 'pothole',
       categoryLabel: 'Road Hazard & Pothole',
       name: 'Road Pothole & Broken Street',
-      icon: '🕳️',
+      icon: AlertTriangle,
       desc: 'Road crater, broken pavement, loose pavers',
       badge: 'SLA: 24h',
       color: '#DC2626'
@@ -1377,7 +1345,7 @@ function ReportIssueView({
       category: 'garbage',
       categoryLabel: 'Solid Waste & Garbage',
       name: 'Garbage & Overflowing Waste',
-      icon: '🗑️',
+      icon: Trash2,
       desc: 'Uncollected trash bins, street litter pile',
       badge: 'SLA: 12h',
       color: '#D97706'
@@ -1387,7 +1355,7 @@ function ReportIssueView({
       category: 'electricity',
       categoryLabel: 'Electrical & Streetlight',
       name: 'Streetlight Not Working',
-      icon: '💡',
+      icon: Lightbulb,
       desc: 'Dark road at night, broken light pole',
       badge: 'SLA: 24h',
       color: '#CA8A04'
@@ -1397,7 +1365,7 @@ function ReportIssueView({
       category: 'water',
       categoryLabel: 'Water Leak & Drainage',
       name: 'Water Pipe Burst & Leakage',
-      icon: '🚰',
+      icon: Droplets,
       desc: 'Clean drinking water wasted on the street',
       badge: 'SLA: 18h',
       color: '#2563EB'
@@ -1407,7 +1375,7 @@ function ReportIssueView({
       category: 'water',
       categoryLabel: 'Open Drain & Waterlogging',
       name: 'Open Drain & Dirty Water',
-      icon: '🚧',
+      icon: Wrench,
       desc: 'Blocked gutter, stagnant dirty water, mosquito hazard',
       badge: 'SLA: 24h',
       color: '#059669'
@@ -1417,7 +1385,7 @@ function ReportIssueView({
       category: 'pothole',
       categoryLabel: 'Fallen Tree / Road Hazard',
       name: 'Fallen Tree & Dangerous Branch',
-      icon: '🌳',
+      icon: AlertCircle,
       desc: 'Tree fallen on road or footpath, tangled in wires',
       badge: 'SLA: 12h',
       color: '#166534'
@@ -1427,7 +1395,7 @@ function ReportIssueView({
       category: 'others',
       categoryLabel: 'Others / None of the Categories',
       name: 'Others / None of the Categories',
-      icon: '📌',
+      icon: HelpCircle,
       desc: 'Non-civic photo or unlisted municipal issue',
       badge: 'Non-Civic / Blocked',
       color: '#64748B'
@@ -1571,7 +1539,7 @@ function ReportIssueView({
       >
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ECFDF5', color: '#065F46', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 800, marginBottom: '6px' }}>
-            <span>🌱</span>
+            <Sprout size={14} color="#059669" />
             <span>Citizen Grievance Intake Desk • Ward H/West</span>
           </div>
           <h2 style={{ fontSize: '1.65rem', fontWeight: 900, color: '#0F172A', margin: '2px 0 4px', letterSpacing: '-0.02em' }}>
@@ -1646,7 +1614,7 @@ function ReportIssueView({
               }}
             >
               <Camera size={20} />
-              <span>📸 Live Camera Viewfinder</span>
+              <span>Live Camera Viewfinder</span>
             </button>
 
             <button
@@ -1677,7 +1645,7 @@ function ReportIssueView({
               ) : (
                 <>
                   <Upload size={20} />
-                  <span>📁 Upload Photo</span>
+                  <span>Upload Photo</span>
                 </>
               )}
             </button>
@@ -1698,72 +1666,46 @@ function ReportIssueView({
                 color: '#166534'
               }}
             >
-              <RefreshCw className="animate-spin" size={20} color="#16A34A" />
+              <RefreshCw className="animate-spin" size={20} color="#059669" />
               <div>
-                <div style={{ fontWeight: 800, fontSize: '0.92rem' }}>AI Vision Scanning in Progress...</div>
+                <div style={{ fontWeight: 800, fontSize: '0.94rem' }}>
+                  AI Computer Vision Engine Analyzing Image...
+                </div>
                 <div style={{ fontSize: '0.8rem', color: '#15803D' }}>
-                  Analyzing pixel features to categorize problem, estimate severity, and match municipal SLA
+                  Running MobileNet multi-class inference to classify municipal hazard...
                 </div>
               </div>
             </div>
           )}
 
-          {/* Photo Preview Container */}
+          {/* Photo Preview Strip */}
           {capturedPhoto ? (
-            <div
-              style={{
-                position: 'relative',
-                borderRadius: '14px',
-                overflow: 'hidden',
-                border: '2px solid #10B981',
-                background: '#0F172A',
-                maxHeight: '260px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
+            <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '2px solid #10B981', maxHeight: '280px', display: 'flex', justifyContent: 'center', background: '#0F172A' }}>
               <img
                 src={capturedPhoto}
-                alt="Captured Grievance"
-                style={{ width: '100%', maxHeight: '260px', objectFit: 'contain' }}
+                alt="Captured Evidence"
+                style={{ maxHeight: '280px', width: 'auto', objectFit: 'contain' }}
               />
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  left: '12px',
-                  background: 'rgba(5, 150, 105, 0.9)',
-                  backdropFilter: 'blur(4px)',
-                  color: '#FFFFFF',
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <CheckCircle2 size={15} />
-                <span>Photo Ready for Municipal Team</span>
-              </div>
-              <div style={{ position: 'absolute', bottom: '12px', right: '12px', display: 'flex', gap: '8px' }}>
+              <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setIsWebcamCaptureOpen(true)}
                   style={{
                     background: 'rgba(15, 23, 42, 0.85)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    border: 'none',
                     color: '#FFF',
                     padding: '6px 12px',
                     borderRadius: '8px',
                     fontSize: '0.76rem',
                     fontWeight: 700,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
                   }}
                 >
-                  🔄 Retake Photo
+                  <RotateCcw size={13} />
+                  <span>Retake Photo</span>
                 </button>
                 <button
                   type="button"
@@ -1779,10 +1721,14 @@ function ReportIssueView({
                     borderRadius: '8px',
                     fontSize: '0.76rem',
                     fontWeight: 700,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
                   }}
                 >
-                  ✕ Remove
+                  <X size={13} />
+                  <span>Remove</span>
                 </button>
               </div>
             </div>
@@ -1798,7 +1744,7 @@ function ReportIssueView({
                 fontSize: '0.86rem'
               }}
             >
-              No photo taken yet. Click <strong>"📸 Live Camera Viewfinder"</strong> or <strong>"📁 Upload Photo"</strong> above for instant AI classification.
+              No photo taken yet. Click <strong>"Live Camera Viewfinder"</strong> or <strong>"Upload Photo"</strong> above for instant AI classification.
             </div>
           )}
 
@@ -1836,10 +1782,13 @@ function ReportIssueView({
                   padding: '4px 10px',
                   borderRadius: '9999px',
                   background: aiResult.category === 'others' ? '#FEE2E2' : '#D1FAE5',
-                  color: aiResult.category === 'others' ? '#991B1B' : '#065F46'
+                  color: aiResult.category === 'others' ? '#991B1B' : '#065F46',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px'
                 }}
               >
-                {aiResult.category === 'others' ? '⚠️ Non-Civic Image' : '✓ Auto-Selected'}
+                {aiResult.category === 'others' ? <><AlertTriangle size={12} /> Non-Civic Image</> : <><Check size={12} /> Auto-Selected</>}
               </span>
             </div>
           )}
@@ -1938,15 +1887,17 @@ function ReportIssueView({
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span style={{ fontSize: '2.4rem', lineHeight: 1 }}>{cat.icon}</span>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: `${cat.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {React.createElement(cat.icon, { size: 22, color: cat.color })}
+                  </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ fontSize: '1rem', fontWeight: 800, color: isSelected ? '#065F46' : '#0F172A' }}>
                         {cat.name}
                       </div>
                       {isSelected && (
-                        <span style={{ background: '#10B981', color: '#FFFFFF', padding: '2px 8px', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 800 }}>
-                          ✓ Selected {aiResult && aiResult.category === cat.category ? '(AI Detected)' : ''}
+                        <span style={{ background: '#10B981', color: '#FFFFFF', padding: '2px 8px', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <Check size={12} /> Selected {aiResult && aiResult.category === cat.category ? '(AI Detected)' : ''}
                         </span>
                       )}
                     </div>
@@ -2027,8 +1978,8 @@ function ReportIssueView({
                 {geo.loading
                   ? 'Detecting your GPS location...'
                   : geo.coords
-                  ? `✓ GPS Detected: ${geo.address || 'Ward H/West (Mumbai)'}`
-                  : '📍 Tap to Detect My Current Location (GPS)'}
+                  ? `GPS Detected: ${geo.address || 'Ward H/West (Mumbai)'}`
+                  : 'Tap to Detect My Current Location (GPS)'}
               </span>
             </button>
 
@@ -2074,8 +2025,9 @@ function ReportIssueView({
               />
             </div>
 
-            <div style={{ background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.82rem', color: '#64748B' }}>
-              📍 <strong>Assigned Area:</strong> Ward H/West (Bandra West & Khar) • Fast-response municipal squad
+            <div style={{ background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <MapPin size={14} color="#1D4ED8" />
+              <span><strong>Assigned Area:</strong> Ward H/West (Bandra West & Khar) • Fast-response municipal squad</span>
             </div>
           </div>
         </div>
@@ -2098,12 +2050,9 @@ function ReportIssueView({
                   fontSize: '0.88rem'
                 }}
               >
-                <AlertTriangle size={22} color="#DC2626" style={{ flexShrink: 0 }} />
+                <AlertCircle size={20} color="#DC2626" />
                 <div>
-                  <strong>Non-Civic Image Detected ({selectedSimpleCategory.categoryLabel}):</strong>
-                  <div style={{ marginTop: '2px', fontSize: '0.8rem', color: '#7F1D1D' }}>
-                    Submission is blocked. Please take or upload a photo of a real municipal hazard (such as a pothole, garbage dump, or water leak).
-                  </div>
+                  <strong>Non-Civic Issue Warning:</strong> This grievance does not match actionable BMC categories (potholes, garbage, streetlights, or drainage).
                 </div>
               </div>
               <button
@@ -2126,7 +2075,8 @@ function ReportIssueView({
                   opacity: 0.75
                 }}
               >
-                🚫 Submission Blocked (Non-Civic Image)
+                <AlertCircle size={18} />
+                <span>Submission Blocked (Non-Civic Image)</span>
               </button>
             </div>
           ) : (
@@ -2151,7 +2101,8 @@ function ReportIssueView({
                 transition: 'all 0.15s ease'
               }}
             >
-              <span>🚀 Submit Complaint to Ward Office</span>
+              <Send size={18} />
+              <span>Submit Complaint to Ward Office</span>
             </button>
           )}
           <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2222,7 +2173,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
             const currentCoords = [pos.coords.latitude, pos.coords.longitude];
             const dist = getDistanceMeters(currentCoords, resolvingTicket.coords);
             if (dist > 100) {
-              setResolveGeofenceNotice(`⚠️ Geo-Fence Warning: Device is ~${dist}m from grievance location (100m radius). Confirming manual override.`);
+              setResolveGeofenceNotice(`Geo-Fence Warning: Device is ~${dist}m from grievance location (100m radius). Confirming manual override.`);
             } else {
               setResolveGeofenceNotice(null);
             }
@@ -2278,7 +2229,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#1D4ED8', fontWeight: 800, fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#1D4ED8', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
                       {r.id}
                     </span>
                     <span
@@ -2303,10 +2254,14 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                           padding: '2px 8px',
                           borderRadius: '4px',
                           fontSize: '0.72rem',
-                          fontWeight: 700
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontFamily: 'var(--font-mono)'
                         }}
                       >
-                        ⚠️ SLA BREACHED (+{p.overdueHours}h)
+                        <AlertTriangle size={12} /> SLA BREACHED (+{p.overdueHours}h)
                       </span>
                     )}
                   </div>
@@ -2355,8 +2310,8 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
               </div>
 
               {/* 6-Stage Progress Stepper */}
-              <div style={{ margin: '20px 0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+              <div style={{ margin: '20px 0 16px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
                   <div
                     style={{
                       position: 'absolute',
@@ -2365,34 +2320,29 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                       right: '20px',
                       height: '2px',
                       background: '#E2E8F0',
-                      zIndex: 1
+                      zIndex: 0
                     }}
                   />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '14px',
-                      left: '20px',
-                      width: `${((r.statusStep - 1) / 5) * 100}%`,
-                      height: '2px',
-                      background: '#1D4ED8',
-                      zIndex: 1,
-                      transition: 'width 0.3s ease'
-                    }}
-                  />
-
-                  {steps.map(step => {
+                  {[
+                    { num: 1, label: 'Reported' },
+                    { num: 2, label: 'Clustered' },
+                    { num: 3, label: 'Prioritized' },
+                    { num: 4, label: 'Assigned' },
+                    { num: 5, label: 'Resolved' },
+                    { num: 6, label: 'Citizen Verified' }
+                  ].map(step => {
                     const isPassed = r.statusStep >= step.num;
                     const isCurrent = r.statusStep === step.num;
                     return (
                       <div
                         key={step.num}
                         style={{
+                          position: 'relative',
+                          zIndex: 1,
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          zIndex: 2,
-                          position: 'relative'
+                          textAlign: 'center'
                         }}
                       >
                         <div
@@ -2400,9 +2350,8 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                             width: '28px',
                             height: '28px',
                             borderRadius: '50%',
-                            background: isPassed ? '#1D4ED8' : '#FFFFFF',
-                            border: `2px solid ${isPassed ? '#1D4ED8' : '#CBD5E1'}`,
-                            color: isPassed ? '#FFF' : '#64748B',
+                            background: isCurrent ? '#1D4ED8' : isPassed ? '#10B981' : '#E2E8F0',
+                            color: isCurrent || isPassed ? '#FFFFFF' : '#94A3B8',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -2411,7 +2360,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                             boxShadow: isCurrent ? '0 0 0 4px rgba(29, 78, 216, 0.2)' : 'none'
                           }}
                         >
-                          {isPassed && !isCurrent ? '✓' : step.num}
+                          {isPassed && !isCurrent ? <Check size={13} /> : step.num}
                         </div>
                         <div
                           style={{
@@ -2470,10 +2419,20 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                         fontSize: '0.78rem',
                         fontWeight: 700,
                         cursor: 'pointer',
-                        boxShadow: '0 2px 4px rgba(29, 78, 216, 0.2)'
+                        boxShadow: '0 2px 4px rgba(29, 78, 216, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
                       }}
                     >
-                      {r.statusStep === 4 ? '📸 Upload Post-Repair Photo & Complete' : 'Advance Next Stage →'}
+                      {r.statusStep === 4 ? (
+                        <>
+                          <Camera size={13} />
+                          <span>Upload Post-Repair Photo & Complete</span>
+                        </>
+                      ) : (
+                        'Advance Next Stage →'
+                      )}
                     </button>
                   )}
 
@@ -2519,7 +2478,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
         })}
       </div>
 
-      {/* Ward Engineer Resolution Modal with Camera / Photo Upload */}
+      {/* Ward Engineer "Complete Repair" Resolution Modal */}
       {resolvingTicket && typeof document !== 'undefined' && createPortal(
         <div
           style={{
@@ -2528,16 +2487,13 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
             left: 0,
             right: 0,
             bottom: 0,
-            width: '100vw',
-            height: '100vh',
             background: 'rgba(15, 23, 42, 0.7)',
-            backdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(6px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 99999,
-            padding: '20px',
-            boxSizing: 'border-box'
+            zIndex: 9999,
+            padding: '20px'
           }}
         >
           <div
@@ -2546,43 +2502,30 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
               borderRadius: '16px',
               maxWidth: '520px',
               width: '100%',
-              padding: '28px',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)'
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase' }}>
-                  Stage 5: Field Resolution Proof
-                </span>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0' }}>
-                  Complete Work Order {resolvingTicket.id}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setResolvingTicket(null)}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 18px 0' }}>
-              Please take or upload an on-site post-repair photo. Citizens will inspect this image against the original before final sign-off.
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 6px 0', color: '#0F172A' }}>
+              Upload Field Proof & Complete Repair
+            </h3>
+            <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '0 0 16px 0' }}>
+              Ticket <strong>{resolvingTicket.id}</strong>: {resolvingTicket.title}
             </p>
 
-            {/* Geo-Fence Warning if applicable */}
+            {/* Geofence notice */}
             {resolveGeofenceNotice && (
-              <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', color: '#B91C1C', padding: '10px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '14px' }}>
-                {resolveGeofenceNotice}
+              <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', color: '#B91C1C', padding: '10px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <AlertTriangle size={14} />
+                <span>{resolveGeofenceNotice}</span>
               </div>
             )}
 
             {/* Target Location Mini-Map */}
             <div style={{ marginBottom: '14px' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-                📍 Grievance Site: {resolvingTicket.address}
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <MapPin size={13} color="#1D4ED8" />
+                <span>Grievance Site: {resolvingTicket.address}</span>
               </div>
               <ComplaintMiniMap
                 coords={resolvingTicket.coords}
@@ -2692,10 +2635,15 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                   fontSize: '0.88rem',
                   color: '#FFFFFF',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 10px rgba(5, 150, 105, 0.3)'
+                  boxShadow: '0 4px 10px rgba(5, 150, 105, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
                 }}
               >
-                ✓ Submit Proof & Mark Resolved
+                <Check size={16} />
+                <span>Submit Proof & Mark Resolved</span>
               </button>
             </div>
           </div>
@@ -2716,7 +2664,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                 const currentCoords = [pos.coords.latitude, pos.coords.longitude];
                 const dist = getDistanceMeters(currentCoords, resolvingTicket.coords);
                 if (dist > 100) {
-                  setResolveGeofenceNotice(`⚠️ Geo-Fence Warning: Device is ~${dist}m from grievance location (100m radius). Confirming manual override.`);
+                  setResolveGeofenceNotice(`Geo-Fence Warning: Device is ~${dist}m from grievance location (100m radius). Confirming manual override.`);
                 } else {
                   setResolveGeofenceNotice(null);
                 }
@@ -3035,10 +2983,14 @@ function VerificationView({
                 padding: '12px 20px',
                 fontWeight: 700,
                 fontSize: '0.9rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}
             >
-              ✕ Dispute Quality (Reopen Ticket)
+              <X size={16} />
+              <span>Dispute Quality (Reopen Ticket)</span>
             </button>
           </div>
         </div>
@@ -3101,7 +3053,8 @@ function PriorityRulesView({ report }) {
               fontWeight: 800,
               color: p.finalScore >= 80 ? '#DC2626' : p.finalScore >= 50 ? '#D97706' : '#2563EB',
               margin: '12px 0 6px 0',
-              lineHeight: 1
+              lineHeight: 1,
+              fontFamily: 'var(--font-display)'
             }}
           >
             {p.finalScore}
@@ -3123,12 +3076,21 @@ function PriorityRulesView({ report }) {
               marginTop: '12px',
               padding: '6px 12px',
               borderRadius: '6px',
-              background: '#F8FAFC'
+              background: '#F8FAFC',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
             }}
           >
-            {p.isOverdue
-              ? `⚠️ SLA breached by ${p.overdueHours}h! Auto-escalated to Executive Engineer & MLA.`
-              : 'Complaint is within target SLA threshold.'}
+            {p.isOverdue ? (
+              <>
+                <AlertTriangle size={13} color="#DC2626" />
+                <span>SLA breached by {p.overdueHours}h! Auto-escalated to Executive Engineer & MLA.</span>
+              </>
+            ) : (
+              <span>Complaint is within target SLA threshold.</span>
+            )}
           </div>
         </div>
 
@@ -3149,19 +3111,19 @@ function PriorityRulesView({ report }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.88rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #F1F5F9' }}>
               <span>Base Severity (Deep pothole with rim damage risk):</span>
-              <strong>+{p.breakdown.base} pts</strong>
+              <strong style={{ fontFamily: 'var(--font-mono)' }}>+{p.breakdown.base} pts</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #F1F5F9' }}>
               <span>14 Citizen Endorsements (Clustered):</span>
-              <strong>+{p.breakdown.dup} pts</strong>
+              <strong style={{ fontFamily: 'var(--font-mono)' }}>+{p.breakdown.dup} pts</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #F1F5F9' }}>
               <span>Critical Zone (St. Mary's Girls High School 60m):</span>
-              <strong style={{ color: '#D97706' }}>+{p.breakdown.critical} pts</strong>
+              <strong style={{ color: '#D97706', fontFamily: 'var(--font-mono)' }}>+{p.breakdown.critical} pts</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #F1F5F9' }}>
               <span>Traffic Density (Active School Bus Corridor):</span>
-              <strong>+{p.breakdown.traffic} pts</strong>
+              <strong style={{ fontFamily: 'var(--font-mono)' }}>+{p.breakdown.traffic} pts</strong>
             </div>
             <div
               style={{
@@ -3175,7 +3137,7 @@ function PriorityRulesView({ report }) {
               }}
             >
               <span>Anti-Deadlock Aging Booster:</span>
-              <strong>+{p.breakdown.aging} pts</strong>
+              <strong style={{ fontFamily: 'var(--font-mono)' }}>+{p.breakdown.aging} pts</strong>
             </div>
           </div>
 
@@ -3191,7 +3153,9 @@ function PriorityRulesView({ report }) {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', fontWeight: 700, color: '#991B1B', marginBottom: '8px' }}>
               <span>Simulate Complaint Age (Target SLA: 48h):</span>
-              <span>{elapsed} Hours Elapsed {elapsed > 48 ? '⚠️ OVERDUE!' : '✓ Within SLA'}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)' }}>
+                {elapsed} Hours Elapsed {elapsed > 48 ? <><AlertTriangle size={12} /> OVERDUE!</> : <><Check size={12} /> Within SLA</>}
+              </span>
             </div>
             <input
               type="range"
@@ -3201,7 +3165,7 @@ function PriorityRulesView({ report }) {
               onChange={e => setElapsed(parseInt(e.target.value))}
               style={{ width: '100%', accentColor: '#DC2626', cursor: 'pointer' }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#991B1B', marginTop: '6px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#991B1B', marginTop: '6px', fontFamily: 'var(--font-mono)' }}>
               <span>0h (Fresh Ticket)</span>
               <span>48h (SLA Deadline)</span>
               <span>96h (Heavy Neglect Escalation)</span>
@@ -3214,64 +3178,69 @@ function PriorityRulesView({ report }) {
 }
 
 // ==========================================================================
-// 6. MLA CONSTITUENCY DASHBOARD VIEW
+// 6. MLA LEGISLATIVE OVERSIGHT DASHBOARD (Executive Transparency)
 // ==========================================================================
-function MlaDashboardView({ reports = [], currentRole = 'mla', onNotifyWard }) {
-  const overdueCount = reports.filter(r => r.elapsedHours > r.slaHours).length;
-  const verifiedCount = reports.filter(r => r.status === 'verified').length;
-  const duplicateCallsFiltered = calculateTotalDuplicates(reports);
+function MlaDashboardView({ reports, currentRole, onNotifyWard }) {
+  const total = reports.length;
+  const overdue = reports.filter(r => r.elapsedHours > r.slaHours && r.status !== 'verified').length;
+  const verified = reports.filter(r => r.status === 'verified').length;
+  const highPriority = reports.filter(r => (r.priorityScore || 70) >= 80 && r.status !== 'verified').length;
+  const escalatedCount = reports.filter(r => r.mlaEscalated).length;
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px 0' }}>
-            Constituency Oversight Desk
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ background: '#F5F3FF', color: '#7C3AED', border: '1px solid #DDD6FE', padding: '3px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>
+              Legislative Assembly Jurisdiction
+            </span>
+            <span style={{ fontSize: '0.8rem', color: '#64748B' }}>Constituency 177 — Bandra West</span>
+          </div>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+            MLA Civic Grievance & SLA Accountability Radar
           </h2>
-          <p style={{ color: '#64748B', fontSize: '0.88rem', margin: 0 }}>
-            Executive accountability view for <strong>Shri Ashish Shelar (MLA, Bandra West / Mumbai Suburban)</strong>.
+          <p style={{ color: '#64748B', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
+            Constituency office oversight desk for Shri Ashish Shelar (MLA). Real-time monitoring of Ward H/West resolution velocity.
           </p>
         </div>
 
-        <div
-          style={{
-            background: '#ECFDF5',
-            color: '#065F46',
-            border: '1px solid #A7F3D0',
-            padding: '6px 14px',
-            borderRadius: '9999px',
-            fontSize: '0.82rem',
-            fontWeight: 700
-          }}
-        >
-          Ward H/West Performance Grade: <strong>A+ (95.4% On-Time)</strong>
+        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '8px 16px', borderRadius: '10px', fontSize: '0.82rem', color: '#475569' }}>
+          <div>Executive Ward Engineer: <strong>Er. Rajesh Sawant</strong></div>
+          <div style={{ color: '#059669', fontWeight: 700, marginTop: '2px' }}>Direct Municipal Line: Active</div>
         </div>
       </div>
 
-      {/* KPI Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '18px', marginBottom: '28px' }}>
-        <div style={{ background: '#FFF', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '14px' }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Total Ward Grievances</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, marginTop: '4px' }}>{reports.length}</div>
-          <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '4px' }}>Across 8 municipal sectors</div>
+      {/* KPI Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Total Ward Issues</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginTop: '4px', fontFamily: 'var(--font-display)' }}>{total}</div>
+          <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '2px' }}>Intake across 6 sectors</div>
         </div>
 
-        <div style={{ background: '#FFF', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '14px' }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Duplicate Calls Filtered</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D97706', marginTop: '4px' }}>{duplicateCallsFiltered}</div>
-          <div style={{ fontSize: '0.75rem', color: '#D97706', marginTop: '4px' }}>AI Clustering Active</div>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', borderLeft: '4px solid #DC2626' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Overdue SLA Breaches</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#DC2626', marginTop: '4px', fontFamily: 'var(--font-display)' }}>{overdue}</div>
+          <div style={{ fontSize: '0.75rem', color: '#DC2626', marginTop: '2px' }}>Requires immediate intervention</div>
         </div>
 
-        <div style={{ background: '#FFF', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '14px' }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Community Verified</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#059669', marginTop: '4px' }}>{verifiedCount}</div>
-          <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '4px' }}>Citizen sign-offs secured</div>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#D97706', textTransform: 'uppercase' }}>Critical Priority (≥80)</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D97706', marginTop: '4px', fontFamily: 'var(--font-display)' }}>{highPriority}</div>
+          <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>School/hospital corridors</div>
         </div>
 
-        <div style={{ background: '#FFF', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '14px' }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Deadlock Escalations</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>{overdueCount}</div>
-          <div style={{ fontSize: '0.75rem', color: '#DC2626', marginTop: '4px' }}>Flagged for immediate intervention</div>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#7C3AED', textTransform: 'uppercase' }}>MLA Escalations Sent</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#7C3AED', marginTop: '4px', fontFamily: 'var(--font-display)' }}>{escalatedCount}</div>
+          <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>Directives to Executive Eng.</div>
+        </div>
+
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', borderLeft: '4px solid #059669' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Citizen-Verified Resolved</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#059669', marginTop: '4px', fontFamily: 'var(--font-display)' }}>{verified}</div>
+          <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '2px' }}>Closed-loop completed</div>
         </div>
       </div>
 
@@ -3282,7 +3251,7 @@ function MlaDashboardView({ reports = [], currentRole = 'mla', onNotifyWard }) {
           readOnly={true}
           currentRole={currentRole}
           onNotifyWard={onNotifyWard}
-          title="🏛️ Bandra West Constituency Jurisdiction Map (MLA Surveillance)"
+          title="Bandra West Constituency Jurisdiction Map (MLA Surveillance)"
         />
       </div>
 
@@ -3320,16 +3289,16 @@ function MlaDashboardView({ reports = [], currentRole = 'mla', onNotifyWard }) {
                 >
                   <div style={{ flex: 1, minWidth: '220px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1D4ED8' }}>{r.id}</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1D4ED8', fontFamily: 'var(--font-mono)' }}>{r.id}</span>
                       <strong style={{ fontSize: '0.92rem' }}>{r.title}</strong>
                       {p.isOverdue && (
-                        <span style={{ background: '#DC2626', color: '#FFF', fontSize: '0.7rem', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                        <span style={{ background: '#DC2626', color: '#FFF', fontSize: '0.7rem', padding: '1px 6px', borderRadius: '4px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
                           OVERDUE
                         </span>
                       )}
                       {r.mlaEscalated && (
-                        <span style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>
-                          🔔 Escalated
+                        <span style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '3px', fontFamily: 'var(--font-mono)' }}>
+                          <Bell size={11} /> Escalated
                         </span>
                       )}
                     </div>
@@ -3350,7 +3319,7 @@ function MlaDashboardView({ reports = [], currentRole = 'mla', onNotifyWard }) {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 800, color: p.finalScore >= 80 ? '#DC2626' : '#D97706' }}>
+                      <div style={{ fontWeight: 800, color: p.finalScore >= 80 ? '#DC2626' : '#D97706', fontFamily: 'var(--font-display)' }}>
                         Priority {p.finalScore}/100
                       </div>
                       <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
@@ -3360,8 +3329,8 @@ function MlaDashboardView({ reports = [], currentRole = 'mla', onNotifyWard }) {
 
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                       {isSevere && (
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#DC2626' }}>
-                          ⚠️ Recommended
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <AlertTriangle size={11} /> Recommended
                         </span>
                       )}
                       <button
@@ -3388,7 +3357,8 @@ function MlaDashboardView({ reports = [], currentRole = 'mla', onNotifyWard }) {
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        {r.mlaEscalated ? '🔔 Ward Notified' : '🔔 Notify Ward'}
+                        <Bell size={13} />
+                        <span>{r.mlaEscalated ? 'Ward Notified' : 'Notify Ward'}</span>
                       </button>
                     </div>
                   </div>

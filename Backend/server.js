@@ -20,6 +20,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
+app.use('/seeds', express.static(path.join(__dirname, 'public/seeds')));
 
 // In-memory data store for CivicCare (Sahayata) - Mumbai
 let jurisdiction = {
@@ -59,8 +60,8 @@ const SEED_REPORTS = [
     baseSeverity: 35,
     reportedBy: "Priya S. & 14 others",
     reportedAt: "2 days ago",
-    beforeImage: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
-    afterImage: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
+    beforeImage: "/seeds/SEED-1-before.png",
+    afterImage: "/seeds/SEED-1-after.png",
     resolution: {
       assignedTo: "Er. Rajesh Sawant (Ward H/West)",
       contractor: "Falcon Mumbai Infrastructure Ltd.",
@@ -86,8 +87,8 @@ const SEED_REPORTS = [
     baseSeverity: 28,
     reportedBy: "Karthik R. & 8 others",
     reportedAt: "19 hours ago",
-    beforeImage: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
-    afterImage: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
+    beforeImage: "/seeds/SEED-4-before.png",
+    afterImage: "/seeds/SEED-4-after.png",
     resolution: {
       assignedTo: "Er. Rajesh Sawant",
       contractor: "CleanMumbai BMC Solid Waste Marshall Squad #3",
@@ -113,8 +114,8 @@ const SEED_REPORTS = [
     baseSeverity: 40,
     reportedBy: "Dr. Ananya Rao",
     reportedAt: "Yesterday",
-    beforeImage: "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
-    afterImage: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+    beforeImage: "/seeds/SEED-3-before.png",
+    afterImage: "/seeds/SEED-3-after.png",
     resolution: {
       assignedTo: "Er. Ramesh Patil (BEST Electrical Dept)",
       contractor: "BEST Emergency Wing",
@@ -140,12 +141,39 @@ const SEED_REPORTS = [
     baseSeverity: 32,
     reportedBy: "Meera Deshmukh & 10 others",
     reportedAt: "14 hours ago",
-    beforeImage: "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
-    afterImage: "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
+    beforeImage: "/seeds/SEED-2-before.png",
+    afterImage: "/seeds/SEED-2-after.png",
     resolution: {
       assignedTo: "Er. Rajesh Sawant",
       contractor: "BMC Hydraulic Engineering Quick Response Unit",
       note: "Isolation valve dispatched to stem wastage."
+    }
+  },
+  {
+    id: "CIVIC-2026-8850",
+    title: "Broken Water Pipe near Bandra Station",
+    category: "water",
+    categoryLabel: "Water Supply & Sewage",
+    coords: [19.0544, 72.8402],
+    address: "Station Road, Near Bandra Railway Station, Bandra West, Mumbai",
+    status: "resolved",
+    statusStep: 5,
+    slaHours: 24,
+    elapsedHours: 20,
+    duplicateCount: 9,
+    impactRadiusMeters: 110,
+    criticalZone: "Railway Station Entrance Corridor",
+    trafficDensity: "High (Commuter Flow)",
+    baseSeverity: 34,
+    reportedBy: "Sanjay K. & 9 others",
+    reportedAt: "20 hours ago",
+    beforeImage: "/seeds/SEED-5-before.png",
+    afterImage: "/seeds/SEED-5-after.png",
+    resolution: {
+      assignedTo: "Er. Rajesh Sawant",
+      contractor: "BMC Hydraulic Engineering Division",
+      note: "Cast iron joint replaced with high-pressure bolted sleeve clamp.",
+      aiConfidence: "97.1% Pipeline Leak Sealed"
     }
   }
 ];

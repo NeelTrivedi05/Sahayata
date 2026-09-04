@@ -49,7 +49,7 @@ export default function RoleSelectLanding({ onSelectRole }) {
       {/* Top Nav */}
       <div className="auth-top-nav" style={{ maxWidth: '1080px', width: '100%', margin: '0 auto 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '1.2rem' }}>🏛️</span>
+          <Landmark size={20} color="#1E3A5F" />
           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E3A5F' }}>
             Brihanmumbai Municipal Corporation (BMC) & Govt. of Maharashtra
           </span>
@@ -65,6 +65,11 @@ export default function RoleSelectLanding({ onSelectRole }) {
           <Sparkles size={15} />
           <span>Official Civic Grievance & SLA Anti-Deadlock Network • Ward H/West</span>
         </div>
+        <img 
+          src="/sahayata-logo.jpg" 
+          alt="Sahayata Logo" 
+          style={{ height: '70px', width: 'auto', margin: '0 auto 16px', display: 'block', objectFit: 'contain', borderRadius: '8px' }}
+        />
         <h1 style={{ fontSize: '2.6rem', fontWeight: 900, color: '#0F172A', margin: '0 0 10px', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
           Welcome to <span style={{ color: '#1E3A5F' }}>Sahayata</span>
         </h1>

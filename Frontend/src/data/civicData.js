@@ -70,8 +70,9 @@ export const CIVIC_DATA = {
       phash: "a1b2c3d4e5f60718",
       reportedBy: "Priya S. & 14 others",
       reportedAt: "2 days ago",
-      beforeImage: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
-      afterImage: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
+      image: "/seeds/SEED-1-before.png",
+      beforeImage: "/seeds/SEED-1-before.png",
+      afterImage: "/seeds/SEED-1-after.png",
       resolution: {
         assignedTo: "Er. Rajesh Sawant (Ward H/West)",
         contractor: "Falcon Mumbai Infrastructure Ltd.",
@@ -98,8 +99,9 @@ export const CIVIC_DATA = {
       phash: "f0e1d2c3b4a59687",
       reportedBy: "Karthik R. & 8 others",
       reportedAt: "19 hours ago",
-      beforeImage: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
-      afterImage: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
+      image: "/seeds/SEED-4-before.png",
+      beforeImage: "/seeds/SEED-4-before.png",
+      afterImage: "/seeds/SEED-4-after.png",
       resolution: {
         assignedTo: "Er. Rajesh Sawant",
         contractor: "CleanMumbai BMC Solid Waste Marshall Squad #3",
@@ -126,13 +128,69 @@ export const CIVIC_DATA = {
       phash: "123456789abcdef0",
       reportedBy: "Dr. Ananya Rao",
       reportedAt: "Yesterday",
-      beforeImage: "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
-      afterImage: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+      image: "/seeds/SEED-3-before.png",
+      beforeImage: "/seeds/SEED-3-before.png",
+      afterImage: "/seeds/SEED-3-after.png",
       resolution: {
         assignedTo: "Er. Ramesh Patil (BEST Electrical Dept)",
         contractor: "BEST Emergency Wing",
         note: "Insulated junction replaced, 120W LED lamp installed and tested.",
         aiConfidence: "98.2% Illumination Restored"
+      }
+    },
+    {
+      id: "CIVIC-2026-8842",
+      title: "Burst Water Pipeline gushing across road",
+      category: "water",
+      categoryLabel: "Water Supply & Sewage",
+      coords: [19.0610, 72.8350],
+      address: "Turner Road Junction, Bandra West, Mumbai",
+      status: "prioritized",
+      statusStep: 3,
+      slaHours: 24,
+      elapsedHours: 14,
+      duplicateCount: 11,
+      impactRadiusMeters: 120,
+      criticalZone: "Transit Main Road",
+      trafficDensity: "High",
+      baseSeverity: 32,
+      reportedBy: "Meera Deshmukh & 10 others",
+      reportedAt: "14 hours ago",
+      image: "/seeds/SEED-2-before.png",
+      beforeImage: "/seeds/SEED-2-before.png",
+      afterImage: "/seeds/SEED-2-after.png",
+      resolution: {
+        assignedTo: "Er. Rajesh Sawant",
+        contractor: "BMC Hydraulic Engineering Quick Response Unit",
+        note: "Isolation valve dispatched to stem wastage."
+      }
+    },
+    {
+      id: "CIVIC-2026-8850",
+      title: "Broken Water Pipe near Bandra Station",
+      category: "water",
+      categoryLabel: "Water Supply & Sewage",
+      coords: [19.0544, 72.8402],
+      address: "Station Road, Near Bandra Railway Station, Bandra West, Mumbai",
+      status: "resolved",
+      statusStep: 5,
+      slaHours: 24,
+      elapsedHours: 20,
+      duplicateCount: 9,
+      impactRadiusMeters: 110,
+      criticalZone: "Railway Station Entrance Corridor",
+      trafficDensity: "High (Commuter Flow)",
+      baseSeverity: 34,
+      reportedBy: "Sanjay K. & 9 others",
+      reportedAt: "20 hours ago",
+      image: "/seeds/SEED-5-before.png",
+      beforeImage: "/seeds/SEED-5-before.png",
+      afterImage: "/seeds/SEED-5-after.png",
+      resolution: {
+        assignedTo: "Er. Rajesh Sawant",
+        contractor: "BMC Hydraulic Engineering Division",
+        note: "Cast iron joint replaced with high-pressure bolted sleeve clamp.",
+        aiConfidence: "97.1% Pipeline Leak Sealed"
       }
     }
   ],
@@ -140,15 +198,15 @@ export const CIVIC_DATA = {
   reportingPresets: [
     {
       id: "preset_pothole",
-      name: "Deep Crater Pothole near St. Andrew's School",
+      name: "Deep Crater Pothole on Carter Road",
       category: "pothole",
       categoryLabel: "Road Hazard & Pothole",
       baseSeverity: 35,
       slaHours: 48,
       phash: "a1b2c3d4e5f60719",
-      image: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
-      coords: [19.0558, 72.8295],
-      address: "Hill Road, Near St. Andrew's Church, Bandra West, Mumbai",
+      image: "/seeds/SEED-1-before.png",
+      coords: [19.0680, 72.8250],
+      address: "Carter Road Promenade, Bandra West, Mumbai",
       aiClarification: {
         question: "Is this pothole affecting the active school bus drop-off zone or pedestrian crosswalk?",
         options: [
@@ -160,12 +218,12 @@ export const CIVIC_DATA = {
     },
     {
       id: "preset_light",
-      name: "Broken Streetlight & Exposed Wire on Hospital Corridor",
+      name: "Broken Streetlight & Hanging Live Wire",
       category: "electricity",
       categoryLabel: "Electrical & Lighting",
       baseSeverity: 42,
       slaHours: 12,
-      image: "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
+      image: "/seeds/SEED-3-before.png",
       coords: [19.0514, 72.8296],
       address: "Lilavati Hospital Emergency Access Lane, Bandra West, Mumbai",
       aiClarification: {
@@ -179,14 +237,14 @@ export const CIVIC_DATA = {
     },
     {
       id: "preset_water",
-      name: "Burst Water Main Flooding Street",
+      name: "Burst Water Pipeline Gushing on Street",
       category: "water",
       categoryLabel: "Water Supply & Pipe Leakage",
       baseSeverity: 30,
       slaHours: 24,
-      image: "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
+      image: "/seeds/SEED-2-before.png",
       coords: [19.0610, 72.8350],
-      address: "Turner Road Junction, Near Bandra Station, Mumbai",
+      address: "Turner Road Junction, Bandra West, Mumbai",
       aiClarification: {
         question: "Is the water leakage clean drinking water pipe or contaminated sewage overflow?",
         options: [
@@ -203,15 +261,34 @@ export const CIVIC_DATA = {
       categoryLabel: "Solid Waste & Sanitation",
       baseSeverity: 28,
       slaHours: 24,
-      image: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
-      coords: [12.9765, 77.6385],
-      address: "12th Main Corner, Near BDA Complex, Ward 142",
+      image: "/seeds/SEED-4-before.png",
+      coords: [19.0585, 72.8315],
+      address: "Linking Road Corner, Near National College, Bandra West, Mumbai",
       aiClarification: {
         question: "Does the garbage dump contain bio-medical waste or block public access completely?",
         options: [
           "Bio-hazard / Medical waste mixed (Urgent Action)",
           "Completely blocking pedestrian walkway",
           "Overfilled bin, walkway partially clear"
+        ]
+      }
+    },
+    {
+      id: "preset_station_pipe",
+      name: "Broken Water Pipe near Bandra Station",
+      category: "water",
+      categoryLabel: "Water Supply & Pipe Leakage",
+      baseSeverity: 34,
+      slaHours: 24,
+      image: "/seeds/SEED-5-before.png",
+      coords: [19.0544, 72.8402],
+      address: "Station Road, Near Bandra Railway Station, Bandra West, Mumbai",
+      aiClarification: {
+        question: "Is the water leak spreading into the suburban train entry stairs?",
+        options: [
+          "Yes, flowing into commuter walking corridor",
+          "Seeping along curb side drain",
+          "Minor leak at valve joint"
         ]
       }
     },

@@ -56,7 +56,7 @@ export default function LocationPickerMiniMap({
             font-size:16px;
             box-shadow:0 6px 14px rgba(37,99,235,0.45);
           ">
-            📍
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
           </div>
           <div style="
             position:absolute;
@@ -209,10 +209,13 @@ export default function LocationPickerMiniMap({
             fontSize: '0.68rem',
             fontWeight: 600,
             zIndex: 1000,
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
           }}
         >
-          📍 Drag pin or click map to adjust location
+          <MapPin size={11} /> Drag pin or click map to adjust location
         </div>
       </div>
 
@@ -220,7 +223,7 @@ export default function LocationPickerMiniMap({
         <span style={{ color: '#475569', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
           <MapPin size={13} color="#2563EB" /> {addressText}
         </span>
-        <span style={{ color: '#94A3B8', fontSize: '0.72rem' }}>
+        <span style={{ color: '#94A3B8', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
           {currentCoords[0]?.toFixed(4)}, {currentCoords[1]?.toFixed(4)}
         </span>
       </div>

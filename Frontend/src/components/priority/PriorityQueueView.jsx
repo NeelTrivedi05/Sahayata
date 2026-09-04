@@ -40,7 +40,7 @@ export default function PriorityQueueView({
             <Flame size={14} />
             <span>Anti-Deadlock Dynamic SLA Escalation Engine</span>
           </div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#0F172A', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#0F172A', margin: '0 0 4px', letterSpacing: '-0.02em', fontFamily: 'var(--font-display)' }}>
             Live Civic Priority Queue
           </h1>
           <p style={{ fontSize: '0.88rem', color: '#64748B', margin: 0 }}>
@@ -112,6 +112,7 @@ export default function PriorityQueueView({
                     justifyContent: 'center',
                     fontSize: '0.9rem',
                     fontWeight: 900,
+                    fontFamily: 'var(--font-display)',
                     flexShrink: 0
                   }}
                 >
@@ -120,7 +121,7 @@ export default function PriorityQueueView({
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#1E3A5F', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#1E3A5F', fontFamily: 'var(--font-mono)' }}>
                       {r.id}
                     </span>
                     <span
@@ -130,17 +131,31 @@ export default function PriorityQueueView({
                         padding: '2px 8px',
                         borderRadius: '9999px',
                         background: isOverdue ? '#FEE2E2' : '#EFF6FF',
-                        color: isOverdue ? '#DC2626' : '#2563EB'
+                        color: isOverdue ? '#DC2626' : '#2563EB',
+                        fontFamily: 'var(--font-mono)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
                       }}
                     >
-                      {isOverdue ? `🚨 SLA EXCEEDED (+${r.elapsedHours - r.slaHours}h)` : `⏳ ${r.slaHours - r.elapsedHours}h remaining`}
+                      {isOverdue ? (
+                        <>
+                          <AlertTriangle size={12} />
+                          <span>SLA EXCEEDED (+{r.elapsedHours - r.slaHours}h)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Clock size={12} />
+                          <span>{r.slaHours - r.elapsedHours}h remaining</span>
+                        </>
+                      )}
                     </span>
                     <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
                       Ward H/West (Bandra)
                     </span>
                   </div>
 
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: '0 0 6px' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: '0 0 6px', fontFamily: 'var(--font-display)' }}>
                     {r.title}
                   </h3>
 
@@ -187,7 +202,7 @@ export default function PriorityQueueView({
                   <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
                     Priority Score
                   </div>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 900, color: (r.priorityScore || 70) >= 80 ? '#DC2626' : '#D97706', lineHeight: 1 }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 900, color: (r.priorityScore || 70) >= 80 ? '#DC2626' : '#D97706', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
                     {r.priorityScore || 75}
                     <span style={{ fontSize: '0.85rem', color: '#94A3B8', fontWeight: 600 }}>/100</span>
                   </div>
@@ -224,8 +239,8 @@ export default function PriorityQueueView({
                         </span>
                       </button>
                     ) : (
-                      <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700, background: '#ECFDF5', padding: '6px 12px', borderRadius: '8px' }}>
-                        ✓ Repair Done
+                      <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700, background: '#ECFDF5', padding: '6px 12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Check size={14} /> Repair Done
                       </span>
                     )}
                   </div>
