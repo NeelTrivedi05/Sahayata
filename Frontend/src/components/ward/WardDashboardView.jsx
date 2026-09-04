@@ -602,15 +602,15 @@ export default function WardDashboardView({
                     key={r.id}
                     onClick={() => setSelectedReportForModal(r)}
                     style={{
-                      padding: '14px',
+                      padding: '12px 14px',
                       borderRadius: '12px',
                       border: isOverdue ? '1.5px solid #FECDD3' : '1px solid #E2E8F0',
                       background: isOverdue ? '#FFF5F5' : '#FFFFFF',
                       cursor: 'pointer',
-                      transition: 'transform 0.15s ease'
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', fontFamily: 'var(--font-mono)' }}>
                           {r.id}
@@ -644,18 +644,58 @@ export default function WardDashboardView({
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
-                      {r.title}
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem', color: '#64748B' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <MapPin size={12} />
-                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '200px' }}>{r.address}</span>
-                      </span>
-                      <span style={{ fontWeight: 800, color: '#DC2626' }}>
-                        Priority: {r.priorityScore || 85}/100
-                      </span>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <div
+                        style={{
+                          position: 'relative',
+                          width: '64px',
+                          height: '52px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          border: '1px solid #CBD5E1',
+                          background: '#0F172A',
+                          flexShrink: 0
+                        }}
+                      >
+                        <img
+                          src={getReportBeforeImage(r)}
+                          alt={r.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/seeds/SEED-1-before.png';
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: 'absolute',
+                            bottom: '2px',
+                            left: '2px',
+                            background: '#DC2626',
+                            color: '#FFF',
+                            fontSize: '0.52rem',
+                            fontWeight: 800,
+                            padding: '1px 3px',
+                            borderRadius: '2px',
+                            lineHeight: 1
+                          }}
+                        >
+                          BEFORE
+                        </span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', marginBottom: '2px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {r.title}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748B' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            <MapPin size={11} /> {r.address}
+                          </span>
+                          <span style={{ fontWeight: 800, color: '#DC2626', flexShrink: 0 }}>
+                            Priority {r.priorityScore || 85}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
@@ -766,6 +806,7 @@ export default function WardDashboardView({
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
                 <th style={{ padding: '12px 16px', fontWeight: 700 }}>Ticket ID</th>
+                <th style={{ padding: '12px 16px', fontWeight: 700, width: '68px' }}>Photo</th>
                 <th style={{ padding: '12px 16px', fontWeight: 700 }}>Category & Location</th>
                 <th style={{ padding: '12px 16px', fontWeight: 700 }}>Priority</th>
                 <th style={{ padding: '12px 16px', fontWeight: 700 }}>SLA Status</th>
@@ -792,6 +833,49 @@ export default function WardDashboardView({
                             <Bell size={10} /> MLA Escalated
                           </span>
                         )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '10px 16px' }}>
+                      <div
+                        onClick={() => setSelectedReportForModal(r)}
+                        style={{
+                          position: 'relative',
+                          width: '54px',
+                          height: '46px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          border: '1.5px solid #CBD5E1',
+                          background: '#0F172A',
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                        }}
+                        title="Click to inspect before & after verification photos"
+                      >
+                        <img
+                          src={getReportBeforeImage(r)}
+                          alt={r.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/seeds/SEED-1-before.png';
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: 'absolute',
+                            bottom: '2px',
+                            left: '2px',
+                            background: '#DC2626',
+                            color: '#FFF',
+                            fontSize: '0.5rem',
+                            fontWeight: 800,
+                            padding: '1px 3px',
+                            borderRadius: '2px',
+                            lineHeight: 1
+                          }}
+                        >
+                          BEFORE
+                        </span>
                       </div>
                     </td>
                     <td style={{ padding: '14px 16px' }}>

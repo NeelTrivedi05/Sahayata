@@ -140,9 +140,9 @@ export const CIVIC_DATA = {
     },
     {
       id: "CIVIC-2026-8842",
-      title: "Burst Water Pipeline gushing across road",
-      category: "water",
-      categoryLabel: "Water Supply & Sewage",
+      title: "Overflowing Sewage & Open Drain on Street",
+      category: "sewage",
+      categoryLabel: "Sewage & Drainage",
       coords: [19.0610, 72.8350],
       address: "Turner Road Junction, Bandra West, Mumbai",
       status: "prioritized",
@@ -161,8 +161,8 @@ export const CIVIC_DATA = {
       afterImage: "/seeds/SEED-2-after.png",
       resolution: {
         assignedTo: "Er. Rajesh Sawant",
-        contractor: "BMC Hydraulic Engineering Quick Response Unit",
-        note: "Isolation valve dispatched to stem wastage."
+        contractor: "BMC Stormwater & Sewage Engineering Unit",
+        note: "Suction truck deployed to clear blocked culvert and disinfect street."
       }
     },
     {
@@ -242,7 +242,7 @@ export const CIVIC_DATA = {
       categoryLabel: "Water Supply & Pipe Leakage",
       baseSeverity: 30,
       slaHours: 24,
-      image: "/seeds/SEED-2-before.png",
+      image: "/seeds/SEED-5-before.png",
       coords: [19.0610, 72.8350],
       address: "Turner Road Junction, Bandra West, Mumbai",
       aiClarification: {
@@ -294,14 +294,14 @@ export const CIVIC_DATA = {
     },
     {
       id: "preset_drainage",
-      name: "Clogged Stormwater Drain & Street Inundation",
-      category: "drainage",
-      categoryLabel: "Stormwater Drain & Flooding",
+      name: "Overflowing Sewage & Open Drain on Street",
+      category: "sewage",
+      categoryLabel: "Sewage & Drainage",
       baseSeverity: 36,
       slaHours: 18,
-      image: "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=800&q=80",
-      coords: [12.9750, 77.6410],
-      address: "8th Main Road, Ward 142 Low-lying Area",
+      image: "/seeds/SEED-2-before.png",
+      coords: [19.0610, 72.8350],
+      address: "Turner Road Junction, Bandra West, Mumbai",
       aiClarification: {
         question: "Is floodwater entering residential basements or commercial shops?",
         options: [
@@ -412,11 +412,26 @@ export function getReportBeforeImage(report) {
     return report.image;
   }
   const text = ((report.category || '') + ' ' + (report.categoryLabel || '') + ' ' + (report.title || '')).toLowerCase();
-  if (text.includes('station') && (text.includes('water') || text.includes('pipe'))) return '/seeds/SEED-5-before.png';
-  if (text.includes('pothole') || text.includes('road') || text.includes('carter')) return '/seeds/SEED-1-before.png';
-  if (text.includes('water') || text.includes('drain') || text.includes('leak') || text.includes('pipe') || text.includes('burst')) return '/seeds/SEED-2-before.png';
-  if (text.includes('elect') || text.includes('light') || text.includes('wire') || text.includes('pole')) return '/seeds/SEED-3-before.png';
-  if (text.includes('garb') || text.includes('waste') || text.includes('trash') || text.includes('dump')) return '/seeds/SEED-4-before.png';
+  // 1. Pothole before/after -> SEED-1
+  if (text.includes('pothole') || text.includes('crater') || text.includes('road') || text.includes('carter') || text.includes('paver')) {
+    return '/seeds/SEED-1-before.png';
+  }
+  // 2. Sewage before/after -> SEED-2
+  if (text.includes('sewage') || text.includes('drain') || text.includes('gutter') || text.includes('stagnant')) {
+    return '/seeds/SEED-2-before.png';
+  }
+  // 3. Broken Streetlight -> SEED-3
+  if (text.includes('light') || text.includes('street') || text.includes('wire') || text.includes('elect') || text.includes('pole')) {
+    return '/seeds/SEED-3-before.png';
+  }
+  // 4. Garbage Dump on Footpath -> SEED-4
+  if (text.includes('garb') || text.includes('waste') || text.includes('dump') || text.includes('trash') || text.includes('litter')) {
+    return '/seeds/SEED-4-before.png';
+  }
+  // 5. Water Pipeline Broke -> SEED-5
+  if (text.includes('water') || text.includes('pipe') || text.includes('leak') || text.includes('burst')) {
+    return '/seeds/SEED-5-before.png';
+  }
   return '/seeds/SEED-1-before.png';
 }
 
@@ -426,11 +441,26 @@ export function getReportAfterImage(report) {
     return report.afterImage;
   }
   const text = ((report.category || '') + ' ' + (report.categoryLabel || '') + ' ' + (report.title || '')).toLowerCase();
-  if (text.includes('station') && (text.includes('water') || text.includes('pipe'))) return '/seeds/SEED-5-after.png';
-  if (text.includes('pothole') || text.includes('road') || text.includes('carter')) return '/seeds/SEED-1-after.png';
-  if (text.includes('water') || text.includes('drain') || text.includes('leak') || text.includes('pipe') || text.includes('burst')) return '/seeds/SEED-2-after.png';
-  if (text.includes('elect') || text.includes('light') || text.includes('wire') || text.includes('pole')) return '/seeds/SEED-3-after.png';
-  if (text.includes('garb') || text.includes('waste') || text.includes('trash') || text.includes('dump')) return '/seeds/SEED-4-after.png';
+  // 1. Pothole before/after -> SEED-1
+  if (text.includes('pothole') || text.includes('crater') || text.includes('road') || text.includes('carter') || text.includes('paver')) {
+    return '/seeds/SEED-1-after.png';
+  }
+  // 2. Sewage before/after -> SEED-2
+  if (text.includes('sewage') || text.includes('drain') || text.includes('gutter') || text.includes('stagnant')) {
+    return '/seeds/SEED-2-after.png';
+  }
+  // 3. Broken Streetlight -> SEED-3
+  if (text.includes('light') || text.includes('street') || text.includes('wire') || text.includes('elect') || text.includes('pole')) {
+    return '/seeds/SEED-3-after.png';
+  }
+  // 4. Garbage Dump on Footpath -> SEED-4
+  if (text.includes('garb') || text.includes('waste') || text.includes('dump') || text.includes('trash') || text.includes('litter')) {
+    return '/seeds/SEED-4-after.png';
+  }
+  // 5. Water Pipeline Broke -> SEED-5
+  if (text.includes('water') || text.includes('pipe') || text.includes('leak') || text.includes('burst')) {
+    return '/seeds/SEED-5-after.png';
+  }
   return '/seeds/SEED-1-after.png';
 }
 

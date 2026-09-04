@@ -181,20 +181,25 @@ const SEED_REPORTS = [
 export function getSeedImagesForCategory(category = "", title = "") {
   const cat = (category || "").toLowerCase();
   const t = (title || "").toLowerCase();
-  if (t.includes("station") && (cat.includes("water") || t.includes("pipe"))) {
-    return { before: "/seeds/SEED-5-before.png", after: "/seeds/SEED-5-after.png" };
-  }
-  if (cat.includes("pothole") || t.includes("pothole") || t.includes("road") || t.includes("carter")) {
+  // 1. Pothole before/after
+  if (cat.includes("pothole") || t.includes("pothole") || t.includes("road") || t.includes("carter") || t.includes("paver")) {
     return { before: "/seeds/SEED-1-before.png", after: "/seeds/SEED-1-after.png" };
   }
-  if (cat.includes("water") || t.includes("water") || t.includes("pipeline") || t.includes("burst")) {
+  // 2. Sewage before/after
+  if (cat.includes("sewage") || cat.includes("drain") || t.includes("sewage") || t.includes("drain") || t.includes("gutter")) {
     return { before: "/seeds/SEED-2-before.png", after: "/seeds/SEED-2-after.png" };
   }
-  if (cat.includes("electric") || cat.includes("light") || t.includes("wire") || t.includes("light")) {
+  // 3. Broken Streetlight before/after
+  if (cat.includes("electric") || cat.includes("light") || t.includes("wire") || t.includes("light") || t.includes("pole") || t.includes("lamp")) {
     return { before: "/seeds/SEED-3-before.png", after: "/seeds/SEED-3-after.png" };
   }
-  if (cat.includes("garbage") || cat.includes("waste") || t.includes("dump") || t.includes("trash")) {
+  // 4. Garbage Dump on Footpath before/after
+  if (cat.includes("garbage") || cat.includes("waste") || t.includes("dump") || t.includes("trash") || t.includes("litter")) {
     return { before: "/seeds/SEED-4-before.png", after: "/seeds/SEED-4-after.png" };
+  }
+  // 5. Water Pipeline Broke before/after
+  if (cat.includes("water") || t.includes("water") || t.includes("pipe") || t.includes("pipeline") || t.includes("burst") || t.includes("leak")) {
+    return { before: "/seeds/SEED-5-before.png", after: "/seeds/SEED-5-after.png" };
   }
   return { before: "/seeds/SEED-1-before.png", after: "/seeds/SEED-1-after.png" };
 }
