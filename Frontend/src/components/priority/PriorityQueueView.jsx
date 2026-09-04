@@ -52,7 +52,7 @@ export default function PriorityQueueView({
 
         {/* Category Filters */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {['all', 'pothole', 'garbage', 'electricity', 'water'].map(cat => (
+          {['all', 'pothole', 'garbage', 'electricity', 'water', 'drainage', 'traffic', 'others'].map(cat => (
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}

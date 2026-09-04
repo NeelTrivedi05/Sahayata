@@ -661,6 +661,7 @@ export default function InteractiveCivicMap({
             { id: 'garbage', label: '🗑️ Garbage Dumps' },
             { id: 'electricity', label: '💡 Streetlights' },
             { id: 'water', label: '🚰 Water Leaks' },
+            { id: 'others', label: '📌 Others' },
             { id: 'critical', label: '🚨 Critical Priority (≥80)' },
             { id: 'overdue', label: '⏳ Overdue SLA' }
           ].map(tab => (

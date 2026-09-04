@@ -252,6 +252,25 @@ export const CIVIC_DATA = {
           "Partial shoulder obstruction"
         ]
       }
+    },
+    {
+      id: "preset_others",
+      name: "Others / None of the Categories",
+      category: "others",
+      categoryLabel: "Others / None of the Categories",
+      baseSeverity: 25,
+      slaHours: 36,
+      image: "https://images.unsplash.com/photo-1584467735867-4297ae2ebcee?auto=format&fit=crop&w=800&q=80",
+      coords: [19.0558, 72.8295],
+      address: "Ward H/West (General Municipal Jurisdiction)",
+      aiClarification: {
+        question: "What type of civic grievance or municipal concern is this?",
+        options: [
+          "Public amenity or municipal property defect",
+          "Public safety, nuisance, or health concern",
+          "General municipal infrastructure / repair request"
+        ]
+      }
     }
   ]
 };

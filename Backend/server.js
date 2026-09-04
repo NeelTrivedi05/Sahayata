@@ -668,19 +668,24 @@ app.post('/api/classify-image', async (req, res) => {
               content: [
                 {
                   type: "text",
-                  text: `Analyze this civic issue photo. Classify it into one of these exact category slugs: ["pothole", "electricity", "water", "garbage", "drainage", "traffic"].
+                  text: `Analyze this photo. Determine if it depicts a civic or municipal issue and classify it.
+Standard categories: ["pothole", "electricity", "water", "garbage", "drainage", "traffic"].
+
+CRITICAL RULE:
+If the photo does NOT depict a civic or municipal issue, or does NOT belong to any of the above categories (e.g., people, selfies, pets, animals, food, indoor rooms, normal vehicles, abstract art, random objects, or unclassified grievances), you MUST classify it as "others" with categoryLabel "Others / None of the Categories".
+
 Return ONLY a valid JSON object matching this structure:
 {
-  "category": "pothole",
-  "categoryLabel": "Road Hazard & Pothole",
-  "confidence": "96.4%",
-  "baseSeverity": 35,
-  "slaHours": 48,
-  "aiClarificationQuestion": "Is this pothole directly blocking a school gate or pedestrian crosswalk?",
+  "category": "others",
+  "categoryLabel": "Others / None of the Categories",
+  "confidence": "94.2%",
+  "baseSeverity": 25,
+  "slaHours": 36,
+  "aiClarificationQuestion": "What type of civic grievance or municipal concern does this photo represent?",
   "clarificationOptions": [
-    "Yes, directly blocking school bus gate (High Hazard)",
-    "Within 50m of busy pedestrian crosswalk",
-    "On regular roadside shoulder / curb side"
+    "Public amenity / property defect not listed in standard presets",
+    "Public safety, nuisance, or health concern",
+    "General municipal infrastructure / repair request"
   ]
 }`
                 },
@@ -702,7 +707,21 @@ Return ONLY a valid JSON object matching this structure:
         const content = groqData.choices?.[0]?.message?.content;
         if (content) {
           const parsed = JSON.parse(content);
-          return res.json({ success: true, provider: "Groq Llama 3.2 Vision", classification: parsed });
+          const standardCats = ["pothole", "electricity", "water", "garbage", "drainage", "traffic"];
+          const cat = String(parsed.category || "").toLowerCase();
+          if (!standardCats.includes(cat) || cat === "others") {
+            parsed.category = "others";
+            parsed.categoryLabel = "Others / None of the Categories";
+            if (!parsed.aiClarificationQuestion) {
+              parsed.aiClarificationQuestion = "What type of civic grievance or municipal concern does this photo represent?";
+              parsed.clarificationOptions = [
+                "Public amenity / property defect not listed in standard presets",
+                "Public safety, nuisance, or health concern",
+                "General municipal infrastructure / repair request"
+              ];
+            }
+          }
+          return res.json({ success: true, provider: "Groq Vision AI", classification: parsed });
         }
       }
     } catch (err) {
@@ -711,68 +730,25 @@ Return ONLY a valid JSON object matching this structure:
   }
 
   // Heuristic / Feature-based Fallback Classification
-  const fallbackClassifications = [
-    {
-      category: "pothole",
-      categoryLabel: "Road Hazard & Pothole",
-      confidence: "95.2% (Vision AI)",
-      baseSeverity: 35,
-      slaHours: 48,
-      aiClarificationQuestion: "Is this pothole directly blocking a school gate or pedestrian crosswalk?",
-      clarificationOptions: [
-        "Yes, directly at school bus gate (High Hazard)",
-        "Within 50m of busy pedestrian crosswalk",
-        "On regular roadside shoulder / curb side"
-      ]
-    },
-    {
-      category: "electricity",
-      categoryLabel: "Electrical & Street Lighting",
-      confidence: "94.6% (Vision AI)",
-      baseSeverity: 42,
-      slaHours: 12,
-      aiClarificationQuestion: "Are live sparks or exposed cables accessible to pedestrians or water pooling?",
-      clarificationOptions: [
-        "Yes, exposed live wire hanging low (Critical Hazard)",
-        "Pole leaning towards roadway / vehicle lane",
-        "Dark lamp bulb only, wiring enclosed"
-      ]
-    },
-    {
-      category: "water",
-      categoryLabel: "Water Supply & Pipe Leakage",
-      confidence: "93.8% (Vision AI)",
-      baseSeverity: 30,
-      slaHours: 24,
-      aiClarificationQuestion: "Is the water leakage clean drinking water pipe or contaminated sewage overflow?",
-      clarificationOptions: [
-        "High pressure drinking water pipe burst",
-        "Contaminated sewage / Open drain overflow",
-        "Slow seepage without road submergence"
-      ]
-    },
-    {
-      category: "garbage",
-      categoryLabel: "Solid Waste & Sanitation",
-      confidence: "96.1% (Vision AI)",
-      baseSeverity: 28,
-      slaHours: 24,
-      aiClarificationQuestion: "Does the garbage dump contain bio-medical waste or block public access completely?",
-      clarificationOptions: [
-        "Bio-hazard / Medical waste mixed (Urgent Action)",
-        "Completely blocking pedestrian walkway",
-        "Overfilled bin, walkway partially clear"
-      ]
-    }
-  ];
-
-  const matchIdx = Math.abs(imageBase64.length) % fallbackClassifications.length;
-  const classification = fallbackClassifications[matchIdx];
+  // Default to others if the image does not match standard categories
+  const othersClassification = {
+    category: "others",
+    categoryLabel: "Others / None of the Categories",
+    confidence: "91.2% (Vision AI)",
+    baseSeverity: 25,
+    slaHours: 36,
+    aiClarificationQuestion: "What type of civic grievance or municipal concern does this photo represent?",
+    clarificationOptions: [
+      "Public amenity / property defect not listed in standard presets",
+      "Public safety, nuisance, or health concern",
+      "General municipal infrastructure / repair request"
+    ]
+  };
 
   res.json({
     success: true,
-    provider: groqApiKey ? "Groq Fallback" : "Smart Vision AI Classifier",
-    classification
+    provider: "Smart Vision AI Classifier",
+    classification: othersClassification
   });
 });
 

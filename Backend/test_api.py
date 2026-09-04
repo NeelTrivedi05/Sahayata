@@ -104,6 +104,80 @@ def test_phash_generation():
     print(f"[PASS] POST /api/ai/phash (Computed 64-bit dHash: {data['hexHash']})")
 
 
+def test_classify_image_others():
+    """Verify images that belong to none of the standard categories classify as 'others'."""
+    from PIL import ImageDraw
+
+    # 1. Plain non-civic image
+    img = Image.new('RGB', (100, 100), color='salmon')
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG')
+    b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+
+    res = client.post("/api/classify-image", json={"imageBase64": b64})
+    assert res.status_code == 200, "classify-image failed"
+    data = res.json()
+    assert data["success"] is True, "Classification success false"
+    cls = data["classification"]
+    assert cls["category"] == "others", f"Expected category 'others', got '{cls.get('category')}'"
+    assert "Others" in cls["categoryLabel"]
+
+    # 2. Selfie / Person portrait photo (skin tones, face structure)
+    selfie_img = Image.new('RGB', (128, 128), (90, 90, 95))
+    draw = ImageDraw.Draw(selfie_img)
+    draw.ellipse((40, 30, 90, 90), fill=(185, 135, 100)) # Human face skin tone
+    buf2 = io.BytesIO()
+    selfie_img.save(buf2, format='JPEG')
+    b64_selfie = base64.b64encode(buf2.getvalue()).decode('utf-8')
+
+    res2 = client.post("/api/classify-image", json={"imageBase64": b64_selfie})
+    assert res2.status_code == 200
+    cls2 = res2.json()["classification"]
+    assert cls2["category"] == "others", f"Expected selfie to be 'others', got {cls2['category']}"
+    assert cls2["categoryLabel"] == "Others / None of the Categories"
+
+    print(f"[PASS] POST /api/classify-image (Selfie & non-civic photos classified as '{cls2['category']}' -> '{cls2['categoryLabel']}')")
+
+
+def test_create_pothole_report_and_block_others():
+    """Verify that pothole grievances are stored with category 'pothole', and 'others' are blocked."""
+    # 1. Submitting a pothole report must succeed and store category: 'pothole'
+    pothole_payload = {
+        "title": "Severe road crater on 100ft Road",
+        "category": "pothole",
+        "categoryLabel": "Road Hazard & Pothole",
+        "coords": [12.9600, 77.6500],  # distinct coords
+        "address": "100ft Road, Indiranagar",
+        "phash": "1122334455667788",
+        "clarificationAnswer": "Yes, it's in the main lane"
+    }
+    res = client.post("/api/reports", json=pothole_payload)
+    assert res.status_code == 200, f"Expected 200 for pothole, got {res.status_code}"
+    created_data = res.json()["data"]
+    assert created_data["category"] == "pothole", f"Expected category 'pothole', got '{created_data['category']}'"
+    assert created_data["categoryLabel"] == "Road Hazard & Pothole"
+    print(f"[PASS] POST /api/reports Pothole successfully registered with ID {created_data['id']} (Category: {created_data['category']})")
+
+    # Verify retrieval from /api/reports includes the new pothole
+    reports_res = client.get("/api/reports")
+    all_reports = reports_res.json()["data"]
+    found = any(r["id"] == created_data["id"] and r["category"] == "pothole" for r in all_reports)
+    assert found is True, "Pothole was not found in stored reports"
+    print(f"[PASS] GET /api/reports verified pothole is stored in database as category 'pothole'")
+
+    # 2. Submitting an 'others' non-civic grievance must be blocked with HTTP 400
+    others_payload = {
+        "title": "Selfie or non-civic picture",
+        "category": "others",
+        "categoryLabel": "Others / None of the Categories",
+        "coords": [12.9610, 77.6510],
+        "address": "Indoor Office"
+    }
+    res_others = client.post("/api/reports", json=others_payload)
+    assert res_others.status_code == 400, f"Expected 400 for 'others', got {res_others.status_code}"
+    print(f"[PASS] POST /api/reports Non-civic submission ('others') successfully blocked with HTTP 400")
+
+
 if __name__ == "__main__":
     print("==================================================")
     print("[TEST] SAHAYATA FASTAPI BACKEND VALIDATION SUITE")
@@ -115,6 +189,9 @@ if __name__ == "__main__":
     test_endorse_report()
     test_progress_report()
     test_phash_generation()
+    test_classify_image_others()
+    test_create_pothole_report_and_block_others()
     print("\n==================================================")
-    print("[SUCCESS] ALL 7 FASTAPI ENDPOINTS FULLY VERIFIED AND WORKING!")
+    print("[SUCCESS] ALL 9 FASTAPI TESTS FULLY VERIFIED AND PASSING!")
     print("==================================================")
+

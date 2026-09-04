@@ -233,6 +233,11 @@ export default function App() {
 
   // Handle citizen submission with instant deduplication check (works both online and offline)
   const handleReportSubmit = async (payload) => {
+    if (payload?.category === 'others' || payload?.categoryLabel?.includes('Others')) {
+      showToast('Submission blocked: Non-civic image classified as Others / None of the Categories.');
+      return;
+    }
+
     const reportData = {
       title: payload?.title || (customDescription ? customDescription : activePreset.name),
       category: payload?.category || activePreset.category,
@@ -1236,22 +1241,22 @@ function ReportIssueView({
         const cls = data.classification;
         const dynamicPreset = {
           id: `custom_${Date.now()}`,
-          name: `${cls.categoryLabel} (AI Vision Detected)`,
-          category: cls.category,
-          categoryLabel: cls.categoryLabel,
-          baseSeverity: cls.baseSeverity || 35,
-          slaHours: cls.slaHours || 24,
+          name: `${cls.categoryLabel || 'Others / None of the Categories'} (AI Vision Detected)`,
+          category: cls.category || 'others',
+          categoryLabel: cls.categoryLabel || 'Others / None of the Categories',
+          baseSeverity: cls.baseSeverity || 25,
+          slaHours: cls.slaHours || 36,
           image: base64Image,
           coords: [19.0558, 72.8295],
           address: "Ward H/West (GPS Tagged Location)",
-          confidence: cls.confidence || "96.4%",
-          provider: data.provider || "Groq Llama 3.2 Vision",
+          confidence: cls.confidence || "95.4%",
+          provider: data.provider || "Groq Qwen 27B Vision AI",
           aiClarification: {
-            question: cls.aiClarificationQuestion || "Is this issue actively blocking traffic or pedestrian safety?",
+            question: cls.aiClarificationQuestion || "What type of civic grievance or municipal concern is this?",
             options: cls.clarificationOptions || [
-              "Yes, high hazard / urgent priority",
-              "Medium hazard / standard priority",
-              "Minor hazard / routine repair"
+              "Public amenity / property defect not listed in standard presets",
+              "Public safety, nuisance, or health concern",
+              "General municipal infrastructure / repair request"
             ]
           }
         };
@@ -1270,25 +1275,25 @@ function ReportIssueView({
       setIsScanning(false);
     }
 
-    // Heuristic fallback preset
+    // Heuristic fallback preset (defaults to Others / None of the Categories when image belongs to none of the standard categories)
     const fallbackPreset = {
       id: `custom_${Date.now()}`,
-      name: "Custom Captured Issue (AI Verified)",
-      category: "pothole",
-      categoryLabel: "Road Hazard & Pothole",
-      baseSeverity: 35,
-      slaHours: 24,
+      name: "Others / None of the Categories (AI Assessed)",
+      category: "others",
+      categoryLabel: "Others / None of the Categories",
+      baseSeverity: 25,
+      slaHours: 36,
       image: base64Image,
       coords: [19.0558, 72.8295],
       address: "Ward H/West (GPS Tagged Location)",
-      confidence: "94.0%",
+      confidence: "91.0%",
       provider: "Visual Feature Analyzer",
       aiClarification: {
-        question: "Is this issue actively blocking traffic or pedestrian safety?",
+        question: "What type of civic grievance or municipal concern does this photo represent?",
         options: [
-          "Yes, high hazard / urgent priority",
-          "Medium hazard / standard priority",
-          "Minor hazard / routine repair"
+          "Public amenity / property defect not listed in standard presets",
+          "Public safety, nuisance, or health concern",
+          "General municipal infrastructure / repair request"
         ]
       }
     };
@@ -1312,18 +1317,26 @@ function ReportIssueView({
   };
 
   // Category state for custom mode
-  const [category, setCategory] = useState('pothole');
-  const [categoryLabel, setCategoryLabel] = useState('Road Hazard & Pothole');
+  const [category, setCategory] = useState('others');
+  const [categoryLabel, setCategoryLabel] = useState('Others / None of the Categories');
 
   const categories = [
     { id: 'pothole', label: 'Road Hazard & Pothole', icon: '🕳️' },
     { id: 'garbage', label: 'Solid Waste & Garbage', icon: '🗑️' },
     { id: 'electricity', label: 'Electrical & Streetlight', icon: '💡' },
-    { id: 'water', label: 'Water Leak & Drainage', icon: '🚰' }
+    { id: 'water', label: 'Water Leak & Drainage', icon: '🚰' },
+    { id: 'drainage', label: 'Stormwater & Flooding', icon: '🌊' },
+    { id: 'traffic', label: 'Traffic & Obstruction', icon: '🚦' },
+    { id: 'others', label: 'Others / None of the Categories', icon: '📌' }
   ];
 
   // Handle final submission
   const handleFormSubmit = () => {
+    if (currentPreset?.category === "others" || currentPreset?.categoryLabel?.includes("Others")) {
+      alert("Submission blocked: Uploaded photo does not depict a municipal or civic issue (classified as Others / None of the Categories). Please upload an image of a municipal problem like a pothole, garbage dump, or water leak.");
+      return;
+    }
+
     const finalCoords = currentPreset?.coords || [19.0558, 72.8295];
     const finalAddress = currentPreset?.address || "Hill Road, Ward H/West, Bandra West, Mumbai";
 
@@ -1370,7 +1383,7 @@ function ReportIssueView({
           </div>
           <div>
             <div style={{ fontWeight: 800, fontSize: '0.98rem' }}>
-              Groq Llama 3.2 Vision Automated Image Classifier
+              Groq Qwen 27B Vision Automated Classifier
             </div>
             <div style={{ fontSize: '0.78rem', opacity: 0.85, marginTop: '2px' }}>
               Upload any photo from your device. AI will analyze pixel features, detect issue category & generate clarification options.
@@ -1507,7 +1520,7 @@ function ReportIssueView({
             {isScanning ? (
               <div style={{ height: '260px', background: '#1E1B4B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
                 <RefreshCw size={36} className="animate-spin text-indigo-400 mb-3" />
-                <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>Groq Llama 3.2 Vision Analyzing Photo...</div>
+                <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>Groq Qwen 27B Vision Analyzing Photo...</div>
                 <div style={{ fontSize: '0.75rem', color: '#A5B4FC', marginTop: '4px' }}>Extracting features, severity & context</div>
               </div>
             ) : (
@@ -1674,28 +1687,77 @@ function ReportIssueView({
             </div>
           </div>
 
-          <button
-            type="button"
-            style={{
-              background: '#1D4ED8',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '14px',
-              fontWeight: 800,
-              fontSize: '0.98rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 10px rgba(29, 78, 216, 0.3)',
-              marginTop: '10px'
-            }}
-            onClick={handleFormSubmit}
-          >
-            Submit Classified Grievance →
-          </button>
+          {currentPreset?.category === "others" || currentPreset?.categoryLabel?.includes("Others") ? (
+            <div style={{ marginTop: '10px' }}>
+              <div
+                style={{
+                  background: '#FEF2F2',
+                  border: '1px solid #F87171',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  marginBottom: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  color: '#991B1B',
+                  fontSize: '0.84rem'
+                }}
+              >
+                <AlertTriangle size={20} color="#DC2626" style={{ flexShrink: 0 }} />
+                <div>
+                  <strong>Non-Civic Image Detected ({currentPreset?.categoryLabel || "Others / None of the Categories"}):</strong>
+                  <div style={{ marginTop: '2px', fontSize: '0.78rem', color: '#7F1D1D' }}>
+                    Submission is blocked. Please upload a photo of an outdoor municipal hazard (e.g. pothole, garbage dump, water leak) to file a report.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled
+                style={{
+                  width: '100%',
+                  background: '#94A3B8',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  fontWeight: 800,
+                  fontSize: '0.98rem',
+                  cursor: 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: 0.75
+                }}
+              >
+                🚫 Submission Blocked (Non-Civic Image)
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              style={{
+                background: '#1D4ED8',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '14px',
+                fontWeight: 800,
+                fontSize: '0.98rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 10px rgba(29, 78, 216, 0.3)',
+                marginTop: '10px'
+              }}
+              onClick={handleFormSubmit}
+            >
+              Submit Classified Grievance as {currentPreset?.category === 'pothole' ? 'Pothole' : currentPreset?.categoryLabel || 'Grievance'} →
+            </button>
+          )}
         </div>
       </div>
 
