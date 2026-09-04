@@ -178,6 +178,27 @@ const SEED_REPORTS = [
   }
 ];
 
+export function getSeedImagesForCategory(category = "", title = "") {
+  const cat = (category || "").toLowerCase();
+  const t = (title || "").toLowerCase();
+  if (t.includes("station") && (cat.includes("water") || t.includes("pipe"))) {
+    return { before: "/seeds/SEED-5-before.png", after: "/seeds/SEED-5-after.png" };
+  }
+  if (cat.includes("pothole") || t.includes("pothole") || t.includes("road") || t.includes("carter")) {
+    return { before: "/seeds/SEED-1-before.png", after: "/seeds/SEED-1-after.png" };
+  }
+  if (cat.includes("water") || t.includes("water") || t.includes("pipeline") || t.includes("burst")) {
+    return { before: "/seeds/SEED-2-before.png", after: "/seeds/SEED-2-after.png" };
+  }
+  if (cat.includes("electric") || cat.includes("light") || t.includes("wire") || t.includes("light")) {
+    return { before: "/seeds/SEED-3-before.png", after: "/seeds/SEED-3-after.png" };
+  }
+  if (cat.includes("garbage") || cat.includes("waste") || t.includes("dump") || t.includes("trash")) {
+    return { before: "/seeds/SEED-4-before.png", after: "/seeds/SEED-4-after.png" };
+  }
+  return { before: "/seeds/SEED-1-before.png", after: "/seeds/SEED-1-after.png" };
+}
+
 function loadReports() {
   try {
     if (fs.existsSync(REPORTS_FILE)) {
@@ -185,7 +206,23 @@ function loadReports() {
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
         console.log(`[Persistence] Loaded ${parsed.length} reports from ${REPORTS_FILE}`);
-        return parsed.map(r => ({ ...r, source: r.source || "DEMO" }));
+        const normalized = parsed.map(r => {
+          const seeds = getSeedImagesForCategory(r.category, r.title);
+          const cleanBefore = (!r.beforeImage || r.beforeImage.includes('example.com') || r.beforeImage.includes('unsplash.com'))
+            ? (r.image && !r.image.includes('example.com') && !r.image.includes('unsplash.com') ? r.image : seeds.before)
+            : r.beforeImage;
+          const cleanAfter = (!r.afterImage || r.afterImage.includes('example.com') || r.afterImage.includes('unsplash.com'))
+            ? seeds.after
+            : r.afterImage;
+          return {
+            ...r,
+            source: r.source || "DEMO",
+            beforeImage: cleanBefore,
+            afterImage: cleanAfter
+          };
+        });
+        saveReports(normalized);
+        return normalized;
       }
     }
   } catch (err) {
@@ -417,8 +454,8 @@ app.post('/api/reports', (req, res) => {
     clarificationAnswer: clarificationAnswer || "Standard reporting",
     reportedBy: "You (Citizen)",
     reportedAt: "Just now",
-    beforeImage: image,
-    afterImage: image,
+    beforeImage: image && !image.includes('example.com') && !image.includes('unsplash.com') ? image : getSeedImagesForCategory(category, title).before,
+    afterImage: getSeedImagesForCategory(category, title).after,
     phash: phash || null,
     resolution: {
       assignedTo: "Er. Rajesh Sawant (Executive Engineer)",

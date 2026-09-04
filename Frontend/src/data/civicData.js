@@ -402,3 +402,35 @@ export function calculatePriorityScore(report) {
     }
   };
 }
+
+export function getReportBeforeImage(report) {
+  if (!report) return '/seeds/SEED-1-before.png';
+  if (report.beforeImage && typeof report.beforeImage === 'string' && !report.beforeImage.includes('example.com')) {
+    return report.beforeImage;
+  }
+  if (report.image && typeof report.image === 'string' && !report.image.includes('example.com')) {
+    return report.image;
+  }
+  const text = ((report.category || '') + ' ' + (report.categoryLabel || '') + ' ' + (report.title || '')).toLowerCase();
+  if (text.includes('station') && (text.includes('water') || text.includes('pipe'))) return '/seeds/SEED-5-before.png';
+  if (text.includes('pothole') || text.includes('road') || text.includes('carter')) return '/seeds/SEED-1-before.png';
+  if (text.includes('water') || text.includes('drain') || text.includes('leak') || text.includes('pipe') || text.includes('burst')) return '/seeds/SEED-2-before.png';
+  if (text.includes('elect') || text.includes('light') || text.includes('wire') || text.includes('pole')) return '/seeds/SEED-3-before.png';
+  if (text.includes('garb') || text.includes('waste') || text.includes('trash') || text.includes('dump')) return '/seeds/SEED-4-before.png';
+  return '/seeds/SEED-1-before.png';
+}
+
+export function getReportAfterImage(report) {
+  if (!report) return '/seeds/SEED-1-after.png';
+  if (report.afterImage && typeof report.afterImage === 'string' && !report.afterImage.includes('example.com')) {
+    return report.afterImage;
+  }
+  const text = ((report.category || '') + ' ' + (report.categoryLabel || '') + ' ' + (report.title || '')).toLowerCase();
+  if (text.includes('station') && (text.includes('water') || text.includes('pipe'))) return '/seeds/SEED-5-after.png';
+  if (text.includes('pothole') || text.includes('road') || text.includes('carter')) return '/seeds/SEED-1-after.png';
+  if (text.includes('water') || text.includes('drain') || text.includes('leak') || text.includes('pipe') || text.includes('burst')) return '/seeds/SEED-2-after.png';
+  if (text.includes('elect') || text.includes('light') || text.includes('wire') || text.includes('pole')) return '/seeds/SEED-3-after.png';
+  if (text.includes('garb') || text.includes('waste') || text.includes('trash') || text.includes('dump')) return '/seeds/SEED-4-after.png';
+  return '/seeds/SEED-1-after.png';
+}
+

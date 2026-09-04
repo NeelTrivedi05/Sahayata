@@ -31,6 +31,7 @@ import {
   Check
 } from 'lucide-react';
 import { api } from '../../api/client';
+import { getReportBeforeImage, getReportAfterImage } from '../../data/civicData';
 import ComplaintMiniMap from '../map/ComplaintMiniMap';
 import { calculateTotalDuplicates } from '../../utils/deduplication';
 import WebcamCaptureModal from '../common/WebcamCaptureModal';
@@ -1198,9 +1199,13 @@ export default function WardDashboardView({
                     Citizen Intake Photo
                   </div>
                   <img
-                    src={selectedReportForModal.beforeImage}
+                    src={getReportBeforeImage(selectedReportForModal)}
                     alt="Intake"
                     style={{ width: '100%', height: '170px', objectFit: 'cover', borderRadius: '12px', border: '1px solid #E2E8F0' }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/seeds/SEED-1-before.png';
+                    }}
                   />
                 </div>
                 <div>
@@ -1209,9 +1214,13 @@ export default function WardDashboardView({
                   </div>
                   {afterPhotoPreview || selectedReportForModal.afterImage ? (
                     <img
-                      src={afterPhotoPreview || selectedReportForModal.afterImage}
+                      src={afterPhotoPreview || getReportAfterImage(selectedReportForModal)}
                       alt="After Repair"
                       style={{ width: '100%', height: '170px', objectFit: 'cover', borderRadius: '12px', border: '2px solid #10B981' }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/seeds/SEED-1-after.png';
+                      }}
                     />
                   ) : (
                     <div

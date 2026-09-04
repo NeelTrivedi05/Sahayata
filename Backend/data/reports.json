@@ -20,7 +20,8 @@
     "baseSeverity": 30,
     "reportedBy": "You (Citizen)",
     "reportedAt": "Just now",
-    "afterImage": "https://example.com/after.jpg",
+    "beforeImage": "/seeds/SEED-1-before.png",
+    "afterImage": "/seeds/SEED-1-after.png",
     "phash": null,
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
@@ -52,7 +53,8 @@
     "baseSeverity": 30,
     "reportedBy": "You (Citizen)",
     "reportedAt": "Just now",
-    "afterImage": "https://example.com/after.jpg",
+    "beforeImage": "/seeds/SEED-1-before.png",
+    "afterImage": "/seeds/SEED-1-after.png",
     "phash": null,
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
@@ -82,6 +84,8 @@
     "baseSeverity": 30,
     "reportedBy": "You (Citizen)",
     "reportedAt": "Just now",
+    "beforeImage": "/seeds/SEED-5-before.png",
+    "afterImage": "/seeds/SEED-5-after.png",
     "phash": null,
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
@@ -113,8 +117,8 @@
     "baseSeverity": 35,
     "reportedBy": "Priya S. & 14 others",
     "reportedAt": "2 days ago",
-    "beforeImage": "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
-    "afterImage": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
+    "beforeImage": "/seeds/SEED-1-before.png",
+    "afterImage": "/seeds/SEED-1-after.png",
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant (Ward H/West)",
       "contractor": "Falcon Mumbai Infrastructure Ltd.",
@@ -145,8 +149,8 @@
     "baseSeverity": 28,
     "reportedBy": "Karthik R. & 8 others",
     "reportedAt": "19 hours ago",
-    "beforeImage": "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
-    "afterImage": "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
+    "beforeImage": "/seeds/SEED-4-before.png",
+    "afterImage": "/seeds/SEED-4-after.png",
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant",
       "contractor": "CleanMumbai BMC Solid Waste Marshall Squad #3",
@@ -176,8 +180,8 @@
     "baseSeverity": 40,
     "reportedBy": "Dr. Ananya Rao",
     "reportedAt": "Yesterday",
-    "beforeImage": "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
-    "afterImage": "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+    "beforeImage": "/seeds/SEED-3-before.png",
+    "afterImage": "/seeds/SEED-3-after.png",
     "resolution": {
       "assignedTo": "Er. Ramesh Patil (BEST Electrical Dept)",
       "contractor": "BEST Emergency Wing",
@@ -207,8 +211,8 @@
     "baseSeverity": 32,
     "reportedBy": "Meera Deshmukh & 10 others",
     "reportedAt": "14 hours ago",
-    "beforeImage": "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
-    "afterImage": "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
+    "beforeImage": "/seeds/SEED-2-before.png",
+    "afterImage": "/seeds/SEED-2-after.png",
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant",
       "contractor": "BMC Hydraulic Engineering Quick Response Unit",
