@@ -1,7 +1,6 @@
-import React from 'react';
-import { User, Wrench, Landmark, ArrowRight, CheckCircle, Sparkles } from 'lucide-react';
+import { User, Wrench, Landmark, ArrowRight, CheckCircle, Sparkles, Zap } from 'lucide-react';
 
-export default function RoleSelectLanding({ onSelectRole }) {
+export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
   const roles = [
     {
       id: 'citizen',
@@ -49,32 +48,31 @@ export default function RoleSelectLanding({ onSelectRole }) {
       {/* Top Nav */}
       <div className="auth-top-nav" style={{ maxWidth: '1080px', width: '100%', margin: '0 auto 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Landmark size={20} color="#1E3A5F" />
+          <Landmark size={18} color="#1E3A5F" />
           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E3A5F' }}>
-            Brihanmumbai Municipal Corporation (BMC) & Govt. of Maharashtra
+            Brihanmumbai Municipal Corporation (BMC) & Government of Maharashtra
           </span>
         </div>
-        <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', background: '#FFFFFF', padding: '6px 14px', borderRadius: '10px', border: '1px solid #CBD5E1' }}>
+        <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', background: '#FFFFFF', padding: '6px 14px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
           Official Access Portal
         </div>
       </div>
 
       {/* Hero Header */}
       <div style={{ textAlign: 'center', maxWidth: '820px', margin: '0 auto 36px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#FEF3C7', padding: '6px 14px', borderRadius: '9999px', color: '#92400E', fontSize: '0.8rem', fontWeight: 700, marginBottom: '14px', border: '1px solid #FDE68A' }}>
-          <Sparkles size={15} />
-          <span>Official Civic Grievance & SLA Anti-Deadlock Network • Ward H/West</span>
-        </div>
-        <img 
-          src="/sahayata-logo.jpg" 
-          alt="Sahayata Logo" 
-          style={{ height: '70px', width: 'auto', margin: '0 auto 16px', display: 'block', objectFit: 'contain', borderRadius: '8px' }}
+        <img
+          src="/sahayata-logo.jpg"
+          alt="Sahayata Logo"
+          style={{ height: '76px', margin: '0 auto 16px', objectFit: 'contain', display: 'block' }}
         />
-        <h1 style={{ fontSize: '2.6rem', fontWeight: 900, color: '#0F172A', margin: '0 0 10px', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-          Welcome to <span style={{ color: '#1E3A5F' }}>Sahayata</span>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#FEF3C7', padding: '5px 14px', borderRadius: '8px', color: '#92400E', fontSize: '0.8rem', fontWeight: 700, marginBottom: '14px', border: '1px solid #FDE68A' }}>
+          <span>Ward H/West Municipal Grievance and SLA Dispatch System</span>
+        </div>
+        <h1 style={{ fontSize: '2.4rem', fontWeight: 900, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+          Sahayata
         </h1>
-        <p style={{ fontSize: '1.05rem', color: '#475569', margin: '0 0 18px', fontWeight: 500 }}>
-          Help at Hand — <strong style={{ color: '#D97706' }}>Your Problem, Our Responsibility</strong>
+        <p style={{ fontSize: '1.05rem', color: '#1E3A5F', margin: '0 0 20px', fontWeight: 700, letterSpacing: '0.01em' }}>
+          Civic Action, Resolved.
         </p>
 
         {/* Distinct Question Banner */}
@@ -217,6 +215,46 @@ export default function RoleSelectLanding({ onSelectRole }) {
                 <span>{role.actionLabel}</span>
                 <ArrowRight size={17} />
               </button>
+              {onQuickLogin && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickLogin(role.id);
+                  }}
+                  style={{
+                    background: '#F8FAFC',
+                    color: '#334155',
+                    border: '1.5px solid #E2E8F0',
+                    borderRadius: '10px',
+                    padding: '8px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = '#F1F5F9';
+                    e.currentTarget.style.borderColor = role.accentColor;
+                    e.currentTarget.style.color = role.accentColor;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = '#F8FAFC';
+                    e.currentTarget.style.borderColor = '#E2E8F0';
+                    e.currentTarget.style.color = '#334155';
+                  }}
+                  title={`Quick demo access as ${role.demoUser}`}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <Zap size={13} />
+                    <span>Demo ({role.demoUser.split(' ')[0]})</span>
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -224,7 +262,7 @@ export default function RoleSelectLanding({ onSelectRole }) {
 
       {/* Footer */}
       <div style={{ textAlign: 'center', color: '#94A3B8', fontSize: '0.8rem', padding: '16px 0' }}>
-        Govt. of Maharashtra & BMC • Ward H/West (Bandra West) Official Civic Network • Helpline: 1916
+        Government of Maharashtra & BMC | Ward H/West (Bandra West) Civic Network | Helpline: 1916
       </div>
     </div>
   );

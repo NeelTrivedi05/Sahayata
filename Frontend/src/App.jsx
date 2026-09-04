@@ -51,6 +51,7 @@ import {
   RotateCcw,
   Hash,
   EyeOff,
+
   HardHat,
   Bell,
   Trash2,
@@ -63,6 +64,7 @@ import {
   Send,
   Sprout,
   HelpCircle
+
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import RoleSelectLanding from './components/auth/RoleSelectLanding';
@@ -281,9 +283,11 @@ export default function App() {
     { id: 'ward_overview', label: 'Ward Overview Desk', icon: BarChart3, roles: ['ward_engineer'] },
     { id: 'mla', label: 'MLA Oversight Radar', icon: Landmark, roles: ['mla'] },
     { id: 'radar', label: 'Civic Radar & Map', icon: Compass, roles: ['citizen', 'ward_engineer', 'mla'] },
+
     { id: 'pipeline', label: `Track Complaints (${reports.length})`, icon: FileText, roles: ['citizen', 'ward_engineer', 'mla'] },
     { id: 'priority', label: 'Priority Queue', icon: Zap, roles: ['ward_engineer', 'mla'] },
     { id: 'verify', label: 'Verify Resolutions', icon: CheckSquare, roles: ['citizen'] }
+
   ];
 
   const availableNavTabs = allNavTabs.filter(t => t.roles.includes(currentRole));
@@ -590,11 +594,14 @@ export default function App() {
             type="button"
             className="auth-back-btn"
             onClick={() => setShowLanding(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            ← Back to Role Select
+            <ArrowLeft size={15} /> Back to Role Select
           </button>
           <div className="auth-brand-badge">
+
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Building2 size={14} /> BMC & Govt. of Maharashtra Portal</span>
+
           </div>
         </div>
         <AuthCard
@@ -633,6 +640,7 @@ export default function App() {
           style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
           onClick={() => setActiveTab('radar')}
         >
+
           <img 
             src="/sahayata-logo.jpg" 
             alt="Sahayata Logo" 
@@ -644,6 +652,7 @@ export default function App() {
             </span>
             <span className="text-slate-300 dark:text-slate-600 font-light">|</span>
             <span style={{ fontFamily: 'var(--font-display)' }} className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+
               Civic Action, Resolved.
             </span>
           </div>
@@ -663,10 +672,12 @@ export default function App() {
               borderRadius: '10px'
             }}
           >
+
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 700, color: currentRole === 'ward_engineer' ? '#D97706' : currentRole === 'mla' ? '#7C3AED' : '#1D4ED8' }}>
               {currentRole === 'ward_engineer' && <><HardHat size={14} /> Ward H/West Engineering Desk</>}
               {currentRole === 'mla' && <><Landmark size={14} /> MLA Oversight (Shri Ashish Shelar)</>}
               {currentRole === 'citizen' && <><User size={14} /> Citizen Auditor</>}
+
             </span>
           </div>
 
@@ -687,7 +698,9 @@ export default function App() {
             title="Civic Karma earned by reporting and verifying neighborhood issues"
           >
             <Star size={14} fill="#059669" color="#059669" />
+
             <span style={{ fontFamily: 'var(--font-display)' }}>{civicKarma} Karma</span>
+
           </div>
 
           {/* User Auth Section */}
@@ -881,7 +894,9 @@ export default function App() {
           }}
         >
           {availableNavTabs.map(tab => {
+
             const Icon = tab.icon;
+
             return (
               <button
                 key={tab.id}
@@ -894,6 +909,7 @@ export default function App() {
                   padding: '14px 4px',
                   fontSize: '0.88rem',
                   fontWeight: activeTab === tab.id ? 700 : 600,
+
                   fontFamily: 'var(--font-display)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
@@ -904,6 +920,7 @@ export default function App() {
               >
                 {Icon && <Icon size={16} />}
                 <span>{tab.label}</span>
+
               </button>
             );
           })}
@@ -932,9 +949,11 @@ export default function App() {
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
           Current Workspace:{' '}
           <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+
             {currentRole === 'citizen' && <><User size={13} /> Citizen Portal (Report issues, endorse duplicates, verify repairs)</>}
             {currentRole === 'ward_engineer' && <><HardHat size={13} /> Ward H/West Engineering Desk (Inspect intake, assign contractors, upload post-fix proof)</>}
             {currentRole === 'mla' && <><Landmark size={13} /> Legislative Oversight Desk (Monitor SLA compliance, overdue hotspots, contractor accountability)</>}
+
           </strong>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -962,7 +981,7 @@ export default function App() {
             </button>
           )}
           <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
-            Ward H/West (Bandra West) • SLA Target: 24–48h
+            Ward H/West (Bandra West) | SLA Target: 24–48h
           </span>
         </div>
       </div>
@@ -991,7 +1010,9 @@ export default function App() {
                 address
               }));
               setActiveTab('report');
+
               showToast(`Selected location on map: ${address.split('(')[0]}`);
+
             }}
             onEndorseReport={async (reportId) => {
               try {
@@ -1532,8 +1553,10 @@ function ReportIssueView({
       >
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ECFDF5', color: '#065F46', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 800, marginBottom: '6px' }}>
+
             <Sprout size={14} color="#059669" />
             <span>Citizen Grievance Intake Desk • Ward H/West</span>
+
           </div>
           <h2 style={{ fontSize: '1.65rem', fontWeight: 900, color: '#0F172A', margin: '2px 0 4px', letterSpacing: '-0.02em' }}>
             Report an Issue in Your Area
@@ -1637,7 +1660,9 @@ function ReportIssueView({
                 </>
               ) : (
                 <>
+
                   <Upload size={20} />
+
                   <span>Upload Photo</span>
                 </>
               )}
@@ -1972,7 +1997,9 @@ function ReportIssueView({
                   ? 'Detecting your GPS location...'
                   : geo.coords
                   ? `GPS Detected: ${geo.address || 'Ward H/West (Mumbai)'}`
+
                   : 'Tap to Detect My Current Location (GPS)'}
+
               </span>
             </button>
 
@@ -2019,8 +2046,10 @@ function ReportIssueView({
             </div>
 
             <div style={{ background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+
               <MapPin size={14} color="#1D4ED8" />
               <span><strong>Assigned Area:</strong> Ward H/West (Bandra West & Khar) • Fast-response municipal squad</span>
+
             </div>
           </div>
         </div>
@@ -2068,7 +2097,9 @@ function ReportIssueView({
                   opacity: 0.75
                 }}
               >
+
                 <AlertCircle size={18} />
+
                 <span>Submission Blocked (Non-Civic Image)</span>
               </button>
             </div>
@@ -2094,8 +2125,10 @@ function ReportIssueView({
                 transition: 'all 0.15s ease'
               }}
             >
+
               <Send size={18} />
               <span>Submit Complaint to Ward Office</span>
+
             </button>
           )}
           <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2166,7 +2199,9 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
             const currentCoords = [pos.coords.latitude, pos.coords.longitude];
             const dist = getDistanceMeters(currentCoords, resolvingTicket.coords);
             if (dist > 100) {
+
               setResolveGeofenceNotice(`Geo-Fence Warning: Device is ~${dist}m from grievance location (100m radius). Confirming manual override.`);
+
             } else {
               setResolveGeofenceNotice(null);
             }
@@ -2248,6 +2283,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                           borderRadius: '4px',
                           fontSize: '0.72rem',
                           fontWeight: 700,
+
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
@@ -2255,6 +2291,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                         }}
                       >
                         <AlertTriangle size={12} /> SLA BREACHED (+{p.overdueHours}h)
+
                       </span>
                     )}
                   </div>
@@ -2353,7 +2390,9 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                             boxShadow: isCurrent ? '0 0 0 4px rgba(29, 78, 216, 0.2)' : 'none'
                           }}
                         >
+
                           {isPassed && !isCurrent ? <Check size={13} /> : step.num}
+
                         </div>
                         <div
                           style={{
@@ -2387,7 +2426,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                 }}
               >
                 <div style={{ fontSize: '0.82rem', color: '#475569' }}>
-                  <strong>Assigned Officer:</strong> {r.resolution?.assignedTo || 'Er. Rajesh Sawant'} •{' '}
+                  <strong>Assigned Officer:</strong> {r.resolution?.assignedTo || 'Er. Rajesh Sawant'} |{' '}
                   <span style={{ color: '#64748B' }}>{r.resolution?.note || 'In active municipal pipeline.'}</span>
                 </div>
 
@@ -2413,18 +2452,22 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                         fontWeight: 700,
                         cursor: 'pointer',
                         boxShadow: '0 2px 4px rgba(29, 78, 216, 0.2)',
+
                         display: 'flex',
+
                         alignItems: 'center',
                         gap: '6px'
                       }}
                     >
                       {r.statusStep === 4 ? (
                         <>
+
                           <Camera size={13} />
                           <span>Upload Post-Repair Photo & Complete</span>
                         </>
                       ) : (
                         'Advance Next Stage →'
+
                       )}
                     </button>
                   )}
@@ -2448,7 +2491,7 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                         boxShadow: '0 2px 4px rgba(5, 150, 105, 0.2)'
                       }}
                     >
-                      <Eye size={16} /> Verify Repair (Before / After) →
+                      <Eye size={16} /> Verify Repair (Before / After) <ArrowRight size={14} />
                     </button>
                   )}
 
@@ -2516,9 +2559,11 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
 
             {/* Target Location Mini-Map */}
             <div style={{ marginBottom: '14px' }}>
+
               <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <MapPin size={13} color="#1D4ED8" />
                 <span>Grievance Site: {resolvingTicket.address}</span>
+
               </div>
               <ComplaintMiniMap
                 coords={resolvingTicket.coords}
@@ -2635,8 +2680,10 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
                   gap: '6px'
                 }}
               >
+
                 <Check size={16} />
                 <span>Submit Proof & Mark Resolved</span>
+
               </button>
             </div>
           </div>
@@ -2977,13 +3024,17 @@ function VerificationView({
                 fontWeight: 700,
                 fontSize: '0.9rem',
                 cursor: 'pointer',
+
                 display: 'flex',
+
                 alignItems: 'center',
                 gap: '6px'
               }}
             >
+
               <X size={16} />
               <span>Dispute Quality (Reopen Ticket)</span>
+
             </button>
           </div>
         </div>
@@ -3044,10 +3095,10 @@ function PriorityRulesView({ report }) {
             style={{
               fontSize: '3.6rem',
               fontWeight: 800,
+              fontFamily: 'var(--font-display)',
               color: p.finalScore >= 80 ? '#DC2626' : p.finalScore >= 50 ? '#D97706' : '#2563EB',
               margin: '12px 0 6px 0',
-              lineHeight: 1,
-              fontFamily: 'var(--font-display)'
+              lineHeight: 1
             }}
           >
             {p.finalScore}
@@ -3077,12 +3128,14 @@ function PriorityRulesView({ report }) {
             }}
           >
             {p.isOverdue ? (
+
               <>
                 <AlertTriangle size={13} color="#DC2626" />
                 <span>SLA breached by {p.overdueHours}h! Auto-escalated to Executive Engineer & MLA.</span>
               </>
             ) : (
               <span>Complaint is within target SLA threshold.</span>
+
             )}
           </div>
         </div>
@@ -3144,10 +3197,12 @@ function PriorityRulesView({ report }) {
               border: '1px solid #FED7D7'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', fontWeight: 700, color: '#991B1B', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', fontWeight: 700, color: '#991B1B', marginBottom: '8px', alignItems: 'center' }}>
               <span>Simulate Complaint Age (Target SLA: 48h):</span>
+
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)' }}>
                 {elapsed} Hours Elapsed {elapsed > 48 ? <><AlertTriangle size={12} /> OVERDUE!</> : <><Check size={12} /> Within SLA</>}
+
               </span>
             </div>
             <input
@@ -3204,6 +3259,7 @@ function MlaDashboardView({ reports, currentRole, onNotifyWard }) {
         </div>
       </div>
 
+
       {/* KPI Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
         <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
@@ -3234,6 +3290,7 @@ function MlaDashboardView({ reports, currentRole, onNotifyWard }) {
           <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Citizen-Verified Resolved</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: '#059669', marginTop: '4px', fontFamily: 'var(--font-display)' }}>{verified}</div>
           <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '2px' }}>Closed-loop completed</div>
+
         </div>
       </div>
 
@@ -3244,7 +3301,9 @@ function MlaDashboardView({ reports, currentRole, onNotifyWard }) {
           readOnly={true}
           currentRole={currentRole}
           onNotifyWard={onNotifyWard}
+
           title="Bandra West Constituency Jurisdiction Map (MLA Surveillance)"
+
         />
       </div>
 

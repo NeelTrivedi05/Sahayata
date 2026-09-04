@@ -12,7 +12,8 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  Check
+  Check,
+  ArrowRight
 } from 'lucide-react';
 
 export default function PriorityQueueView({
@@ -128,11 +129,11 @@ export default function PriorityQueueView({
                       style={{
                         fontSize: '0.72rem',
                         fontWeight: 800,
+                        fontFamily: 'var(--font-mono)',
                         padding: '2px 8px',
                         borderRadius: '9999px',
                         background: isOverdue ? '#FEE2E2' : '#EFF6FF',
                         color: isOverdue ? '#DC2626' : '#2563EB',
-                        fontFamily: 'var(--font-mono)',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px'
@@ -140,12 +141,12 @@ export default function PriorityQueueView({
                     >
                       {isOverdue ? (
                         <>
-                          <AlertTriangle size={12} />
-                          <span>SLA EXCEEDED (+{r.elapsedHours - r.slaHours}h)</span>
+                          <AlertTriangle size={12} color="#DC2626" />
+                          <span>SLA Exceeded (+{r.elapsedHours - r.slaHours}h)</span>
                         </>
                       ) : (
                         <>
-                          <Clock size={12} />
+                          <Clock size={12} color="#2563EB" />
                           <span>{r.slaHours - r.elapsedHours}h remaining</span>
                         </>
                       )}
@@ -202,7 +203,7 @@ export default function PriorityQueueView({
                   <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
                     Priority Score
                   </div>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 900, color: (r.priorityScore || 70) >= 80 ? '#DC2626' : '#D97706', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 900, fontFamily: 'var(--font-display)', color: (r.priorityScore || 70) >= 80 ? '#DC2626' : '#D97706', lineHeight: 1 }}>
                     {r.priorityScore || 75}
                     <span style={{ fontSize: '0.85rem', color: '#94A3B8', fontWeight: 600 }}>/100</span>
                   </div>
@@ -234,13 +235,13 @@ export default function PriorityQueueView({
                         }}
                       >
                         <Check size={16} />
-                        <span>
-                          {r.statusStep === 4 ? 'Complete Repair' : 'Advance Stage →'}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          {r.statusStep === 4 ? 'Complete Repair' : <>Advance Stage <ArrowRight size={13} /></>}
                         </span>
                       </button>
                     ) : (
                       <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700, background: '#ECFDF5', padding: '6px 12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <Check size={14} /> Repair Done
+                        <Check size={14} strokeWidth={2.5} /> Repair Done
                       </span>
                     )}
                   </div>
@@ -289,7 +290,7 @@ export default function PriorityQueueView({
             <p style={{ margin: '14px 0 8px' }}>
               Priority is calculated server-side in <code>Backend/server.js</code> dynamically:
             </p>
-            <div style={{ background: '#0F172A', color: '#38BDF8', padding: '12px 16px', borderRadius: '10px', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+            <div style={{ background: '#0F172A', color: '#38BDF8', padding: '12px 16px', borderRadius: '10px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
               FinalScore = min(100, BaseSeverity + min(35, DuplicateCount × 3.5) + CriticalZoneBonus(24) + TrafficBonus(14) + AgingBonus)
             </div>
             <ul style={{ margin: '10px 0 0', paddingLeft: '20px' }}>

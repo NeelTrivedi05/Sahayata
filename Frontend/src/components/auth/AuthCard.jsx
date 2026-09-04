@@ -444,6 +444,48 @@ export default function AuthCard({
                 </button>
               </form>
 
+              {/* Quick Demo Accounts Helper */}
+              <div className="auth-demo-section">
+                <div className="auth-demo-header">
+                  <span>Quick Test Login for {currentConfig.badge}:</span>
+                  <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Click to auto-fill</span>
+                </div>
+                <div className="auth-demo-grid">
+                  {isCitizen && (
+                    <button
+                      type="button"
+                      onClick={() => fillDemoAccount('aarav.sharma@example.com', 'Password@123')}
+                      className="auth-demo-chip"
+                      title="Aarav Sharma (Citizen)"
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><User size={14} color="#1E3A8A" /> Aarav Sharma (Citizen)</span>
+                    </button>
+                  )}
+                  {selectedRole === 'ward_engineer' && (
+                    <button
+                      type="button"
+                      onClick={() => fillDemoAccount('rajesh.sawant@mcgm.gov.in', 'Engineer@2026')}
+                      className="auth-demo-chip"
+                      title="Er. Rajesh Sawant (Ward H/West Engineer)"
+                      style={{ gridColumn: '1 / -1' }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Wrench size={14} color="#EA580C" /> Er. Rajesh Sawant (Executive Engineer, Ward H/West)</span>
+                    </button>
+                  )}
+                  {selectedRole === 'mla' && (
+                    <button
+                      type="button"
+                      onClick={() => fillDemoAccount('ashish.shelar@maharashtra.gov.in', 'MLA@2026')}
+                      className="auth-demo-chip"
+                      title="Shri Ashish Shelar (MLA, Bandra West)"
+                      style={{ gridColumn: '1 / -1' }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Landmark size={14} color="#0D9488" /> Shri Ashish Shelar (MLA, Bandra West)</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Bottom Switch Footer */}
               {isCitizen ? (
                 <div className="auth-card-footer">

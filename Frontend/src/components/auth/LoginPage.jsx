@@ -11,7 +11,9 @@ import {
   ArrowRight,
   HelpCircle,
   X,
-  UserCheck
+  UserCheck,
+  User,
+  Wrench
 } from 'lucide-react';
 import { validateField } from '../../utils/validators';
 
@@ -100,8 +102,8 @@ export default function LoginPage({
     <div className="auth-main-content">
       {/* Brand Header */}
       <div className="auth-brand-header">
-        <div className="auth-logo-icon">
-          <Shield size={32} color="#F59E0B" />
+        <div className="auth-logo-icon" style={{ background: 'transparent', boxShadow: 'none' }}>
+          <img src="/sahayata-logo.jpg" alt="Sahayata Logo" style={{ height: '56px', width: 'auto', borderRadius: '8px', objectFit: 'contain' }} />
         </div>
         <h1 className="auth-brand-title">Sahayata</h1>
         <p className="auth-brand-tagline">
@@ -261,6 +263,31 @@ export default function LoginPage({
             </button>
           </form>
 
+          {/* Quick Demo Accounts Helper */}
+          <div className="auth-demo-section">
+            <div className="auth-demo-header">
+              <span>Quick Test Demo Logins:</span>
+              <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Click to auto-fill</span>
+            </div>
+            <div className="auth-demo-grid">
+              <button
+                type="button"
+                onClick={() => fillDemoAccount('aarav.sharma@example.com', 'Password@123')}
+                className="auth-demo-chip"
+                title="Aarav Sharma (Citizen)"
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><User size={14} color="#1E3A8A" /> Citizen Demo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fillDemoAccount('rajesh.sawant@mcgm.gov.in', 'Engineer@2026')}
+                className="auth-demo-chip"
+                title="Er. Rajesh Sawant (Ward H/West Engineer)"
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Wrench size={14} color="#EA580C" /> Ward Engineer</span>
+              </button>
+            </div>
+          </div>
           {/* Bottom Card Footer */}
           <div className="auth-card-footer">
             <p>

@@ -87,8 +87,7 @@ export default function ComplaintMiniMap({
             font-size:11px;
             font-family:var(--font-mono, monospace);
             box-shadow:0 3px 8px rgba(0,0,0,0.3);
-          ">
-            ${isVerified ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : score}
+            ${isVerified ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : score}
           </div>
         </div>
       `,

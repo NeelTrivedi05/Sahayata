@@ -1,4 +1,4 @@
-# 🏛️ Sahayata (CivicCare) — Complete Technical Architecture & System Specification
+# Sahayata (CivicCare) — Complete Technical Architecture & System Specification
 
 > **Project Name**: Sahayata (CivicCare)  
 > **Target Domain**: Municipal Grievance Redressal, Spatial Intelligence & Closed-Loop Accountability  
@@ -249,7 +249,7 @@ $$\text{PriorityScore} = \min\left(100, \text{Base} + \text{DupBonus} + \text{Cr
 To prevent off-site fraudulent closures, when a contractor or ward engineer captures an after-repair photo, the client queries device GPS:
 - Computes Haversine distance $D_{\text{repair}}$ between current GPS coordinates and the complaint's recorded coordinates.
 - **Rule**: If $D_{\text{repair}} > 100\text{ meters}$, the system triggers an audit notice:  
-  `"⚠️ Geo-Fence Notice: Photo captured ~{dist}m from grievance location (100m threshold). Officer verification required."`
+  `"Geo-Fence Notice: Photo captured ~{dist}m from grievance location (100m threshold). Officer verification required."`
 
 #### B. Citizen Sign-Off & Karma Incentive
 - Municipal officers can only move tickets to **Stage 5 (`Resolved`)**.
