@@ -8,6 +8,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+CREDENTIALS.md
+credentials.md
 
 # Node dependencies & build artifacts
 node_modules/

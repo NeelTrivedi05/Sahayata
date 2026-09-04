@@ -73,5 +73,11 @@ export const api = {
   classifyImage: (imageBase64) => request('/classify-image', {
     method: 'POST',
     body: JSON.stringify({ imageBase64 })
+  }),
+
+  // Municipal AI Resource Allocation Advisor
+  suggestResources: (reportData) => request('/suggest-resources', {
+    method: 'POST',
+    body: JSON.stringify(reportData)
   })
 };

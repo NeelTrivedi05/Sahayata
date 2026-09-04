@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import confetti from 'canvas-confetti';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -71,6 +72,7 @@ export default function App() {
   const [selectedRole, setSelectedRole] = useState('citizen'); // 'citizen' | 'ward_engineer' | 'mla'
   const [authView, setAuthView] = useState(!currentUser ? 'login' : null);
   const [prefilledEmail, setPrefilledEmail] = useState('');
+  const [prefilledUsername, setPrefilledUsername] = useState('');
   const [toastNotification, setToastNotification] = useState(null);
 
   // Derived role: strictly from authenticated session, or selectedRole if guest
@@ -201,11 +203,12 @@ export default function App() {
 
   const handleAuthSignup = async (formData) => {
     await signup(formData);
+    setPrefilledUsername(formData.username);
     setPrefilledEmail(formData.email);
     setToastNotification({
       type: 'success',
       title: 'Registration Successful!',
-      message: `Account created for ${formData.fullName}. Please sign in to access your portal.`
+      message: `Account created for ${formData.fullName} (@${formData.username}). Please sign in with your credentials.`
     });
     setAuthView('login');
   };
@@ -474,16 +477,6 @@ export default function App() {
             setShowLanding(false);
             setAuthView('login');
           }}
-          onQuickLogin={async (role) => {
-            let creds = { email: 'aarav.sharma@example.com', password: 'Password@123' };
-            if (role === 'ward_engineer') creds = { email: 'rajesh.sawant@mcgm.gov.in', password: 'Engineer@2026' };
-            if (role === 'mla') creds = { email: 'ashish.shelar@maharashtra.gov.in', password: 'MLA@2026' };
-            try {
-              await handleAuthLogin(creds);
-            } catch (err) {
-              showToast({ type: 'error', title: 'Login Error', message: err.message || 'Failed to sign in' });
-            }
-          }}
         />
       </>
     );
@@ -512,6 +505,7 @@ export default function App() {
         <AuthCard
           initialMode="login"
           selectedRole={selectedRole}
+          prefilledUsername={prefilledUsername}
           prefilledEmail={prefilledEmail}
           onBackToRoleSelect={() => setShowLanding(true)}
           onLoginSuccess={handleAuthLogin}
@@ -1048,18 +1042,24 @@ export default function App() {
       </main>
 
       {/* 6. Duplicate Intercept Modal */}
-      {duplicateModalOpen && matchedDuplicate && (
+      {duplicateModalOpen && matchedDuplicate && typeof document !== 'undefined' && createPortal(
         <div
           style={{
             position: 'fixed',
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
             background: 'rgba(15, 23, 42, 0.65)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
+            zIndex: 99999,
+            padding: '20px',
+            boxSizing: 'border-box'
           }}
         >
           <div
@@ -1216,7 +1216,8 @@ export default function App() {
               Cancel & Edit Details
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* 7. Toast Notification */}
@@ -2430,18 +2431,24 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
       </div>
 
       {/* Ward Engineer Resolution Modal with Camera / Photo Upload */}
-      {resolvingTicket && (
+      {resolvingTicket && typeof document !== 'undefined' && createPortal(
         <div
           style={{
             position: 'fixed',
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
             background: 'rgba(15, 23, 42, 0.7)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 9999,
-            padding: '20px'
+            zIndex: 99999,
+            padding: '20px',
+            boxSizing: 'border-box'
           }}
         >
           <div
@@ -2603,7 +2610,8 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Live On-Site Web App Camera Viewfinder Modal */}

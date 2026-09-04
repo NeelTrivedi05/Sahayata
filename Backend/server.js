@@ -592,39 +592,54 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PHONE_REGEX = /^(\+91[\-\s]?)?[0]?(91)?[6-9]\d{9}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-// 7. Citizen Signup (Citizen-only self-registration)
+// 7. User Signup (Creates and stores user in users.json)
 app.post('/api/auth/signup', (req, res) => {
-  const { fullName, email, phone, password } = req.body;
+  const { fullName, username, email, phone, password, role = 'citizen' } = req.body || {};
 
-  if (!fullName || !NAME_REGEX.test(fullName)) {
-    return res.status(400).json({ success: false, message: "Please enter a valid name (2-50 characters, alphabets only)" });
+  // Clean inputs
+  const cleanUsername = (username || (email ? email.split('@')[0] : '')).trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+  const cleanFullName = (fullName || cleanUsername).trim();
+
+  if (!cleanUsername || cleanUsername.length < 3) {
+    return res.status(400).json({ success: false, message: "Please choose a valid username (at least 3 characters, alphanumeric, dots, underscores)" });
   }
-  if (!email || !EMAIL_REGEX.test(email)) {
-    return res.status(400).json({ success: false, message: "Please enter a valid email address" });
+  if (!password || password.length < 6) {
+    return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
   }
-  if (!phone || !PHONE_REGEX.test(phone)) {
-    return res.status(400).json({ success: false, message: "Please enter a valid Indian phone number" });
+
+  // Check unique username
+  const existingUsername = registeredUsers.find(u => u.username && u.username.toLowerCase() === cleanUsername);
+  if (existingUsername) {
+    return res.status(409).json({ success: false, message: "This username is already taken. Please choose another." });
   }
-  if (!password || !PASSWORD_REGEX.test(password)) {
-    return res.status(400).json({
+
+  // Check unique email if provided
+  if (email && email.trim()) {
+    const existingEmail = registeredUsers.find(u => u.email && u.email.toLowerCase() === email.trim().toLowerCase());
+    if (existingEmail) {
+      return res.status(409).json({ success: false, message: "An account with this email already exists" });
+    }
+  }
+
+  // Only citizens can register through public signup. Ward and MLA accounts are provisioned administratively.
+  if (role && role !== 'citizen') {
+    return res.status(403).json({
       success: false,
-      message: "Password must have at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character"
+      message: "Public registration is restricted to Citizens only. Ward Official and MLA accounts are provisioned administratively."
     });
   }
 
-  const existing = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (existing) {
-    return res.status(409).json({ success: false, message: "An account with this email already exists" });
-  }
+  const assignedRole = 'citizen';
 
   const newUser = {
     id: `usr-${Date.now()}`,
-    fullName,
-    email,
-    phone,
+    fullName: cleanFullName,
+    username: cleanUsername,
+    email: email && email.trim() ? email.trim() : `${cleanUsername}@sahayata.local`,
+    phone: phone && phone.trim() ? phone.trim() : "+91 98000 00000",
     password,
-    role: 'citizen', // Self-registration is strictly citizen role
-    civicKarma: 50 // Welcome bonus
+    role: assignedRole,
+    civicKarma: assignedRole === 'citizen' ? 50 : 500
   };
 
   registeredUsers.push(newUser);
@@ -632,10 +647,11 @@ app.post('/api/auth/signup', (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: "Citizen account created successfully",
+    message: "Account created successfully",
     user: {
       id: newUser.id,
       fullName: newUser.fullName,
+      username: newUser.username,
       email: newUser.email,
       phone: newUser.phone,
       role: newUser.role,
@@ -644,18 +660,24 @@ app.post('/api/auth/signup', (req, res) => {
   });
 });
 
-// 8. User Login (Authenticates Citizen, Ward Engineer, or MLA)
+// 8. User Login (Authenticates Citizen, Ward Engineer, or MLA via username or email)
 app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
+  const { username, email, password } = req.body || {};
+  const identifier = (username || email || '').trim().toLowerCase();
 
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: "Email and password are required" });
+  if (!identifier || !password) {
+    return res.status(400).json({ success: false, message: "Username (or email) and password are required" });
   }
 
-  const user = registeredUsers.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
+  // Search by username or email
+  const user = registeredUsers.find(u => 
+    (u.username && u.username.toLowerCase() === identifier) ||
+    (u.email && u.email.toLowerCase() === identifier)
+  );
+
   const isMlaMatch = user && user.role === 'mla' && (password === 'MLA@2026' || password === 'Mla@2026');
   if (!user || (user.password !== password && !isMlaMatch)) {
-    return res.status(401).json({ success: false, message: "Invalid email or password" });
+    return res.status(401).json({ success: false, message: "Invalid username or password" });
   }
 
   res.json({
@@ -664,6 +686,7 @@ app.post('/api/auth/login', (req, res) => {
     user: {
       id: user.id,
       fullName: user.fullName,
+      username: user.username || user.email.split('@')[0],
       email: user.email,
       phone: user.phone,
       role: user.role,
@@ -778,6 +801,168 @@ Return ONLY a valid JSON object matching this structure:
     success: true,
     provider: "Smart Vision AI Classifier",
     classification: othersClassification
+  });
+});
+
+// 8. AI Municipal Resource Allocation & Dispatch Advisor
+const RESOURCE_FALLBACKS = {
+  pothole: {
+    manpower: "3 road workers + 1 roller operator + 1 safety supervisor",
+    equipment: ["Plate Compactor", "Asphalt Cutter", "Traffic Cones", "Hand Tamps"],
+    materials: ["Cold-mix bitumen (200kg)", "Gravel base aggregate", "Bituminous tack coat emulsion"],
+    estimatedHours: 4,
+    contractorType: "Road & Pavement Engineering Contractor",
+    notes: "Requires traffic diversion; compact gravel base thoroughly before applying top bitumen layer."
+  },
+  garbage: {
+    manpower: "4 sanitation workers + 1 collection truck driver",
+    equipment: ["Hydraulic compactor truck", "Heavy-duty shovels", "Industrial brooms", "Waste bins"],
+    materials: ["Disinfectant lime powder", "Biodegradable heavy bags", "Deodorizer spray"],
+    estimatedHours: 2,
+    contractorType: "Solid Waste Management & Sanitation Squad",
+    notes: "Clear primary overflow first, apply disinfectant lime powder on cleared surface to prevent odor."
+  },
+  electricity: {
+    manpower: "2 licensed electricians + 1 cherry picker crane operator",
+    equipment: ["Insulated ladder / Cherry picker truck", "Multimeter & voltage detector", "Wire crimpers", "Safety harness"],
+    materials: ["LED street luminaire (70W)", "Armored copper wire", "MCB circuit breaker", "Waterproof junction box"],
+    estimatedHours: 3,
+    contractorType: "Electrical & Street Lighting Contractor (BEST/Adani)",
+    notes: "Ensure circuit isolation at feeder pillar before servicing luminaire and wire connections."
+  },
+  water: {
+    manpower: "3 pipefitters + 1 excavation worker + 1 site engineer",
+    equipment: ["Sludge pump", "Pipe cutter", "Trench shoring kit", "Pressure gauge"],
+    materials: ["Cast iron / PVC pipe sleeve", "Rubber gasket couplings", "M-seal epoxy sealant", "Gravel bed"],
+    estimatedHours: 6,
+    contractorType: "Municipal Water Supply & Hydraulic Department",
+    notes: "Isolate branch water valve first to stop pressure flow before replacing the ruptured pipe segment."
+  },
+  drainage: {
+    manpower: "4 desilting workers + 1 jetting machine operator",
+    equipment: ["High-pressure sewer jetting machine", "Suction tanker", "Manhole lifters", "Safety gas detector"],
+    materials: ["Bleaching powder", "Precast RCC drain cover slabs", "Anti-larval larvicide"],
+    estimatedHours: 5,
+    contractorType: "Stormwater Drain & Sewerage Maintenance Unit",
+    notes: "Test for hazardous gases (H2S/CH4) before desilting; replace broken chamber covers immediately."
+  },
+  traffic: {
+    manpower: "2 traffic management wardens + 2 field technicians",
+    equipment: ["Barricade boards", "Reflective signage", "Signal controller programming unit"],
+    materials: ["Solar-powered blinking warning lights", "Reflective safety tape", "Paint for road markings"],
+    estimatedHours: 3,
+    contractorType: "Traffic Police & Municipal Signals Division",
+    notes: "Deploy temporary barricades and warning signage immediately to maintain pedestrian transit flow."
+  },
+  others: {
+    manpower: "2 general municipal workers + 1 supervisor",
+    equipment: ["General utility toolkit", "Safety hazard tape", "Inspection kit"],
+    materials: ["Standard repair supplies", "Safety signage"],
+    estimatedHours: 4,
+    contractorType: "General Municipal Civil Maintenance Squad",
+    notes: "Conduct site inspection to determine detailed contractor scope and secondary equipment needed."
+  }
+};
+
+app.post('/api/suggest-resources', async (req, res) => {
+  const {
+    category = 'others',
+    categoryLabel,
+    title,
+    baseSeverity,
+    duplicateCount,
+    criticalZone,
+    trafficDensity,
+    address
+  } = req.body || {};
+
+  const normalizedCategory = String(category).toLowerCase();
+  const fallback = RESOURCE_FALLBACKS[normalizedCategory] || RESOURCE_FALLBACKS.others;
+
+  const groqApiKey = process.env.GROQ_API_KEY;
+
+  if (groqApiKey) {
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${groqApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert Indian municipal engineer and civic operations dispatch advisor for BMC (Brihanmumbai Municipal Corporation), Ward H/West (Bandra West & Khar).
+Your job is to recommend realistic, operational resource requirements (manpower, equipment, materials, estimated hours, and contractor type) to resolve civic grievances.
+
+CRITICAL INSTRUCTIONS:
+1. Return ONLY a valid JSON object. No Markdown backticks, no markdown fence, no preamble, no commentary.
+2. Structure must exactly match:
+{
+  "manpower": "e.g. 3 road crew workers + 1 asphalt roller operator",
+  "equipment": ["item1", "item2", "item3"],
+  "materials": ["material1", "material2", "material3"],
+  "estimatedHours": number,
+  "contractorType": "e.g. Road & Pavement Contractor",
+  "notes": "1-2 sentence operational rationale"
+}
+3. Tailor the resources to the grievance category and severity:
+   - "pothole": asphalt/bitumen cold-mix, compactor, road crew, traffic cones.
+   - "garbage": sanitation crew, compactor truck, disinfectant lime/bleaching powder, bins.
+   - "electricity": licensed electricians, cherry picker, wire, luminaire, voltage tester.
+   - "water": plumbing crew, replacement pipes, pressure pump, sleeve gaskets.
+   - "drainage": desilting crew, jetting tanker, suction machine, RCC covers.
+   - "traffic": traffic wardens, barricades, reflective signs, solar blinkers.`
+            },
+            {
+              role: "user",
+              content: `Recommend municipal dispatch resources for this reported civic grievance:
+- Title: ${title || "Civic Grievance"}
+- Category: ${category} (${categoryLabel || category})
+- Severity Score: ${baseSeverity || 35}/100
+- Endorsement / Duplicate Count: ${duplicateCount || 1}
+- Critical Zone: ${criticalZone || "Standard municipal corridor"}
+- Traffic Density: ${trafficDensity || "Moderate"}
+- Location: ${address || "Ward H/West, Mumbai"}`
+            }
+          ],
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed.manpower && Array.isArray(parsed.equipment)) {
+            return res.json({
+              success: true,
+              provider: "Groq Llama 3.3 AI",
+              suggestion: {
+                manpower: parsed.manpower,
+                equipment: parsed.equipment || fallback.equipment,
+                materials: parsed.materials || fallback.materials,
+                estimatedHours: typeof parsed.estimatedHours === 'number' ? parsed.estimatedHours : fallback.estimatedHours,
+                contractorType: parsed.contractorType || fallback.contractorType,
+                notes: parsed.notes || fallback.notes
+              }
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[Groq Resource Suggestion] Failed, using heuristic fallback:", err.message);
+    }
+  }
+
+  // Fallback Response
+  return res.json({
+    success: true,
+    provider: "Fallback Heuristic",
+    suggestion: fallback
   });
 });
 

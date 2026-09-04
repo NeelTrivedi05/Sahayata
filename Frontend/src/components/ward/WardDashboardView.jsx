@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
   Clock,
@@ -19,8 +20,13 @@ import {
   Sparkles,
   X,
   FileCheck,
-  Building
+  Building,
+  HardHat,
+  Truck,
+  Layers,
+  RefreshCw
 } from 'lucide-react';
+import { api } from '../../api/client';
 import ComplaintMiniMap from '../map/ComplaintMiniMap';
 import { calculateTotalDuplicates } from '../../utils/deduplication';
 import WebcamCaptureModal from '../common/WebcamCaptureModal';
@@ -53,6 +59,73 @@ export default function WardDashboardView({
   const [inspectionPhotoPreview, setInspectionPhotoPreview] = useState(null);
   const [showInspectionModal, setShowInspectionModal] = useState(false);
   const inspectionCameraInputRef = useRef(null);
+
+  // AI Municipal Resource Allocation Advisor state & cache
+  const [resourceSuggestions, setResourceSuggestions] = useState({});
+  const [loadingResourceReportId, setLoadingResourceReportId] = useState(null);
+
+  const fetchResourceSuggestion = async (report, force = false) => {
+    if (!report || !report.id) return;
+    if (!force && resourceSuggestions[report.id]) return;
+
+    setLoadingResourceReportId(report.id);
+    try {
+      const res = await api.suggestResources({
+        category: report.category || 'others',
+        categoryLabel: report.categoryLabel,
+        title: report.title,
+        baseSeverity: report.baseSeverity || report.severityScore || 35,
+        duplicateCount: report.duplicateCount || 1,
+        criticalZone: report.criticalZone,
+        trafficDensity: report.trafficDensity,
+        address: report.address
+      });
+      if (res && res.suggestion) {
+        setResourceSuggestions(prev => ({
+          ...prev,
+          [report.id]: {
+            provider: res.provider || 'Groq Llama 3.3 AI',
+            ...res.suggestion
+          }
+        }));
+      }
+    } catch (err) {
+      console.warn("Failed to fetch resource suggestion:", err);
+      // Graceful local preset fallback
+      setResourceSuggestions(prev => ({
+        ...prev,
+        [report.id]: {
+          provider: 'Municipal Operations Presets',
+          manpower: '3 field workers + 1 supervisor',
+          equipment: ['Standard civic maintenance utility kit', 'Safety cones'],
+          materials: ['Immediate remediation material', 'Safety barrier'],
+          estimatedHours: 4,
+          contractorType: 'Ward Civil Maintenance Contractor',
+          notes: 'Standard municipal guideline allocation for immediate site remediation.'
+        }
+      }));
+    } finally {
+      setLoadingResourceReportId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedReportForModal) {
+      fetchResourceSuggestion(selectedReportForModal);
+    }
+  }, [selectedReportForModal?.id]);
+
+  // Lock background body scroll when ticket modal or inspection modal is open
+  useEffect(() => {
+    if (selectedReportForModal || showInspectionModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedReportForModal, showInspectionModal]);
 
   // Derived KPI Stats
   const totalReports = reports.length;
@@ -787,18 +860,24 @@ export default function WardDashboardView({
       </div>
 
       {/* 5. Comprehensive Complaint Detail & Resolution Modal */}
-      {selectedReportForModal && (
+      {selectedReportForModal && typeof document !== 'undefined' && createPortal(
         <div
           style={{
             position: 'fixed',
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
             background: 'rgba(15, 23, 42, 0.65)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
+            zIndex: 99999,
+            padding: '20px',
+            boxSizing: 'border-box'
           }}
         >
           <div
@@ -870,6 +949,212 @@ export default function WardDashboardView({
                   </div>
                 </div>
               </div>
+
+              {/* AI Municipal Resource Allocation Advisor */}
+              {(() => {
+                const currentSuggestion = resourceSuggestions[selectedReportForModal.id];
+                const isResourceLoading = loadingResourceReportId === selectedReportForModal.id;
+
+                return (
+                  <div
+                    style={{
+                      background: 'linear-gradient(145deg, #F8FAFC 0%, #F1F5F9 100%)',
+                      border: '1.5px solid #CBD5E1',
+                      borderRadius: '14px',
+                      padding: '16px',
+                      boxShadow: '0 2px 8px -2px rgba(15, 23, 42, 0.05)'
+                    }}
+                  >
+                    {/* Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '8px',
+                          background: '#4F46E5',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#FFFFFF'
+                        }}>
+                          <HardHat size={18} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            AI Municipal Dispatch Advisor
+                            <span style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: '999px',
+                              background: currentSuggestion?.provider?.includes('Groq') ? '#EEF2FF' : '#F1F5F9',
+                              color: currentSuggestion?.provider?.includes('Groq') ? '#4F46E5' : '#475569',
+                              border: currentSuggestion?.provider?.includes('Groq') ? '1px solid #C7D2FE' : '1px solid #CBD5E1'
+                            }}>
+                              {currentSuggestion?.provider || (isResourceLoading ? 'Calculating...' : 'Groq Llama 3.3')}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                            Automated equipment, manpower & contractor requisition based on report telemetry
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        title="Re-calculate AI Dispatch Recommendation"
+                        disabled={isResourceLoading}
+                        onClick={() => fetchResourceSuggestion(selectedReportForModal, true)}
+                        style={{
+                          background: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '8px',
+                          padding: '6px 10px',
+                          fontSize: '0.74rem',
+                          fontWeight: 600,
+                          color: '#475569',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          cursor: isResourceLoading ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <RefreshCw size={13} className={isResourceLoading ? 'animate-spin' : ''} />
+                        <span>{isResourceLoading ? 'Updating...' : 'Recalculate'}</span>
+                      </button>
+                    </div>
+
+                    {isResourceLoading && !currentSuggestion ? (
+                      <div style={{
+                        padding: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        color: '#6366F1'
+                      }}>
+                        <RefreshCw size={24} className="animate-spin" />
+                        <div style={{ fontSize: '0.80rem', fontWeight: 600, color: '#475569' }}>
+                          Evaluating road severity & synthesizing contractor requirements...
+                        </div>
+                      </div>
+                    ) : currentSuggestion ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* 3 Metric Cards */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                          {/* Manpower */}
+                          <div style={{ background: '#FFFFFF', padding: '10px 12px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#4F46E5', fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              <Users size={13} />
+                              Field Manpower
+                            </div>
+                            <div style={{ fontSize: '0.80rem', fontWeight: 700, color: '#0F172A', marginTop: '4px', lineHeight: 1.3 }}>
+                              {currentSuggestion.manpower}
+                            </div>
+                          </div>
+
+                          {/* Estimated SLA / Hours */}
+                          <div style={{ background: '#FFFFFF', padding: '10px 12px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0D9488', fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              <Clock size={13} />
+                              Estimated Duration
+                            </div>
+                            <div style={{ fontSize: '0.80rem', fontWeight: 700, color: '#0F172A', marginTop: '4px', lineHeight: 1.3 }}>
+                              {currentSuggestion.estimatedHours} Hours Required
+                            </div>
+                          </div>
+
+                          {/* Contractor Squad */}
+                          <div style={{ background: '#FFFFFF', padding: '10px 12px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#D97706', fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              <Building size={13} />
+                              Contractor / Dept
+                            </div>
+                            <div style={{ fontSize: '0.80rem', fontWeight: 700, color: '#0F172A', marginTop: '4px', lineHeight: 1.3 }}>
+                              {currentSuggestion.contractorType}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Equipment & Machinery Badges */}
+                        {currentSuggestion.equipment && currentSuggestion.equipment.length > 0 && (
+                          <div style={{ background: '#FFFFFF', padding: '10px 12px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#4338CA', fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                              <Truck size={13} />
+                              Equipment & Machinery Requisition
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {currentSuggestion.equipment.map((item, idx) => (
+                                <span
+                                  key={idx}
+                                  style={{
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    background: '#EEF2FF',
+                                    color: '#3730A3',
+                                    border: '1px solid #C7D2FE',
+                                    padding: '3px 8px',
+                                    borderRadius: '6px'
+                                  }}
+                                >
+                                  ⚙️ {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Materials Requisition Badges */}
+                        {currentSuggestion.materials && currentSuggestion.materials.length > 0 && (
+                          <div style={{ background: '#FFFFFF', padding: '10px 12px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#047857', fontSize: '0.70rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                              <Layers size={13} />
+                              Materials & Consumables
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {currentSuggestion.materials.map((item, idx) => (
+                                <span
+                                  key={idx}
+                                  style={{
+                                    fontSize: '0.74rem',
+                                    fontWeight: 600,
+                                    background: '#ECFDF5',
+                                    color: '#065F46',
+                                    border: '1px solid #A7F3D0',
+                                    padding: '3px 8px',
+                                    borderRadius: '6px'
+                                  }}
+                                >
+                                  📦 {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Operational Notes / Guidelines */}
+                        {currentSuggestion.notes && (
+                          <div style={{
+                            background: '#EFF6FF',
+                            borderLeft: '3.5px solid #3B82F6',
+                            padding: '8px 12px',
+                            borderRadius: '0 8px 8px 0',
+                            fontSize: '0.75rem',
+                            color: '#1E40AF',
+                            lineHeight: 1.4
+                          }}>
+                            <strong style={{ color: '#1D4ED8' }}>Operational Dispatch Protocol: </strong>
+                            {currentSuggestion.notes}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })()}
 
               {/* Grievance Mini-Map & Impact Buffer */}
               <div>
@@ -1103,22 +1388,29 @@ export default function WardDashboardView({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Standalone Field Inspection Photo Preview Modal */}
-      {showInspectionModal && inspectionPhotoPreview && (
+      {showInspectionModal && inspectionPhotoPreview && typeof document !== 'undefined' && createPortal(
         <div
           style={{
             position: 'fixed',
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
             background: 'rgba(15, 23, 42, 0.7)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1050,
-            padding: '20px'
+            zIndex: 99999,
+            padding: '20px',
+            boxSizing: 'border-box'
           }}
         >
           <div
@@ -1206,7 +1498,8 @@ export default function WardDashboardView({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Live Web App Camera Modal */}

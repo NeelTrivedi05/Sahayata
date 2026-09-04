@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, X, RefreshCw, AlertCircle, CheckCircle2, SwitchCamera } from 'lucide-react';
 
 /**
@@ -7,6 +8,7 @@ import { Camera, X, RefreshCw, AlertCircle, CheckCircle2, SwitchCamera } from 'l
  * - Renders a live video viewfinder
  * - Allows snapping a photo via HTML5 Canvas
  * - Cleanly stops media tracks on unmount or close
+ * - Uses createPortal to guarantee centering on the active screen viewport
  */
 export default function WebcamCaptureModal({ isOpen, onClose, onPhotoCaptured, title = "Live Camera Capture" }) {
   const [stream, setStream] = useState(null);
@@ -15,6 +17,18 @@ export default function WebcamCaptureModal({ isOpen, onClose, onPhotoCaptured, t
   const [facingMode, setFacingMode] = useState('environment'); // 'environment' | 'user'
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+
+  // Lock background body scroll when camera modal is active
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -94,18 +108,24 @@ export default function WebcamCaptureModal({ isOpen, onClose, onPhotoCaptured, t
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
         background: 'rgba(15, 23, 42, 0.85)',
         backdropFilter: 'blur(6px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 99999,
-        padding: '16px'
+        zIndex: 999999,
+        padding: '16px',
+        boxSizing: 'border-box'
       }}
     >
       <div
@@ -307,4 +327,6 @@ export default function WebcamCaptureModal({ isOpen, onClose, onPhotoCaptured, t
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }
