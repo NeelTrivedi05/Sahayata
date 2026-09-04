@@ -63,6 +63,7 @@ import LocationPickerMiniMap from './components/map/LocationPickerMiniMap';
 import ComplaintMiniMap from './components/map/ComplaintMiniMap';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import WebcamCaptureModal from './components/common/WebcamCaptureModal';
+import HistoricalBmcView from './components/historical/HistoricalBmcView';
 
 export default function App() {
   const { currentUser, login, signup, logout } = useAuth();
@@ -271,7 +272,8 @@ export default function App() {
     { id: 'radar', label: '🗺️ Civic Radar & Map', roles: ['citizen', 'ward_engineer', 'mla'] },
     { id: 'pipeline', label: `📋 Track Complaints (${reports.length})`, roles: ['citizen', 'ward_engineer', 'mla'] },
     { id: 'priority', label: '⚡ Priority Queue', roles: ['ward_engineer', 'mla'] },
-    { id: 'verify', label: '🔍 Verify Resolutions', roles: ['citizen'] }
+    { id: 'verify', label: '🔍 Verify Resolutions', roles: ['citizen'] },
+    { id: 'bmc_historical', label: '🏛️ BMC Historical Intel (960k)', roles: ['citizen', 'ward_engineer', 'mla'] }
   ];
 
   const availableNavTabs = allNavTabs.filter(t => t.roles.includes(currentRole));
@@ -1113,8 +1115,12 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'bmc_historical' && (
+          <HistoricalBmcView />
+        )}
+
         {/* Fallback view to ensure screen is never blank */}
-        {!['ward_overview', 'radar', 'report', 'pipeline', 'verify', 'priority', 'mla'].includes(activeTab) && (
+        {!['ward_overview', 'radar', 'report', 'pipeline', 'verify', 'priority', 'mla', 'bmc_historical'].includes(activeTab) && (
           <CivicRadarMapView
             reports={reports}
             currentRole={currentRole}

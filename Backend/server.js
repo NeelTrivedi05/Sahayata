@@ -4,6 +4,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import * as bmcService from './bmcHistoricalService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -156,15 +157,16 @@ function loadReports() {
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
         console.log(`[Persistence] Loaded ${parsed.length} reports from ${REPORTS_FILE}`);
-        return parsed;
+        return parsed.map(r => ({ ...r, source: r.source || "DEMO" }));
       }
     }
   } catch (err) {
     console.warn('[Persistence] Could not read reports.json, falling back to seed data:', err);
   }
   // Initialize with seed data and save file
-  saveReports(SEED_REPORTS);
-  return [...SEED_REPORTS];
+  const initial = SEED_REPORTS.map(r => ({ ...r, source: "DEMO" }));
+  saveReports(initial);
+  return initial;
 }
 
 function saveReports(data) {
@@ -369,6 +371,7 @@ app.post('/api/reports', (req, res) => {
 
   const newReport = {
     id: `CIVIC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+    source: "SAHAYATA_LIVE",
     title: title || `${categoryLabel || category} reported by citizen`,
     category,
     categoryLabel: categoryLabel || category,
@@ -964,6 +967,104 @@ CRITICAL INSTRUCTIONS:
     provider: "Fallback Heuristic",
     suggestion: fallback
   });
+});
+
+// ==========================================
+// BMC HISTORICAL INTELLIGENCE API ROUTES
+// ==========================================
+
+// Global / Filtered BMC Historical Statistics
+app.get('/api/historical/bmc/stats', (req, res) => {
+  try {
+    const stats = bmcService.getBmcStats(req.query);
+    if (!stats) {
+      return res.status(503).json({ success: false, message: "BMC Historical dataset not initialized" });
+    }
+    res.json({ success: true, ...stats });
+  } catch (err) {
+    console.error('[API /api/historical/bmc/stats] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Paginated BMC Historical Complaints Explorer with Multi-Field Filtering
+app.get('/api/historical/bmc/complaints', (req, res) => {
+  try {
+    const result = bmcService.getBmcComplaints(req.query);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('[API /api/historical/bmc/complaints] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Single BMC Historical Complaint by ID (Full 35-field record)
+app.get('/api/historical/bmc/complaints/:id', (req, res) => {
+  try {
+    const complaint = bmcService.getBmcComplaintById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: "Complaint not found" });
+    }
+    res.json({ success: true, data: complaint });
+  } catch (err) {
+    console.error('[API /api/historical/bmc/complaints/:id] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Category Breakdown & SLA Metrics
+app.get('/api/historical/bmc/categories', (req, res) => {
+  try {
+    const categories = bmcService.getBmcCategories();
+    res.json({ success: true, categories });
+  } catch (err) {
+    console.error('[API /api/historical/bmc/categories] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 24 Mumbai Wards Profile & Performance
+app.get('/api/historical/bmc/wards', (req, res) => {
+  try {
+    const wards = bmcService.getBmcWards();
+    res.json({ success: true, wards });
+  } catch (err) {
+    console.error('[API /api/historical/bmc/wards] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Departmental Efficiency & Reassignment Metrics
+app.get('/api/historical/bmc/departments', (req, res) => {
+  try {
+    const departments = bmcService.getBmcDepartments();
+    res.json({ success: true, departments });
+  } catch (err) {
+    console.error('[API /api/historical/bmc/departments] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Longitudinal Trends & Monsoon Comparison
+app.get('/api/historical/bmc/trends', (req, res) => {
+  try {
+    const trends = bmcService.getBmcTrends();
+    res.json({ success: true, ...trends });
+  } catch (err) {
+    console.error('[API /api/historical/bmc/trends] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Ward Map Geographic Aggregations (No fabricated coordinates!)
+app.get('/api/historical/bmc/map', (req, res) => {
+  try {
+    const mapData = bmcService.getBmcMapData();
+    res.json({ success: true, mapData });
+  } catch (err) {
+    console.error('[API /api/historical/bmc/map] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.listen(PORT, () => {

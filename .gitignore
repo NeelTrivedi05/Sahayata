@@ -24,3 +24,9 @@ venv/
 __pycache__/
 *.pyc
 pip_temp/
+
+# Databases & large datasets
+*.db
+*.sqlite
+*.sqlite3
+Backend/data/bmc_train.csv

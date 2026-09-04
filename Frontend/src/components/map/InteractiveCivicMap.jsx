@@ -23,6 +23,7 @@ import {
   Lock
 } from 'lucide-react';
 import { CIVIC_DATA } from '../../data/civicData';
+import { api } from '../../api/client';
 
 const BASEMAPS = [
   {
@@ -137,11 +138,14 @@ export default function InteractiveCivicMap({
   const zonesLayerRef = useRef(null);
   const radiiLayerRef = useRef(null);
   const markersLayerRef = useRef(null);
+  const bmcAgrLayerRef = useRef(null);
   const markersByIdRef = useRef(new Map()); // id -> { marker, dataHash }
   const userMarkerRef = useRef(null);
   const droppedPinRef = useRef(null);
 
   // Filter & Layer States
+  const [dataSource, setDataSource] = useState('both'); // 'live' | 'bmc' | 'both'
+  const [bmcMapData, setBmcMapData] = useState([]);
   const [activeBasemap, setActiveBasemap] = useState('streets');
   const [activeCategory, setActiveCategory] = useState('all'); // 'all' | 'pothole' | 'garbage' | 'electricity' | 'water' | 'critical' | 'overdue'
   const [showCriticalZones, setShowCriticalZones] = useState(true);
@@ -189,6 +193,7 @@ export default function InteractiveCivicMap({
     zonesLayerRef.current = L.layerGroup().addTo(map);
     radiiLayerRef.current = L.layerGroup().addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
+    bmcAgrLayerRef.current = L.layerGroup().addTo(map);
 
     // Only allow pin-drop if NOT read-only
     if (!readOnly) {
@@ -308,9 +313,82 @@ export default function InteractiveCivicMap({
     }
   }, [showImpactRadius, reports]);
 
-  // 6. Fast Marker Diffing & Rendering
+  // Load BMC Ward Aggregates on mount
+  useEffect(() => {
+    api.getBmcMapData()
+      .then(res => {
+        if (res && res.mapData) setBmcMapData(res.mapData);
+      })
+      .catch(e => console.warn('[Map] BMC aggregates not available:', e));
+  }, []);
+
+  // Render BMC Ward Aggregates without loading 960k point markers
+  useEffect(() => {
+    if (!bmcAgrLayerRef.current) return;
+    bmcAgrLayerRef.current.clearLayers();
+
+    if (dataSource === 'live') return;
+
+    bmcMapData.forEach(w => {
+      const countFormatted = (w.totalComplaints || 0).toLocaleString();
+      const html = `
+        <div style="
+          background: #0F172A;
+          border: 2px solid #3B82F6;
+          color: #FFFFFF;
+          padding: 4px 8px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 800;
+          white-space: nowrap;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          cursor: pointer;
+        ">
+          <span style="color:#60A5FA;">🏛️ Ward ${w.wardCode}</span>
+          <span style="background:#1D4ED8; padding:1px 6px; border-radius:10px; font-size:10px;">${countFormatted}</span>
+        </div>
+      `;
+      const icon = L.divIcon({
+        html,
+        className: 'bmc-ward-marker-icon',
+        iconSize: [120, 26],
+        iconAnchor: [60, 13]
+      });
+
+      const marker = L.marker(w.coords, { icon });
+      marker.bindPopup(`
+        <div style="font-family: inherit; font-size: 12px; color: #0F172A; min-width: 210px; line-height: 1.45;">
+          <div style="font-weight: 800; font-size: 13px; color: #1D4ED8; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 4px; margin-bottom: 6px;">
+            🏛️ BMC Ward ${w.wardCode} (Historical Aggregate)
+          </div>
+          <div><strong>Area:</strong> ${w.wardName}</div>
+          <div><strong>Zone:</strong> ${w.zone}</div>
+          <div><strong>Historical Grievances:</strong> ${(w.totalComplaints || 0).toLocaleString()}</div>
+          <div><strong>Satisfaction Rate:</strong> ${w.satisfactionRate}%</div>
+          <div><strong>Average SLA:</strong> ${w.avgResolutionDays} days</div>
+          <div><strong>Slum Percentage:</strong> ${w.slumPercentage}%</div>
+          <div style="margin-top: 6px; font-size: 10px; color: #64748B; font-style: italic;">
+            Brihanmumbai Municipal Corporation 2018–2024 Archive
+          </div>
+        </div>
+      `);
+      bmcAgrLayerRef.current.addLayer(marker);
+    });
+  }, [dataSource, bmcMapData]);
+
+  // 6. Fast Marker Diffing & Rendering (Respects dataSource)
   useEffect(() => {
     if (!markersLayerRef.current || !mapInstanceRef.current) return;
+
+    // If viewing BMC Historical only, clear live markers
+    if (dataSource === 'bmc') {
+      markersLayerRef.current.clearLayers();
+      markersByIdRef.current.clear();
+      return;
+    }
 
     const visibleReports = reports.filter(r => {
       const p = r.priority || { finalScore: r.priorityScore || 70, isOverdue: (r.elapsedHours || 0) > (r.slaHours || 24) };
@@ -539,6 +617,61 @@ export default function InteractiveCivicMap({
                 <Search size={15} className={searchLoading ? 'animate-spin' : ''} />
               </button>
             </form>
+
+            {/* Data Source Selector */}
+            <div style={{ display: 'flex', alignItems: 'center', background: '#F1F5F9', padding: '3px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+              <button
+                type="button"
+                onClick={() => setDataSource('both')}
+                style={{
+                  background: dataSource === 'both' ? '#FFFFFF' : 'transparent',
+                  color: dataSource === 'both' ? '#0F172A' : '#64748B',
+                  border: 'none',
+                  boxShadow: dataSource === 'both' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                  borderRadius: '6px',
+                  padding: '5px 9px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                All Data
+              </button>
+              <button
+                type="button"
+                onClick={() => setDataSource('live')}
+                style={{
+                  background: dataSource === 'live' ? '#FFFFFF' : 'transparent',
+                  color: dataSource === 'live' ? '#1D4ED8' : '#64748B',
+                  border: 'none',
+                  boxShadow: dataSource === 'live' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                  borderRadius: '6px',
+                  padding: '5px 9px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                🚨 Live Reports
+              </button>
+              <button
+                type="button"
+                onClick={() => setDataSource('bmc')}
+                style={{
+                  background: dataSource === 'bmc' ? '#FFFFFF' : 'transparent',
+                  color: dataSource === 'bmc' ? '#7C3AED' : '#64748B',
+                  border: 'none',
+                  boxShadow: dataSource === 'bmc' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                  borderRadius: '6px',
+                  padding: '5px 9px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                🏛️ BMC Wards
+              </button>
+            </div>
 
             <button
               type="button"
