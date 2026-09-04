@@ -454,6 +454,10 @@ export default function App() {
         return;
       }
     } catch (e) {
+      if (e.message && (e.message.includes('AI Resolution Audit') || e.message.includes('Audit Failed'))) {
+        showToast(`❌ ${e.message}`, 'error');
+        throw e;
+      }
       console.warn('Backend progressReport error, falling back locally', e);
     }
 

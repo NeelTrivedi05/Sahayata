@@ -75,6 +75,12 @@ export const api = {
     body: JSON.stringify({ imageBase64 })
   }),
 
+  // Resolution Verification AI Audit
+  verifyResolutionPhoto: (data) => request('/verify-resolution-photo', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+
   // Municipal AI Resource Allocation Advisor
   suggestResources: (reportData) => request('/suggest-resources', {
     method: 'POST',
