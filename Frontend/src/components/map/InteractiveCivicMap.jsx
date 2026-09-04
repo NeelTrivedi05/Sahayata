@@ -121,6 +121,8 @@ function createMarkerIcon(r) {
 
 export default function InteractiveCivicMap({
   reports = [],
+  currentRole,
+  onNotifyWard,
   onSelectReport,
   onReportAtLocation,
   onEndorseReport,
@@ -1018,6 +1020,51 @@ export default function InteractiveCivicMap({
                 <span>Track Full History in Pipeline</span>
                 <ChevronRight size={16} />
               </button>
+
+              {/* MLA Escalation Action Button */}
+              {currentRole === 'mla' && (
+                (() => {
+                  const priVal = selectedReport.priority?.finalScore || selectedReport.priorityScore || 70;
+                  const isOv = (selectedReport.elapsedHours || 0) > (selectedReport.slaHours || 48);
+                  const isSevere = priVal >= 80 || isOv;
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                      {isSevere && (
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          ⚠️ Recommended — high severity
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onNotifyWard) {
+                            onNotifyWard(selectedReport.id);
+                          }
+                        }}
+                        style={{
+                          background: selectedReport.mlaEscalated ? '#F1F5F9' : isSevere ? '#DC2626' : '#EA580C',
+                          color: selectedReport.mlaEscalated ? '#64748B' : '#FFFFFF',
+                          border: isSevere && !selectedReport.mlaEscalated ? '1px solid #B91C1C' : 'none',
+                          borderRadius: '10px',
+                          padding: '10px',
+                          fontSize: '0.84rem',
+                          fontWeight: 700,
+                          cursor: selectedReport.mlaEscalated ? 'default' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          boxShadow: !selectedReport.mlaEscalated && isSevere ? '0 4px 12px rgba(220, 38, 38, 0.35)' : 'none',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span>{selectedReport.mlaEscalated ? '🔔 Ward Notified (Escalated)' : '🔔 Notify Ward (Escalate)'}</span>
+                      </button>
+                    </div>
+                  );
+                })()
+              )}
             </div>
           </div>
         )}
