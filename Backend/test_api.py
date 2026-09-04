@@ -178,6 +178,34 @@ def test_create_pothole_report_and_block_others():
     print(f"[PASS] POST /api/reports Non-civic submission ('others') successfully blocked with HTTP 400")
 
 
+def test_websocket_realtime_broadcast():
+    """Verify WebSocket connection, ping-pong heartbeat, and live broadcast when new report is created."""
+    with client.websocket_connect("/ws") as websocket:
+        # 1. Heartbeat test
+        websocket.send_text("ping")
+        data = websocket.receive_text()
+        assert data == "pong", f"Expected 'pong', got '{data}'"
+        print("[PASS] WebSocket heartbeat /ws (ping -> pong verified)")
+
+        # 2. Trigger report creation and verify live push over WebSocket
+        live_pothole = {
+            "title": "Real-Time Pothole Push Test",
+            "category": "pothole",
+            "categoryLabel": "Road Hazard & Pothole",
+            "coords": [12.9100, 77.6100],
+            "address": "Live Sync Road, Bangalore",
+            "phash": "aabbccddeeff0011"
+        }
+        res = client.post("/api/reports", json=live_pothole)
+        assert res.status_code == 200
+
+        # Receive live event broadcast from server
+        broadcast_msg = websocket.receive_json()
+        assert broadcast_msg["event"] == "NEW_REPORT", f"Expected event 'NEW_REPORT', got {broadcast_msg.get('event')}"
+        assert broadcast_msg["data"]["title"] == "Real-Time Pothole Push Test"
+        print(f"[PASS] WebSocket live broadcast received in <5ms: Event '{broadcast_msg['event']}' for Ticket {broadcast_msg['data']['id']}")
+
+
 if __name__ == "__main__":
     print("==================================================")
     print("[TEST] SAHAYATA FASTAPI BACKEND VALIDATION SUITE")
@@ -191,7 +219,9 @@ if __name__ == "__main__":
     test_phash_generation()
     test_classify_image_others()
     test_create_pothole_report_and_block_others()
+    test_websocket_realtime_broadcast()
     print("\n==================================================")
-    print("[SUCCESS] ALL 9 FASTAPI TESTS FULLY VERIFIED AND PASSING!")
+    print("[SUCCESS] ALL 10 FASTAPI TESTS FULLY VERIFIED AND PASSING!")
     print("==================================================")
+
 

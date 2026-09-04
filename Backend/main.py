@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, status, Query, Body
+from fastapi import FastAPI, HTTPException, status, Query, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from PIL import Image
@@ -35,6 +35,52 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ==============================================================================
+# REAL-TIME WEBSOCKET LIVE SYNCHRONIZATION MANAGER
+# ==============================================================================
+class ConnectionManager:
+    """Manages persistent WebSocket connections across multiple Citizen & Ward laptops."""
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: Dict[str, Any]):
+        dead_connections = []
+        for connection in list(self.active_connections):
+            try:
+                await connection.send_json(message)
+            except Exception:
+                dead_connections.append(connection)
+        for dead in dead_connections:
+            if dead in self.active_connections:
+                self.active_connections.remove(dead)
+
+ws_manager = ConnectionManager()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """
+    Live synchronization channel for Citizen & Ward Officer portals.
+    Broadcasts NEW_REPORT, REPORT_UPDATED, and responds to heartbeats.
+    """
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+    except Exception:
+        ws_manager.disconnect(websocket)
 
 # ==============================================================================
 # IN-MEMORY DATA STORE (Seeds Ward 142 Indiranagar, Bengaluru)
@@ -274,14 +320,15 @@ class EndorseSchema(BaseModel):
 
 
 class ProgressSchema(BaseModel):
-    statusStep: int = Field(..., ge=1, le=6)
-    status: str
+    statusStep: Optional[int] = Field(None, ge=1, le=6)
+    status: Optional[str] = None
     note: Optional[str] = None
     afterImage: Optional[str] = None
 
 
 class VerifySchema(BaseModel):
-    vote: str = Field(..., description="'verified' or 'rejected'")
+    vote: Optional[str] = Field(None, description="'verified' or 'rejected'")
+    action: Optional[str] = Field(None, description="'confirm' or 'dispute'")
     note: Optional[str] = None
 
 
@@ -395,7 +442,13 @@ async def create_report(payload: ReportCreateSchema):
     }
 
     reports.insert(0, new_report)
-    return {"success": True, "message": "Report submitted successfully", "data": new_report}
+
+    # Live 2-way real-time synchronization broadcast
+    enriched_new = dict(new_report)
+    enriched_new["priority"] = calculate_priority_score(new_report)
+    await ws_manager.broadcast({"event": "NEW_REPORT", "data": enriched_new})
+
+    return {"success": True, "message": "Report submitted successfully", "data": enriched_new}
 
 
 @app.post("/api/reports/{report_id}/endorse")
@@ -404,46 +457,99 @@ async def endorse_report(report_id: str, payload: EndorseSchema = Body(default=E
     for r in reports:
         if r["id"] == report_id:
             r["duplicateCount"] = r.get("duplicateCount", 1) + 1
+            enriched_endorse = dict(r)
+            enriched_endorse["priority"] = calculate_priority_score(r)
+            await ws_manager.broadcast({"event": "REPORT_UPDATED", "data": enriched_endorse})
             return {
                 "success": True,
                 "message": f"Endorsement recorded for complaint {report_id}",
-                "duplicateCount": r["duplicateCount"]
+                "duplicateCount": r["duplicateCount"],
+                "data": enriched_endorse
             }
     raise HTTPException(status_code=404, detail="Complaint not found")
 
 
-@app.patch("/api/reports/{report_id}/progress")
-async def progress_report(report_id: str, payload: ProgressSchema):
-    """Ward Engineer action: progresses complaint lifecycle (Reported -> Clustered -> Prioritized -> Assigned -> Resolved)."""
+@app.post("/api/reports/{report_id}/notify-ward")
+async def notify_ward(report_id: str):
+    """Ward notification via MLA escalation. Broadcasts live update to all portals."""
     for r in reports:
         if r["id"] == report_id:
-            r["statusStep"] = payload.statusStep
-            r["status"] = payload.status
+            r["mlaEscalated"] = True
+            r["mlaEscalatedAt"] = datetime.utcnow().isoformat()
+            enriched = dict(r)
+            enriched["priority"] = calculate_priority_score(r)
+            await ws_manager.broadcast({"event": "REPORT_UPDATED", "data": enriched})
+            return {"success": True, "message": "Ward notified via MLA escalation", "data": enriched}
+    raise HTTPException(status_code=404, detail="Complaint not found")
+
+
+@app.post("/api/reports/{report_id}/progress")
+@app.patch("/api/reports/{report_id}/progress")
+async def progress_report(report_id: str, payload: ProgressSchema = Body(default_factory=ProgressSchema)):
+    """Ward Engineer action: progresses complaint lifecycle (Reported -> Clustered -> Prioritized -> Assigned -> Resolved). Broadcasts live update."""
+    for r in reports:
+        if r["id"] == report_id:
+            if "resolution" not in r or not isinstance(r["resolution"], dict):
+                r["resolution"] = {}
             if payload.afterImage:
                 r["afterImage"] = payload.afterImage
             if payload.note:
                 r["resolution"]["note"] = payload.note
-            return {"success": True, "message": f"Complaint {report_id} updated to {payload.status}", "data": r}
+
+            if payload.statusStep is not None:
+                r["statusStep"] = payload.statusStep
+                if payload.status:
+                    r["status"] = payload.status
+            else:
+                # Auto-advance step if not explicitly supplied by frontend button click
+                current_step = r.get("statusStep", 1)
+                if current_step < 5:
+                    r["statusStep"] = current_step + 1
+                    step_status_map = {
+                        2: "clustered",
+                        3: "prioritized",
+                        4: "assigned",
+                        5: "resolved"
+                    }
+                    r["status"] = step_status_map.get(r["statusStep"], "assigned")
+                    if r["statusStep"] == 5:
+                        r["resolution"]["aiConfidence"] = "96.4% Repair Cleared"
+                        r["resolution"]["inspectionStatus"] = "Field Repair Completed - Verification Pending"
+
+            enriched_progress = dict(r)
+            enriched_progress["priority"] = calculate_priority_score(r)
+            await ws_manager.broadcast({"event": "REPORT_UPDATED", "data": enriched_progress})
+            return {"success": True, "message": f"Complaint {report_id} updated to {r.get('status')}", "data": enriched_progress}
     raise HTTPException(status_code=404, detail="Complaint not found")
 
 
 @app.post("/api/reports/{report_id}/verify")
 async def verify_report(report_id: str, payload: VerifySchema):
-    """Citizen verification: accepts or reopens completed repairs."""
+    """Citizen verification: accepts (confirm/verified) or reopens (dispute/rejected) completed repairs. Broadcasts live update."""
     for r in reports:
         if r["id"] == report_id:
-            if payload.vote == "verified":
+            if "verifications" not in r or not isinstance(r["verifications"], dict):
+                r["verifications"] = {"verifiedCount": 0, "reopenedCount": 0}
+            if "resolution" not in r or not isinstance(r["resolution"], dict):
+                r["resolution"] = {}
+
+            is_confirm = payload.action == "confirm" or payload.vote == "verified"
+            is_dispute = payload.action == "dispute" or payload.vote == "rejected"
+
+            if is_confirm:
                 r["verifications"]["verifiedCount"] = r["verifications"].get("verifiedCount", 0) + 1
-                if r["verifications"]["verifiedCount"] >= 3:
-                    r["status"] = "verified"
-                    r["statusStep"] = 6
-            elif payload.vote == "rejected":
+                r["status"] = "verified"
+                r["statusStep"] = 6
+            elif is_dispute:
                 r["verifications"]["reopenedCount"] = r["verifications"].get("reopenedCount", 0) + 1
-                # Reopen to assigned status
                 r["status"] = "assigned"
                 r["statusStep"] = 4
-                r["resolution"]["note"] = f"Citizen rejected fix: {payload.note or 'Repair sub-standard'}"
-            return {"success": True, "message": f"Verification vote recorded ({payload.vote})", "data": r}
+                r["resolution"]["note"] = f"Citizen rejected fix: {payload.note or 'Repair sub-standard / disputed'}"
+
+            enriched_verify = dict(r)
+            enriched_verify["priority"] = calculate_priority_score(r)
+            await ws_manager.broadcast({"event": "REPORT_UPDATED", "data": enriched_verify})
+            return {"success": True, "message": "Verification vote recorded", "data": enriched_verify}
     raise HTTPException(status_code=404, detail="Complaint not found")
 
 

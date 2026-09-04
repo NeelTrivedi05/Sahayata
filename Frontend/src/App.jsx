@@ -4,7 +4,7 @@ import confetti from 'canvas-confetti';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CIVIC_DATA } from './data/civicData';
-import { api } from './api/client';
+import { api, getWebSocketUrl } from './api/client';
 import { useGeolocation } from './hooks/useGeolocation';
 import {
   evaluateDuplicateCandidate,
@@ -166,7 +166,90 @@ export default function App() {
     }
   };
 
-  // Periodic polling every 6 seconds on any active dashboard/pipeline/map tab
+  // Live 2-Way WebSocket Connection for Instant Multi-Device Sync
+  useEffect(() => {
+    let ws = null;
+    let reconnectTimeout = null;
+    let pingInterval = null;
+    let isUnmounted = false;
+
+    const connectWebSocket = () => {
+      if (isUnmounted) return;
+      try {
+        const wsUrl = getWebSocketUrl();
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('[WebSocket] Connected to Sahayata Live Sync at', wsUrl);
+          // Heartbeat ping every 20 seconds
+          pingInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send('ping');
+            }
+          }, 20000);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            if (event.data === 'pong') return;
+            const payload = JSON.parse(event.data);
+            if (!payload || !payload.event) return;
+
+            if (payload.event === 'NEW_REPORT' && payload.data) {
+              const newRep = payload.data;
+              setReports(prev => {
+                const exists = prev.some(r => r.id === newRep.id);
+                if (exists) return prev;
+                return [newRep, ...prev];
+              });
+              showToast({
+                type: 'info',
+                title: '🚨 Live Complaint Filed',
+                message: `${newRep.categoryLabel || newRep.category}: ${newRep.title} (${newRep.address || 'Ward 142'})`
+              });
+            } else if (payload.event === 'REPORT_UPDATED' && payload.data) {
+              const updatedRep = payload.data;
+              setReports(prev => prev.map(r => r.id === updatedRep.id ? { ...r, ...updatedRep } : r));
+              setSelectedVerifyReport(prev => prev && prev.id === updatedRep.id ? { ...prev, ...updatedRep } : prev);
+              showToast({
+                type: 'info',
+                title: '⚡ Live Status Updated',
+                message: `Ticket ${updatedRep.id} updated to ${updatedRep.status} (${updatedRep.categoryLabel || updatedRep.category})`
+              });
+            }
+          } catch (err) {
+            console.error('[WebSocket message parse error]', err);
+          }
+        };
+
+        ws.onclose = () => {
+          clearInterval(pingInterval);
+          if (!isUnmounted) {
+            reconnectTimeout = setTimeout(connectWebSocket, 3000);
+          }
+        };
+
+        ws.onerror = () => {
+          if (ws) ws.close();
+        };
+      } catch (err) {
+        if (!isUnmounted) {
+          reconnectTimeout = setTimeout(connectWebSocket, 5000);
+        }
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      isUnmounted = true;
+      clearInterval(pingInterval);
+      clearTimeout(reconnectTimeout);
+      if (ws) ws.close();
+    };
+  }, []);
+
+  // Initial fetch and background safety sync
   useEffect(() => {
     fetchReports(false);
 
@@ -175,7 +258,7 @@ export default function App() {
 
     const interval = setInterval(() => {
       fetchReports(false);
-    }, 6000); // 6 seconds (between 5-8 seconds)
+    }, 15000); // 15s secondary safety sync
 
     return () => clearInterval(interval);
   }, [activeTab]);
