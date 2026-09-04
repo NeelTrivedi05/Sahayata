@@ -26,7 +26,9 @@
       "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
       "contractor": "BMC Fast-Response Team",
       "note": "Clarification provided: None"
-    }
+    },
+    "mlaEscalated": true,
+    "mlaEscalatedAt": "2026-09-04T00:10:46.708Z"
   },
   {
     "id": "CIVIC-2026-6668",
@@ -186,8 +188,8 @@
       72.835
     ],
     "address": "Turner Road Junction, Bandra West, Mumbai",
-    "status": "prioritized",
-    "statusStep": 3,
+    "status": "assigned",
+    "statusStep": 4,
     "slaHours": 24,
     "elapsedHours": 14,
     "duplicateCount": 11,
@@ -203,6 +205,8 @@
       "assignedTo": "Er. Rajesh Sawant",
       "contractor": "BMC Hydraulic Engineering Quick Response Unit",
       "note": "Isolation valve dispatched to stem wastage."
-    }
+    },
+    "mlaEscalated": true,
+    "mlaEscalatedAt": "2026-09-04T00:32:40.568Z"
   }
 ]

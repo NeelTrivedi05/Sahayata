@@ -18,11 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-<<<<<<< HEAD
 app.use(express.json({ limit: '20mb' }));
-=======
-app.use(express.json({ limit: '15mb' }));
->>>>>>> e47bbbe701f6f441a302173a38f69f3847d74d7b
 
 // In-memory data store for CivicCare (Sahayata) - Mumbai
 let jurisdiction = {
@@ -215,7 +211,13 @@ export function calculatePriorityScore(report) {
     agingBonus = (elapsed / sla) * 12;
   }
 
-  const raw = base + dupBonus + criticalBonus + trafficBonus + clarificationBonus + agingBonus;
+  // MLA Escalation Priority Bonus
+  let mlaBonus = 0;
+  if (report.mlaEscalated) {
+    mlaBonus = 15;
+  }
+
+  const raw = base + dupBonus + criticalBonus + trafficBonus + clarificationBonus + agingBonus + mlaBonus;
   const finalScore = Math.min(Math.round(raw), 100);
 
   return {
@@ -228,7 +230,8 @@ export function calculatePriorityScore(report) {
       critical: Math.round(criticalBonus),
       traffic: Math.round(trafficBonus),
       clarification: Math.round(clarificationBonus),
-      aging: Math.round(agingBonus)
+      aging: Math.round(agingBonus),
+      mla: Math.round(mlaBonus)
     }
   };
 }
@@ -426,6 +429,32 @@ app.post('/api/reports/:id/endorse', (req, res) => {
       ...target,
       priorityScore: pri.finalScore,
       priority: pri
+    }
+  });
+});
+
+// 4b. Notify Ward (MLA Escalation)
+app.post('/api/reports/:id/notify-ward', (req, res) => {
+  const { id } = req.params;
+  const target = reports.find(r => r.id === id);
+  if (!target) {
+    return res.status(404).json({ success: false, message: "Report not found" });
+  }
+
+  target.mlaEscalated = true;
+  target.mlaEscalatedAt = new Date().toISOString();
+  saveReports(reports);
+  const pri = calculatePriorityScore(target);
+
+  res.json({
+    success: true,
+    message: "Ward notified via MLA escalation",
+    data: {
+      ...target,
+      priorityScore: pri.finalScore,
+      priority: pri,
+      isOverdue: pri.isOverdue,
+      overdueHours: pri.overdueHours
     }
   });
 });

@@ -47,6 +47,9 @@ export const api = {
   endorseReport: (id) => request(`/reports/${id}/endorse`, {
     method: 'POST'
   }),
+  notifyWard: (id) => request(`/reports/${id}/notify-ward`, {
+    method: 'POST'
+  }),
   progressReport: (id, { afterImage } = {}) => request(`/reports/${id}/progress`, {
     method: 'POST',
     body: JSON.stringify({ afterImage })
@@ -64,5 +67,11 @@ export const api = {
   signup: (userData) => request('/auth/signup', {
     method: 'POST',
     body: JSON.stringify(userData)
+  }),
+
+  // Image Classification (AI Vision)
+  classifyImage: (imageBase64) => request('/classify-image', {
+    method: 'POST',
+    body: JSON.stringify({ imageBase64 })
   })
 };

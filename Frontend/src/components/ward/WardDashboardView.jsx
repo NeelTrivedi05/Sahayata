@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import ComplaintMiniMap from '../map/ComplaintMiniMap';
 import { calculateTotalDuplicates } from '../../utils/deduplication';
+import WebcamCaptureModal from '../common/WebcamCaptureModal';
 
 export default function WardDashboardView({
   reports = [],
@@ -38,11 +39,20 @@ export default function WardDashboardView({
   const [selectedClusterFilter, setSelectedClusterFilter] = useState(null);
   const [geofenceWarning, setGeofenceWarning] = useState(null);
 
+  // Live Web App Camera Modal state
+  const [isLiveCameraModalOpen, setIsLiveCameraModalOpen] = useState(false);
+  const [cameraTarget, setCameraTarget] = useState('resolve'); // 'resolve' | 'inspection'
+
   // Resolution photo modal state
   const [afterPhotoPreview, setAfterPhotoPreview] = useState(null);
   const [isResolving, setIsResolving] = useState(false);
   const cameraInputRef = useRef(null);
   const uploadInputRef = useRef(null);
+
+  // Standalone field inspection photo capture state
+  const [inspectionPhotoPreview, setInspectionPhotoPreview] = useState(null);
+  const [showInspectionModal, setShowInspectionModal] = useState(false);
+  const inspectionCameraInputRef = useRef(null);
 
   // Derived KPI Stats
   const totalReports = reports.length;
@@ -125,6 +135,19 @@ export default function WardDashboardView({
     }
   };
 
+  // Handle Standalone Field Inspection Photo Capture
+  const handleInspectionPhotoCapture = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setInspectionPhotoPreview(event.target.result);
+        setShowInspectionModal(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const submitResolutionWithPhoto = async () => {
     if (!selectedReportForModal) return;
     setIsResolving(true);
@@ -157,6 +180,41 @@ export default function WardDashboardView({
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {/* Hidden camera input for Click Photo */}
+          <input
+            type="file"
+            ref={inspectionCameraInputRef}
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={handleInspectionPhotoCapture}
+          />
+
+          <button
+            type="button"
+            onClick={() => {
+              setCameraTarget('inspection');
+              setIsLiveCameraModalOpen(true);
+            }}
+            style={{
+              background: '#059669',
+              color: '#FFFFFF',
+              border: 'none',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)'
+            }}
+          >
+            <Camera size={17} />
+            <span>Click Photo</span>
+          </button>
+
           <button
             type="button"
             onClick={() => onNavigateTab('priority')}
@@ -474,9 +532,16 @@ export default function WardDashboardView({
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', fontFamily: 'monospace' }}>
-                        {r.id}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', fontFamily: 'monospace' }}>
+                          {r.id}
+                        </span>
+                        {r.mlaEscalated && (
+                          <span style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '1px 6px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800 }}>
+                            🔔 MLA Escalated
+                          </span>
+                        )}
+                      </div>
                       <span
                         style={{
                           fontSize: '0.72rem',
@@ -632,7 +697,14 @@ export default function WardDashboardView({
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td style={{ padding: '14px 16px', fontWeight: 700, fontFamily: 'monospace', color: '#1E3A5F' }}>
-                      {r.id}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                        <span>{r.id}</span>
+                        {r.mlaEscalated && (
+                          <span style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                            🔔 MLA Escalated
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>{r.title}</div>
@@ -744,9 +816,16 @@ export default function WardDashboardView({
             {/* Modal Header */}
             <div style={{ padding: '20px 24px', background: '#1E3A5F', color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <span style={{ fontSize: '0.74rem', background: '#F59E0B', color: '#0F172A', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
-                  {selectedReportForModal.id}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.74rem', background: '#F59E0B', color: '#0F172A', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                    {selectedReportForModal.id}
+                  </span>
+                  {selectedReportForModal.mlaEscalated && (
+                    <span style={{ fontSize: '0.72rem', background: '#DC2626', color: '#FFFFFF', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                      🔔 MLA Escalated
+                    </span>
+                  )}
+                </div>
                 <h3 style={{ margin: '4px 0 0', fontSize: '1.2rem', fontWeight: 800 }}>
                   {selectedReportForModal.title}
                 </h3>
@@ -764,6 +843,21 @@ export default function WardDashboardView({
             </div>
 
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* MLA Escalation Notice Banner */}
+              {selectedReportForModal.mlaEscalated && (
+                <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <ShieldAlert size={20} color="#DC2626" />
+                  <div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#991B1B' }}>
+                      🔔 MLA Escalation Notice
+                    </div>
+                    <div style={{ fontSize: '0.76rem', color: '#B91C1C' }}>
+                      Constituency MLA flagged this issue for urgent ward priority intervention and fast-track contractor resolution.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* AI Intake Verification Banner */}
               <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Sparkles size={20} color="#16A34A" />
@@ -873,7 +967,10 @@ export default function WardDashboardView({
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                       type="button"
-                      onClick={() => cameraInputRef.current?.click()}
+                      onClick={() => {
+                        setCameraTarget('resolve');
+                        setIsLiveCameraModalOpen(true);
+                      }}
                       style={{
                         flex: 1,
                         background: '#FFFFFF',
@@ -1008,6 +1105,139 @@ export default function WardDashboardView({
           </div>
         </div>
       )}
+
+      {/* Standalone Field Inspection Photo Preview Modal */}
+      {showInspectionModal && inspectionPhotoPreview && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1050,
+            padding: '20px'
+          }}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '20px',
+              maxWidth: '540px',
+              width: '100%',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+            }}
+          >
+            <div style={{ padding: '18px 22px', background: '#1E3A5F', color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Camera size={20} color="#34D399" />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>
+                  Field Inspection Photo Preview
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInspectionModal(false)}
+                style={{ background: 'none', border: 'none', color: '#CBD5E1', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E2E8F0', maxHeight: '360px', background: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img
+                  src={inspectionPhotoPreview}
+                  alt="Field Inspection Captured"
+                  style={{ width: '100%', maxHeight: '360px', objectFit: 'contain' }}
+                />
+              </div>
+
+              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '12px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CheckCircle2 size={18} color="#16A34A" />
+                <div style={{ fontSize: '0.78rem', color: '#166534', fontWeight: 600 }}>
+                  On-site camera photo captured successfully. Stored in local inspection buffer.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCameraTarget('inspection');
+                    setIsLiveCameraModalOpen(true);
+                  }}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1.5px solid #CBD5E1',
+                    color: '#334155',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Camera size={15} />
+                  <span>Retake Photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowInspectionModal(false)}
+                  style={{
+                    background: '#059669',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    padding: '8px 20px',
+                    borderRadius: '10px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Done / Keep Photo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Web App Camera Modal */}
+      <WebcamCaptureModal
+        isOpen={isLiveCameraModalOpen}
+        onClose={() => setIsLiveCameraModalOpen(false)}
+        title={cameraTarget === 'inspection' ? 'Field Inspection Camera Capture' : `Live Resolution Proof • Ticket ${selectedReportForModal?.id || ''}`}
+        onPhotoCaptured={(dataUrl) => {
+          if (cameraTarget === 'inspection') {
+            setInspectionPhotoPreview(dataUrl);
+            setShowInspectionModal(true);
+          } else {
+            setAfterPhotoPreview(dataUrl);
+            if ('geolocation' in navigator && selectedReportForModal?.coords) {
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  const currentCoords = [pos.coords.latitude, pos.coords.longitude];
+                  const dist = getDistanceMeters(currentCoords, selectedReportForModal.coords);
+                  if (dist > 100) {
+                    setGeofenceWarning(`⚠️ Geo-Fence Notice: Photo captured ~${dist}m from complaint location (100m threshold). Officer verification required.`);
+                  } else {
+                    setGeofenceWarning(null);
+                  }
+                },
+                (err) => console.warn("GPS lookup error:", err),
+                { timeout: 5000 }
+              );
+            }
+          }
+        }}
+      />
     </div>
   );
 }
