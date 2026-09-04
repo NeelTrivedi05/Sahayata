@@ -9,7 +9,8 @@ import {
   evaluateDuplicateCandidate,
   computeImagePHash,
   calculateHaversineDistance,
-  calculateHammingDistance
+  calculateHammingDistance,
+  calculateTotalDuplicates
 } from './utils/deduplication';
 import {
   Shield,
@@ -94,21 +95,7 @@ export default function App() {
     CIVIC_DATA.sampleReports.find(r => r.status === 'resolved') || CIVIC_DATA.sampleReports[1]
   );
   const [toast, setToast] = useState(null);
-
-  // Fetch latest reports with server-calculated priority scores on mount
-  useEffect(() => {
-    async function loadReports() {
-      try {
-        const res = await api.getReports();
-        if (res.data && res.data.length > 0) {
-          setReports(res.data);
-        }
-      } catch (e) {
-        console.warn('Backend /api/reports unreachable, using local reports', e);
-      }
-    }
-    loadReports();
-  }, []);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Sync user state if authenticated
   useEffect(() => {
@@ -116,6 +103,76 @@ export default function App() {
       setCivicKarma(currentUser.civicKarma);
     }
   }, [currentUser]);
+
+  const showToast = (msg) => {
+    if (typeof msg === 'string') {
+      setToastNotification({ type: 'info', title: 'Sahayata Alert', message: msg });
+    } else {
+      setToastNotification(msg);
+    }
+  };
+
+  // Fetch reports from server and merge into state without interrupting active user workflows
+  const fetchReports = async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
+    try {
+      const res = await api.getReports();
+      if (res && res.data && Array.isArray(res.data)) {
+        setReports(prevReports => {
+          // Compare fingerprint across tickets to avoid needless DOM re-renders or layout shifts
+          const prevKey = prevReports
+            .map(r => `${r.id}:${r.status}:${r.duplicateCount}:${r.statusStep}:${r.priorityScore || ''}`)
+            .join('|');
+          const newKey = res.data
+            .map(r => `${r.id}:${r.status}:${r.duplicateCount}:${r.statusStep}:${r.priorityScore || ''}`)
+            .join('|');
+          if (prevKey === newKey && prevReports.length === res.data.length) {
+            return prevReports;
+          }
+          return res.data;
+        });
+
+        // Keep selected verification report synchronized without resetting slider or modal state
+        setSelectedVerifyReport(prev => {
+          if (!prev) return res.data.find(r => r.status === 'resolved') || res.data[0];
+          const matched = res.data.find(r => r.id === prev.id);
+          return matched || prev;
+        });
+
+        if (isManual) {
+          showToast({
+            type: 'success',
+            title: 'Reports Synchronized',
+            message: `Updated with ${res.data.length} live reports from server.`
+          });
+        }
+      }
+    } catch (e) {
+      if (isManual) {
+        showToast({
+          type: 'warning',
+          title: 'Connection Notice',
+          message: 'Unable to reach backend server. Displaying local data.'
+        });
+      }
+    } finally {
+      if (isManual) setIsRefreshing(false);
+    }
+  };
+
+  // Periodic polling every 6 seconds on any active dashboard/pipeline/map tab
+  useEffect(() => {
+    fetchReports(false);
+
+    const pollableTabs = ['ward_overview', 'radar', 'pipeline', 'priority', 'verify', 'mla'];
+    if (!pollableTabs.includes(activeTab)) return;
+
+    const interval = setInterval(() => {
+      fetchReports(false);
+    }, 6000); // 6 seconds (between 5-8 seconds)
+
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
   // Define All Content Tabs filtered strictly by RBAC (placed at top to adhere to React Rules of Hooks)
   const allNavTabs = [
@@ -137,14 +194,6 @@ export default function App() {
       setActiveTab(availableNavTabs[0].id);
     }
   }, [currentRole, activeTab, availableNavTabs]);
-
-  const showToast = (msg) => {
-    if (typeof msg === 'string') {
-      setToastNotification({ type: 'info', title: 'Sahayata Alert', message: msg });
-    } else {
-      setToastNotification(msg);
-    }
-  };
 
   const handleAuthSignup = async (formData) => {
     await signup(formData);
@@ -667,6 +716,31 @@ export default function App() {
               </button>
             </div>
           )}
+
+          {/* Fallback Manual Refresh Button */}
+          <button
+            onClick={() => fetchReports(true)}
+            disabled={isRefreshing}
+            title="Refresh live reports from server"
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              color: '#334155',
+              borderRadius: '8px',
+              padding: '8px 14px',
+              fontWeight: 600,
+              fontSize: '0.82rem',
+              cursor: isRefreshing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+            <span>{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
+          </button>
 
           {/* Quick Action */}
           <button
@@ -2757,9 +2831,10 @@ function PriorityRulesView({ report }) {
 // ==========================================================================
 // 6. MLA CONSTITUENCY DASHBOARD VIEW
 // ==========================================================================
-function MlaDashboardView({ reports }) {
+function MlaDashboardView({ reports = [] }) {
   const overdueCount = reports.filter(r => r.elapsedHours > r.slaHours).length;
   const verifiedCount = reports.filter(r => r.status === 'verified').length;
+  const duplicateCallsFiltered = calculateTotalDuplicates(reports);
 
   return (
     <div>
@@ -2798,7 +2873,7 @@ function MlaDashboardView({ reports }) {
 
         <div style={{ background: '#FFF', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '14px' }}>
           <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Duplicate Calls Filtered</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D97706', marginTop: '4px' }}>53</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#D97706', marginTop: '4px' }}>{duplicateCallsFiltered}</div>
           <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '4px' }}>Consolidated via AI clustering</div>
         </div>
 

@@ -224,3 +224,12 @@ function deterministicStringHash(str) {
   }
   return Math.abs(hash).toString(16).padStart(16, '0').slice(0, 16);
 }
+
+/**
+ * Calculates the total number of duplicate calls filtered across a list of reports.
+ * For each ticket with duplicateCount > 1, sum up (duplicateCount - 1).
+ */
+export function calculateTotalDuplicates(reports = []) {
+  if (!Array.isArray(reports)) return 0;
+  return reports.reduce((acc, r) => acc + (r.duplicateCount > 1 ? r.duplicateCount - 1 : 0), 0);
+}

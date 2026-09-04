@@ -2,13 +2,16 @@
   "python.defaultInterpreterPath": "${workspaceFolder}/venv/Scripts/python.exe",
   "python.analysis.extraPaths": [
     "${workspaceFolder}/venv/Lib/site-packages",
-    "d:/Sahayata/venv/Lib/site-packages"
+    "${workspaceFolder}/Backend"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/venv/Lib/site-packages",
+    "${workspaceFolder}/Backend"
   ],
   "python.terminal.activateEnvironment": true,
-  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.typeCheckingMode": "basic",
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingImports": "none",
     "reportMissingModuleSource": "none"
   }
 }
-
