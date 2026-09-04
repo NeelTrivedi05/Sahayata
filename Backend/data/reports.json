@@ -28,7 +28,8 @@
       "note": "Clarification provided: None"
     },
     "mlaEscalated": true,
-    "mlaEscalatedAt": "2026-09-04T00:10:46.708Z"
+    "mlaEscalatedAt": "2026-09-04T00:10:46.708Z",
+    "source": "DEMO"
   },
   {
     "id": "CIVIC-2026-6668",
@@ -57,7 +58,8 @@
       "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
       "contractor": "BMC Fast-Response Team",
       "note": "Clarification provided: None"
-    }
+    },
+    "source": "DEMO"
   },
   {
     "id": "CIVIC-2026-3651",
@@ -85,7 +87,10 @@
       "assignedTo": "Er. Rajesh Sawant (Executive Engineer)",
       "contractor": "BMC Fast-Response Team",
       "note": "Clarification provided: None"
-    }
+    },
+    "source": "DEMO",
+    "mlaEscalated": true,
+    "mlaEscalatedAt": "2026-09-04T04:25:06.785Z"
   },
   {
     "id": "CIVIC-2026-8921",
@@ -108,16 +113,16 @@
     "baseSeverity": 35,
     "reportedBy": "Priya S. & 14 others",
     "reportedAt": "2 days ago",
-    "image": "/seeds/SEED-1-before.png",
-    "beforeImage": "/seeds/SEED-1-before.png",
-    "afterImage": "/seeds/SEED-1-after.png",
+    "beforeImage": "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
+    "afterImage": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant (Ward H/West)",
       "contractor": "Falcon Mumbai Infrastructure Ltd.",
       "note": "Compaction scheduled with emergency mastic asphalt.",
       "inspectionStatus": "Field Repair Completed - Verification Pending",
       "aiConfidence": "96.4% Repair Cleared"
-    }
+    },
+    "source": "DEMO"
   },
   {
     "id": "CIVIC-2026-8904",
@@ -140,15 +145,15 @@
     "baseSeverity": 28,
     "reportedBy": "Karthik R. & 8 others",
     "reportedAt": "19 hours ago",
-    "image": "/seeds/SEED-4-before.png",
-    "beforeImage": "/seeds/SEED-4-before.png",
-    "afterImage": "/seeds/SEED-4-after.png",
+    "beforeImage": "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
+    "afterImage": "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant",
       "contractor": "CleanMumbai BMC Solid Waste Marshall Squad #3",
       "note": "Waste cleared, footpath washed and sanitized.",
       "aiConfidence": "95.8% Cleanliness Cleared"
-    }
+    },
+    "source": "DEMO"
   },
   {
     "id": "CIVIC-2026-8877",
@@ -171,15 +176,15 @@
     "baseSeverity": 40,
     "reportedBy": "Dr. Ananya Rao",
     "reportedAt": "Yesterday",
-    "image": "/seeds/SEED-3-before.png",
-    "beforeImage": "/seeds/SEED-3-before.png",
-    "afterImage": "/seeds/SEED-3-after.png",
+    "beforeImage": "https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=800&q=80",
+    "afterImage": "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
     "resolution": {
       "assignedTo": "Er. Ramesh Patil (BEST Electrical Dept)",
       "contractor": "BEST Emergency Wing",
       "note": "Insulated junction replaced, 120W LED lamp installed and tested.",
       "aiConfidence": "98.2% Illumination Restored"
-    }
+    },
+    "source": "DEMO"
   },
   {
     "id": "CIVIC-2026-8842",
@@ -202,46 +207,15 @@
     "baseSeverity": 32,
     "reportedBy": "Meera Deshmukh & 10 others",
     "reportedAt": "14 hours ago",
-    "image": "/seeds/SEED-2-before.png",
-    "beforeImage": "/seeds/SEED-2-before.png",
-    "afterImage": "/seeds/SEED-2-after.png",
+    "beforeImage": "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
+    "afterImage": "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
     "resolution": {
       "assignedTo": "Er. Rajesh Sawant",
       "contractor": "BMC Hydraulic Engineering Quick Response Unit",
       "note": "Isolation valve dispatched to stem wastage."
     },
     "mlaEscalated": true,
-    "mlaEscalatedAt": "2026-09-04T00:32:40.568Z"
-  },
-  {
-    "id": "CIVIC-2026-8850",
-    "title": "Broken Water Pipe near Bandra Station",
-    "category": "water",
-    "categoryLabel": "Water Supply & Sewage",
-    "coords": [
-      19.0544,
-      72.8402
-    ],
-    "address": "Station Road, Near Bandra Railway Station, Bandra West, Mumbai",
-    "status": "resolved",
-    "statusStep": 5,
-    "slaHours": 24,
-    "elapsedHours": 20,
-    "duplicateCount": 9,
-    "impactRadiusMeters": 110,
-    "criticalZone": "Railway Station Entrance Corridor",
-    "trafficDensity": "High (Commuter Flow)",
-    "baseSeverity": 34,
-    "reportedBy": "Sanjay K. & 9 others",
-    "reportedAt": "20 hours ago",
-    "image": "/seeds/SEED-5-before.png",
-    "beforeImage": "/seeds/SEED-5-before.png",
-    "afterImage": "/seeds/SEED-5-after.png",
-    "resolution": {
-      "assignedTo": "Er. Rajesh Sawant",
-      "contractor": "BMC Hydraulic Engineering Division",
-      "note": "Cast iron joint replaced with high-pressure bolted sleeve clamp.",
-      "aiConfidence": "97.1% Pipeline Leak Sealed"
-    }
+    "mlaEscalatedAt": "2026-09-04T00:32:40.568Z",
+    "source": "DEMO"
   }
 ]
