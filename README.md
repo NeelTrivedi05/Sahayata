@@ -12,11 +12,12 @@
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Node.js](https://img.shields.io/badge/Node.js-Express_4-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-960k_Indexed-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-GIS_1.9-199900?style=for-the-badge&logo=leaflet&logoColor=white)](https://leafletjs.com/)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
-*Reference Jurisdiction: Brihanmumbai Municipal Corporation (BMC / MCGM) — Ward H/West (Bandra West, Khar West, Santacruz West, Mumbai)*
+*Reference Jurisdiction: Brihanmumbai Municipal Corporation (BMC / MCGM) — 24 Administrative Wards (A through T), Mumbai*
 
 </div>
 
@@ -30,6 +31,7 @@
   - [2. Anti-Deadlock Dynamic SLA Escalation Engine](#2-anti-deadlock-dynamic-sla-escalation-engine)
   - [3. Closed-Loop Citizen Verification & Geo-Fence Audit](#3-closed-loop-citizen-verification--geo-fence-audit)
   - [4. High-Performance Zero-API-Key GIS Radar](#4-high-performance-zero-api-key-gis-radar)
+  - [5. BMC Historical Grievance Intelligence Layer (960,000 Records)](#5-bmc-historical-grievance-intelligence-layer-960000-records)
 - [Three Stakeholder Portals (RBAC)](#-three-stakeholder-portals-rbac)
 - [6-Stage Grievance Lifecycle Pipeline](#-6-stage-grievance-lifecycle-pipeline)
 - [System Architecture & Tech Stack](#-system-architecture--tech-stack)
@@ -38,9 +40,9 @@
   - [Prerequisites](#prerequisites)
   - [1. Frontend Setup (React + Vite)](#1-frontend-setup-react--vite)
   - [2. Node.js Express Backend Setup](#2-nodejs-express-backend-setup)
-  - [3. Python FastAPI Vision Engine Setup](#3-python-fastapi-vision-engine-setup)
-- [API Reference & Swagger Documentation](#-api-reference--swagger-documentation)
-- [Demo Seed Data & Verified Scenarios](#-demo-seed-data--verified-scenarios)
+  - [3. Run Automated Verification Suite](#3-run-automated-verification-suite)
+  - [4. Python FastAPI Vision Engine Setup](#4-python-fastapi-vision-engine-setup)
+- [Documentation & Credentials](#-documentation--credentials)
 - [Design System & Typography](#-design-system--typography)
 - [Contributing & Development Guidelines](#-contributing--development-guidelines)
 - [License](#-license)
@@ -61,6 +63,7 @@ Traditional urban civic complaint portals and call centers suffer from four syst
 - **Deterministic Anti-Deadlock Aging**: An automated mathematical scoring engine escalates priority points for every hour a ticket remains overdue.
 - **Closed-Loop Verification**: A ticket cannot be closed unilaterally. Field engineers must submit photo proof validated against a 100m GPS geo-fence, and citizens must verify resolution using an interactive Before/After split comparison slider.
 - **Live GIS Everywhere**: Sub-millisecond raster Leaflet mapping across all screens with zero third-party API keys required.
+- **960,000-Record BMC Historical Archive**: Ingested and indexed across all 24 administrative municipal wards (A through T) with sub-20ms indexed queries.
 
 ---
 
@@ -101,6 +104,12 @@ Municipal work orders cannot be resolved by administrative decree:
   - 🛰️ **Satellite Aerial** (Esri World Imagery High-Resolution)
 - Interactive 100m impact radius circles, live incident markers with severity badges, and instant hot-spot jumping.
 
+### 5. BMC Historical Grievance Intelligence Layer (960,000 Records)
+- **Real BMC Historical Dataset (2018–2024)**: Ingested 960,000 real municipal complaint records across all 24 administrative municipal wards (A to T).
+- **Sub-20ms Query Latency**: Powered by a 407 MB SQLite database (`Backend/data/bmc_historical.db`) with 9 B-Tree indexes and a precomputed summary snapshot (`Backend/data/bmc_summary.json`).
+- **35-Field Deep Audit**: Explores temporal patterns, demographic densities, contractor work quality, material costs, and citizen satisfaction ratings.
+- **Geographic Ward Aggregates**: Interactive Leaflet ward aggregate bubble layer rendering complaint volumes, SLA averages, and satisfaction rates using official Mumbai ward centroids without polluting maps with 960k individual point markers.
+
 ---
 
 ## 👥 Three Stakeholder Portals (RBAC)
@@ -121,6 +130,7 @@ Sahayata enforces strict Role-Based Access Control across three distinct user ro
      │ • Duplicate Alert     │ │ • Geo-Fence Audit │ │ • Direct Escalation   │
      │ • Civic Karma Points  │ │ • Material Dispatch│ │ • Contractor Audits   │
      │ • Split-Slider Verify │ │ • Field Resolution│ │ • SLA Breach Alerts   │
+     │ • BMC 960k Intel Tab  │ │ • BMC 960k Intel  │ │ • BMC 960k Intel      │
      └───────────────────────┘ └───────────────────┘ └───────────────────────┘
 ```
 
@@ -128,43 +138,30 @@ Sahayata enforces strict Role-Based Access Control across three distinct user ro
 
 ## 🔄 6-Stage Grievance Lifecycle Pipeline
 
-Every grievance in Sahayata follows a transparent, tamper-proof 6-step lifecycle:
+Every ticket traverses a transparent, accountable six-stage lifecycle:
 
 ```
-[1. REPORTED] ──▶ [2. CLUSTERED] ──▶ [3. PRIORITIZED] ──▶ [4. ASSIGNED] ──▶ [5. RESOLVED] ──▶ [6. VERIFIED]
- Citizen Intake     Deduplication      Dynamic Score        Contractor        Geo-Fenced Photo   Citizen Split-Slider
- GPS + Image        Radius <= 50m      SLA Countdown        Dispatched        On-Site Audit       Confirm / Dispute
+[Stage 1: Intake] ──> [Stage 2: Clustered] ──> [Stage 3: Prioritized]
+  Citizen Report        Duplicate Match           Dynamic Scoring
+  AI Category           Geo-Fence Check           SLA Timer Starts
+        │                     │                         │
+        ▼                     ▼                         ▼
+[Stage 4: Dispatched] ─> [Stage 5: Proof Upload] ─> [Stage 6: Verified]
+  Ward Engineer           Field Photo Upload        Citizen Slider Verify
+  Contractor Assigned     Geo-Audit Validated       Closed & Karma Awarded
 ```
-
-1. **Reported**: Citizen captures image and GPS location; AI performs intake hazard classification.
-2. **Clustered**: System checks for duplicate reports within 50m; clusters complaints or creates a new primary ticket.
-3. **Prioritized**: Dynamic priority formula calculates score ($0-100$) and assigns SLA (24h–48h).
-4. **Assigned**: Ward H/West engineering desk assigns maintenance crew, equipment, and materials.
-5. **Resolved**: Field crew completes repairs and uploads mandatory on-site photo proof with GPS verification.
-6. **Verified**: Reporting citizen inspects Before/After photo comparison slider and confirms resolution.
 
 ---
 
-## 💻 System Architecture & Tech Stack
+## 🛠️ System Architecture & Tech Stack
 
-### Frontend Architecture
-- **Framework**: [React 18](https://react.dev/) + [Vite 6](https://vitejs.dev/) (ES Modules, HMR)
-- **Styling**: [TailwindCSS v4](https://tailwindcss.com/) with native CSS variables and design tokens
-- **GIS / Mapping**: [Leaflet 1.9](https://leafletjs.com/) with custom HTML divIcons, SVG vector badges, and zero API-key tile layers
-- **Icons**: [Lucide React](https://lucide.dev/) (100% SVG icons, zero raw font emojis)
-- **Micro-Interactions**: Canvas Confetti for Karma achievements, CSS hardware-accelerated animations
-
-### Backend Architecture
-- **Node.js / Express Server (`Backend/server.js`)**:
-  - RESTful API engine on port `5000`
-  - In-memory data store with JSON persistence (`data/reports.json`, `data/users.json`)
-  - Static asset delivery for seed verification photos (`/seeds/*`)
-  - Real-time WebSocket broadcasting for multi-client state synchronization
-- **Python / FastAPI Vision Engine (`Backend/main.py`)**:
-  - High-performance asynchronous API on port `8000`
-  - Automated OpenAPI documentation at `/docs`
-  - Computer vision perceptual hashing (`dHash` / `pHash`) via [Pillow](https://python-pillow.org/) & [ImageHash](https://github.com/JohannesBuchner/imagehash)
-  - Algorithmic priority score computation
+| Layer | Technologies | Role & Purpose |
+|---|---|---|
+| **Frontend** | React 18, Vite 6, Tailwind CSS v4, Lucide React | SPA UI, camera capture, split-slider verification |
+| **Mapping / GIS** | Leaflet 1.9, CartoDB, OpenStreetMap, Esri | Zero-API-key mapping, ward aggregate layers |
+| **Primary Backend** | Node.js, Express.js 4, SQLite, `ws` (WebSockets) | REST API, JSON store, 960k-record SQLite engine |
+| **Historical Data** | SQLite 3, Python 3, Pandas/CSV streaming | 960,000 complaints, 9 B-Tree indexes, <20ms queries |
+| **Vision & AI** | Groq Llama 3.3 Vision, Python OpenCV, ImageHash | Multimodal image classification, 64-bit dHash |
 
 ---
 
@@ -172,46 +169,39 @@ Every grievance in Sahayata follows a transparent, tamper-proof 6-step lifecycle
 
 ```
 Sahayata/
-├── README.md                      # Complete system documentation
-├── context.md                     # Deep architectural & municipal context specifications
-├── endtoendworkflow.md            # Step-by-step user interaction & verification flows
-├── requirements.md                # System requirements & specification contract
+├── BMC_HISTORICAL_DATASET.md      # Comprehensive documentation for 960k BMC dataset
+├── CREDENTIALS.md                 # Role-based test login credentials
+├── README.md                      # Primary project documentation
 │
-├── Frontend/                      # React 18 + Vite Frontend Application
-│   ├── index.html                 # HTML shell with Google Fonts & favicon
-│   ├── package.json               # Frontend dependencies & build scripts
-│   ├── vite.config.js             # Vite bundler configuration
-│   ├── public/                    # Static public assets
-│   │   ├── sahayata-logo.jpg      # Official high-resolution Sahayata logo
-│   │   └── seeds/                 # Matched Before/After verification photos (.png)
-│   └── src/
-│       ├── App.jsx                # Main layout, header lockup, navigation & tab router
-│       ├── index.css              # 3-tier typography tokens & Tailwind v4 design system
-│       ├── api/
-│       │   └── client.js          # REST client with error handling & environment config
-│       ├── components/
-│       │   ├── auth/              # Role selection & authentication modal cards
-│       │   ├── common/            # Shared UI (Webcam modal, split slider, badges)
-│       │   ├── map/               # InteractiveCivicMap, ComplaintMiniMap, LocationPicker
-│       │   ├── priority/          # PriorityQueueView & SLA escalation tables
-│       │   └── ward/              # WardDashboardView & municipal engineering desk
-│       ├── data/
-│       │   └── civicData.js       # Ward H/West geographic boundaries, hotspots & presets
-│       └── utils/
-│           ├── deduplication.js   # Client-side Haversine clustering algorithms
-│           └── validators.js      # Form validation rules & test suites
+├── Frontend/                      # React + Vite Client Application
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── auth/              # AuthCard, RoleSelectLanding, Signup/Login forms
+│   │   │   ├── common/            # WebcamCaptureModal & reusable UI controls
+│   │   │   ├── historical/        # HistoricalBmcView (5 sub-tabs, 35-field drawer)
+│   │   │   ├── map/               # InteractiveCivicMap, MiniMaps, Ward overlays
+│   │   │   ├── priority/          # PriorityQueueView & dynamic score inspection
+│   │   │   └── ward/              # WardDashboardView & municipal engineering desk
+│   │   ├── data/
+│   │   │   └── civicData.js       # Geographic boundaries, hotspots & presets
+│   │   └── utils/
+│   │       ├── deduplication.js   # Client-side Haversine clustering algorithms
+│   │       └── validators.js      # Form validation rules & test suites
+│   └── package.json
 │
-└── Backend/                       # Dual-Backend Services (Node.js + Python FastAPI)
-    ├── server.js                  # Express.js REST API, JSON database & WebSockets
-    ├── main.py                    # FastAPI service with OpenCV/ImageHash vision deduplication
-    ├── requirements.txt           # Python backend dependencies
-    ├── package.json               # Node backend dependencies & scripts
-    ├── test_api.py                # Automated pytest suite for FastAPI endpoints
-    ├── public/seeds/              # Static seed imagery for demo scenarios
-    ├── routers/                   # Modular FastAPI route controllers
-    └── data/
-        ├── reports.json           # Persistent grievance ticket datastore
-        └── users.json             # Seed user accounts & role profiles
+└── Backend/                       # Backend Services
+    ├── server.js                  # Express.js REST API & 8 BMC Historical endpoints
+    ├── bmcHistoricalService.js    # SQLite query engine for 960,000 records
+    ├── scripts/
+    │   ├── import_bmc_data.py     # Streaming batch importer (960k rows in 103s)
+    │   ├── generate_bmc_summary.py# Analytical pre-computation engine
+    │   └── verify_integration.js  # 35-test automated verification suite
+    ├── data/
+    │   ├── bmc_data_dictionary.csv# Official BMC 35-column metadata definition
+    │   ├── bmc_summary.json       # Precomputed macro analytics snapshot (52 KB)
+    │   ├── reports.json           # Live grievance tickets datastore
+    │   └── users.json             # Seed user accounts & role profiles
+    └── package.json
 ```
 
 ---
@@ -221,7 +211,7 @@ Sahayata/
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
 - **npm**: v9.0.0 or higher
-- **Python**: v3.10 or higher (for FastAPI vision service)
+- **Python**: v3.10 or higher
 - **Git**: For version control
 
 ---
@@ -258,92 +248,45 @@ cd Backend
 npm install
 
 # Start the Express server
-npm run dev
-# or: node server.js
+node server.js
 ```
 
-The Express API will be running on: **`http://localhost:5000`**  
-Static seed images served at: **`http://localhost:5000/seeds/`**
+The Express API will run on: **`http://localhost:5000`**
 
 ---
 
-### 3. Python FastAPI Vision Engine Setup
+### 3. Run Automated Verification Suite
 
+Validate end-to-end integration, API contracts, source separation, and query latency:
 ```bash
-# In the Backend directory (or project root with virtual environment)
 cd Backend
-
-# Create and activate a Python virtual environment
-python -m venv venv
-
-# On Windows:
-venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
-
-# Install Python requirements
-pip install -r requirements.txt
-
-# Launch FastAPI server with auto-reload
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+node scripts/verify_integration.js
 ```
+*Expected: 35 / 35 tests passed (100%).*
 
-The FastAPI service runs on: **`http://localhost:8000`**  
-Interactive Swagger API documentation: **`http://localhost:8000/docs`**
+---
 
-To execute automated tests on the Python endpoints:
+### 4. Python FastAPI Vision Engine Setup (Optional)
+
 ```bash
-python test_api.py
+cd Backend
+pip install -r requirements.txt
+python main.py
 ```
+Runs the optional auxiliary OpenCV/FastAPI image deduplication engine on `http://localhost:8000`.
 
 ---
 
-## 📡 API Reference & Swagger Documentation
+## 📖 Documentation & Credentials
 
-Sahayata provides clean, RESTful APIs across both backend layers:
-
-### Core Endpoints (`Node.js Express / Port 5000`)
-
-| Method | Endpoint | Description | Auth / Role |
-|---|---|---|---|
-| `GET` | `/api/jurisdiction` | Fetch current Ward H/West boundaries, MLA & Engineer metadata | Public |
-| `GET` | `/api/reports` | Retrieve all active grievance tickets with priority scores & coordinates | Public |
-| `POST` | `/api/reports` | Submit a new citizen report with image, category, and GPS coordinates | Citizen |
-| `POST` | `/api/reports/:id/endorse` | Endorse an existing ticket (boosts priority, awards Karma) | Citizen |
-| `POST` | `/api/reports/:id/notify-ward` | Escalate a neglected ticket directly to the ward executive desk | MLA |
-| `POST` | `/api/reports/:id/progress` | Advance ticket stage & upload resolution proof photo | Ward Engineer |
-| `POST` | `/api/reports/:id/verify` | Citizen confirmation (`confirm`) or rejection (`dispute`) | Citizen |
-| `GET` | `/api/stats` | Aggregate ward statistics, resolution percentages, and SLA metrics | Public |
-
-### Interactive OpenAPI Documentation (`Python FastAPI / Port 8000`)
-
-Visit **[http://localhost:8000/docs](http://localhost:8000/docs)** to test live endpoints directly via Swagger UI:
-
-- `POST /api/v1/analyze-image`: Computes 64-bit dHash and detects hazard class.
-- `POST /api/v1/deduplicate`: Compares two coordinates and perceptual hashes for duplicate clustering.
-- `POST /api/v1/calculate-priority`: Returns the full mathematical breakdown of a ticket's priority score.
-
----
-
-## 📸 Demo Seed Data & Verified Scenarios
-
-Sahayata includes 5 matched before/after scenarios in Ward H/West, Mumbai with realistic camera angles and environmental lighting:
-
-| Scenario | Report ID | Location | Hazard Category | Resolution Work Done |
-|---|---|---|---|---|
-| **1. Carter Road Pothole** | `CIVIC-2026-8921` | Carter Road Promenade | `pothole` | Fresh asphalt mastic patch, dry surface |
-| **2. Burst Water Pipeline** | `CIVIC-2026-8842` | Turner Road Junction | `water` | High-pressure joint sealed, trench paved |
-| **3. Hanging Live Wire** | `CIVIC-2026-8877` | Lilavati Hospital Lane | `electricity` | Wiring enclosed, luminaire restored & lit |
-| **4. Footpath Garbage Dump** | `CIVIC-2026-8904` | Linking Road / National College | `garbage` | Refuse removed, pavement sanitized |
-| **5. Station Corridor Leak** | `CIVIC-2026-8850` | Bandra Station West Entrance | `water` | Bolted sleeve clamp applied, leak eliminated |
+- **[`BMC_HISTORICAL_DATASET.md`](BMC_HISTORICAL_DATASET.md)**: Full 35-field data dictionary, SQLite database schema, normalization architecture, and analytical queries.
+- **[`CREDENTIALS.md`](CREDENTIALS.md)**: Authenticated credentials for Citizen, Ward Engineer, and MLA testing.
 
 ---
 
 ## 🎨 Design System & Typography
 
-Sahayata implements a disciplined, accessibility-compliant 3-tier design system:
-
-### 1. Typography Stack
+### 1. Typography Tokens
 ```css
 :root {
   --font-display: 'Space Grotesk', -apple-system, sans-serif;
@@ -353,33 +296,20 @@ Sahayata implements a disciplined, accessibility-compliant 3-tier design system:
 ```
 - **Display (`Space Grotesk`)**: Brand wordmarks, page headings (`h1`–`h3`), stat counters, and navigation tabs.
 - **Body (`IBM Plex Sans`)**: Form controls, descriptions, tables, and modal dialog copy.
-- **Data & Metadata (`IBM Plex Mono`)**: Ticket IDs (`#CIVIC-2026-8921`), SLA countdown timers, GPS coordinates, and technical badges.
+- **Data & Metadata (`IBM Plex Mono`)**: Ticket IDs, SLA countdown timers, GPS coordinates, and technical badges.
 
 ### 2. Zero-Emoji Standard
-All raw font emojis have been eliminated from the UI in favor of crisply aligned **Lucide React SVG icons** (`<AlertTriangle />`, `<MapPin />`, `<Clock />`, `<Check />`, `<Bell />`), ensuring uniform cross-platform rendering across Windows, macOS, Android, and iOS.
-
-### 3. Brand Lockup
-The official logo and tagline lockup is positioned consistently in the primary navigation:
-```jsx
-<img src="/sahayata-logo.jpg" alt="Sahayata Logo" className="h-8 w-auto object-contain rounded-md shadow-sm" />
-<div className="flex items-center gap-2">
-  <span className="text-xl font-bold tracking-tight text-slate-900 font-display">Sahayata</span>
-  <span className="text-slate-300 font-light">|</span>
-  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-display">
-    Civic Action, Resolved.
-  </span>
-</div>
-```
+All raw font emojis have been eliminated from the UI in favor of crisply aligned **Lucide React SVG icons** (`<AlertTriangle />`, `<MapPin />`, `<Clock />`, `<Check />`, `<Database />`, `<Bell />`), ensuring uniform cross-platform rendering across Windows, macOS, Android, and iOS.
 
 ---
 
 ## 🤝 Contributing & Development Guidelines
 
 1. **Strict UI Non-Destruction**: Do not modify existing flex/grid containers, responsive breakpoints, or component hierarchies without architectural review.
-2. **State & Backend Preservation**: Maintain backwards-compatible API contracts across both Express and FastAPI services.
+2. **State & Backend Preservation**: Maintain backwards-compatible API contracts across both Express and SQLite services.
 3. **Typography Compliance**: Always apply `var(--font-mono)` for technical identifiers/timestamps and `var(--font-display)` for titles and major metrics.
 4. **SVG Icons Only**: Never introduce raw font emojis into user-facing copy or UI components.
-5. **Validation**: Always run `npm run build` in `Frontend/` before submitting pull requests.
+5. **Validation**: Always run `npm run build` in `Frontend/` and `node Backend/scripts/verify_integration.js` before submitting pull requests.
 
 ---
 
@@ -392,6 +322,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 <div align="center">
 
 **Sahayata — Civic Action, Resolved.**  
-*Built for the citizens, engineers, and public representatives of Ward H/West, Mumbai.*
+*Built for the citizens, engineers, and public representatives of Mumbai.*
 
 </div>

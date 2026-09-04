@@ -63,8 +63,8 @@ import {
   CheckSquare,
   Send,
   Sprout,
-  HelpCircle
-
+  HelpCircle,
+  Database
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import RoleSelectLanding from './components/auth/RoleSelectLanding';
@@ -77,6 +77,7 @@ import LocationPickerMiniMap from './components/map/LocationPickerMiniMap';
 import ComplaintMiniMap from './components/map/ComplaintMiniMap';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import WebcamCaptureModal from './components/common/WebcamCaptureModal';
+import HistoricalBmcView from './components/historical/HistoricalBmcView';
 
 export default function App() {
   const { currentUser, login, signup, logout } = useAuth();
@@ -286,8 +287,8 @@ export default function App() {
 
     { id: 'pipeline', label: `Track Complaints (${reports.length})`, icon: FileText, roles: ['citizen', 'ward_engineer', 'mla'] },
     { id: 'priority', label: 'Priority Queue', icon: Zap, roles: ['ward_engineer', 'mla'] },
-    { id: 'verify', label: 'Verify Resolutions', icon: CheckSquare, roles: ['citizen'] }
-
+    { id: 'verify', label: 'Verify Resolutions', icon: CheckSquare, roles: ['citizen'] },
+    { id: 'bmc_historical', label: 'BMC Historical Intel (960k)', icon: Database, roles: ['citizen', 'ward_engineer', 'mla'] }
   ];
 
   const availableNavTabs = allNavTabs.filter(t => t.roles.includes(currentRole));
@@ -1101,8 +1102,12 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'bmc_historical' && (
+          <HistoricalBmcView />
+        )}
+
         {/* Fallback view to ensure screen is never blank */}
-        {!['ward_overview', 'radar', 'report', 'pipeline', 'verify', 'priority', 'mla'].includes(activeTab) && (
+        {!['ward_overview', 'radar', 'report', 'pipeline', 'verify', 'priority', 'mla', 'bmc_historical'].includes(activeTab) && (
           <CivicRadarMapView
             reports={reports}
             currentRole={currentRole}

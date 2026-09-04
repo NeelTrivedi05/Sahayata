@@ -79,7 +79,23 @@ export const api = {
   suggestResources: (reportData) => request('/suggest-resources', {
     method: 'POST',
     body: JSON.stringify(reportData)
-  })
+  }),
+
+  // BMC Historical Intelligence (2018-2024 Records)
+  getBmcStats: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/historical/bmc/stats${query ? '?' + query : ''}`);
+  },
+  getBmcComplaints: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/historical/bmc/complaints${query ? '?' + query : ''}`);
+  },
+  getBmcComplaintById: (id) => request(`/historical/bmc/complaints/${id}`),
+  getBmcCategories: () => request('/historical/bmc/categories'),
+  getBmcWards: () => request('/historical/bmc/wards'),
+  getBmcDepartments: () => request('/historical/bmc/departments'),
+  getBmcTrends: () => request('/historical/bmc/trends'),
+  getBmcMapData: () => request('/historical/bmc/map')
 };
 
 export const getWebSocketUrl = () => {
