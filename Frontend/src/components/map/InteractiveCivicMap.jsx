@@ -28,7 +28,7 @@ import {
   Droplets,
   HelpCircle
 } from 'lucide-react';
-import { CIVIC_DATA } from '../../data/civicData';
+import { CIVIC_DATA, getReportBeforeImage } from '../../data/civicData';
 import { api } from '../../api/client';
 
 const BASEMAPS = [
@@ -1051,24 +1051,54 @@ export default function InteractiveCivicMap({
 
             {/* Drawer Content */}
             <div style={{ padding: '16px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {/* Image Preview */}
-              <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', height: '170px', background: '#E2E8F0' }}>
+              {/* Image Preview - Always Shows Citizen Intake Photo Before Repair */}
+              <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', height: '175px', background: '#0F172A' }}>
                 <img
-                  src={selectedReport.beforeImage}
-                  alt={selectedReport.title}
+                  src={getReportBeforeImage(selectedReport)}
+                  alt={`Before: ${selectedReport.title}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/seeds/SEED-1-before.png';
+                  }}
                 />
-                <span
+                {/* Clear BEFORE Badge */}
+                <div
                   style={{
                     position: 'absolute',
                     top: '10px',
                     left: '10px',
-                    background: selectedReport.status === 'verified' ? 'rgba(5, 150, 105, 0.9)' : 'rgba(15, 23, 42, 0.85)',
+                    background: '#DC2626',
                     color: '#FFF',
                     fontSize: '0.72rem',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontWeight: 800,
+                    letterSpacing: '0.03em',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                    zIndex: 2
+                  }}
+                >
+                  <Eye size={12} />
+                  <span>BEFORE (CITIZEN INTAKE PHOTO)</span>
+                </div>
+
+                {/* Status Badge (Top-Right) */}
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    background: selectedReport.status === 'verified' ? 'rgba(5, 150, 105, 0.95)' : 'rgba(15, 23, 42, 0.85)',
+                    color: '#FFF',
+                    fontSize: '0.7rem',
                     padding: '3px 8px',
                     borderRadius: '6px',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    zIndex: 2
                   }}
                 >
                   {selectedReport.status === 'verified' ? (
@@ -1177,7 +1207,7 @@ export default function InteractiveCivicMap({
                   gap: '6px'
                 }}
               >
-                <span>Track Full History in Pipeline</span>
+                <span>Check History in Pipeline</span>
                 <ChevronRight size={16} />
               </button>
 

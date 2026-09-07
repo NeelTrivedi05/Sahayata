@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import confetti from 'canvas-confetti';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CIVIC_DATA } from './data/civicData';
+import { CIVIC_DATA, getReportBeforeImage, getReportAfterImage } from './data/civicData';
 import { api, getWebSocketUrl } from './api/client';
 import { useGeolocation } from './hooks/useGeolocation';
 import {
@@ -456,6 +456,10 @@ export default function App() {
         return;
       }
     } catch (e) {
+      if (e.message && (e.message.includes('AI Resolution Audit') || e.message.includes('Audit Failed'))) {
+        showToast(`❌ ${e.message}`, 'error');
+        throw e;
+      }
       console.warn('Backend progressReport error, falling back locally', e);
     }
 
@@ -1099,6 +1103,7 @@ export default function App() {
             reports={reports}
             currentRole={currentRole}
             onNotifyWard={handleNotifyWard}
+            onSelectReport={(report) => setActiveTab('pipeline')}
           />
         )}
 
@@ -2310,12 +2315,32 @@ function PipelineView({ reports, currentRole, onProgressStatus, onVerifyClick })
 
                   {/* Grievance Location Mini-Map & Photo Grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', maxWidth: '580px', marginBottom: '14px' }}>
-                    <div style={{ borderRadius: '10px', overflow: 'hidden', height: '130px', border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                    <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', height: '130px', border: '1px solid #E2E8F0', background: '#0F172A' }}>
                       <img
-                        src={r.beforeImage}
-                        alt="Intake"
+                        src={getReportBeforeImage(r)}
+                        alt="Before Report"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/seeds/SEED-1-before.png';
+                        }}
                       />
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '6px',
+                          left: '6px',
+                          background: 'rgba(220, 38, 38, 0.9)',
+                          color: '#FFF',
+                          fontSize: '0.66rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          letterSpacing: '0.03em'
+                        }}
+                      >
+                        BEFORE PHOTO
+                      </span>
                     </div>
                     <ComplaintMiniMap
                       coords={r.coords}
@@ -2875,7 +2900,7 @@ function VerificationView({
         >
           {/* AFTER Image (Background) */}
           <img
-            src={report.afterImage}
+            src={getReportAfterImage(report)}
             alt="After resolution"
             style={{
               position: 'absolute',
@@ -2883,6 +2908,10 @@ function VerificationView({
               width: '100%',
               height: '100%',
               objectFit: 'cover'
+            }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/seeds/SEED-1-after.png';
             }}
           />
           <div
@@ -2913,12 +2942,16 @@ function VerificationView({
             }}
           >
             <img
-              src={report.beforeImage}
+              src={getReportBeforeImage(report)}
               alt="Before resolution"
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover'
+              }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/seeds/SEED-1-before.png';
               }}
             />
             <div
@@ -3233,7 +3266,7 @@ function PriorityRulesView({ report }) {
 // ==========================================================================
 // 6. MLA LEGISLATIVE OVERSIGHT DASHBOARD (Executive Transparency)
 // ==========================================================================
-function MlaDashboardView({ reports, currentRole, onNotifyWard }) {
+function MlaDashboardView({ reports, currentRole, onNotifyWard, onSelectReport }) {
   const total = reports.length;
   const overdue = reports.filter(r => r.elapsedHours > r.slaHours && r.status !== 'verified').length;
   const verified = reports.filter(r => r.status === 'verified').length;
@@ -3306,9 +3339,8 @@ function MlaDashboardView({ reports, currentRole, onNotifyWard }) {
           readOnly={true}
           currentRole={currentRole}
           onNotifyWard={onNotifyWard}
-
+          onSelectReport={onSelectReport}
           title="Bandra West Constituency Jurisdiction Map (MLA Surveillance)"
-
         />
       </div>
 
@@ -3364,7 +3396,52 @@ function MlaDashboardView({ reports, currentRole, onNotifyWard }) {
                     </div>
                   </div>
 
-                  <div style={{ width: '160px', flexShrink: 0 }}>
+                  {/* Before Image Preview (Citizen Intake Hazard Photo - MLA Surveillance) */}
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '135px',
+                      height: '80px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1.5px solid #CBD5E1',
+                      background: '#0F172A',
+                      flexShrink: 0
+                    }}
+                  >
+                    <img
+                      src={getReportBeforeImage(r)}
+                      alt={`Before: ${r.title}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/seeds/SEED-1-before.png';
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '4px',
+                        left: '4px',
+                        background: '#DC2626',
+                        color: '#FFFFFF',
+                        fontSize: '0.62rem',
+                        fontWeight: 800,
+                        padding: '1px 5px',
+                        borderRadius: '4px',
+                        letterSpacing: '0.04em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                        zIndex: 2
+                      }}
+                    >
+                      <Eye size={9} /> BEFORE
+                    </div>
+                  </div>
+
+                  <div style={{ width: '150px', flexShrink: 0 }}>
                     <ComplaintMiniMap
                       coords={r.coords}
                       status={r.status}
