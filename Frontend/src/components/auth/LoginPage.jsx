@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Mail,
+  User,
   Lock,
   Eye,
   EyeOff,
@@ -19,16 +19,16 @@ export default function LoginPage({
   onNavigateToSignup,
   onLoginSuccess,
   onError,
-  prefilledEmail = ''
+  prefilledUsername = ''
 }) {
   const [formData, setFormData] = useState({
-    email: prefilledEmail,
+    username: prefilledUsername,
     password: '',
     rememberMe: true
   });
 
   const [touched, setTouched] = useState({
-    email: !!prefilledEmail,
+    username: !!prefilledUsername,
     password: false
   });
 
@@ -40,14 +40,14 @@ export default function LoginPage({
 
   // Validate fields in real-time
   const errors = {
-    email: validateField('email', formData.email, formData, true),
+    username: validateField('username', formData.username, formData, true),
     password: validateField('password', formData.password, formData, true)
   };
 
   const isFormValid =
-    errors.email === null &&
+    errors.username === null &&
     errors.password === null &&
-    formData.email.trim() !== '' &&
+    formData.username.trim() !== '' &&
     formData.password !== '';
 
   const handleInputChange = (field, value) => {
@@ -61,37 +61,25 @@ export default function LoginPage({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setTouched({ email: true, password: true });
+    setTouched({ username: true, password: true });
     if (!isFormValid) return;
 
     setIsSubmitting(true);
     try {
       if (onLoginSuccess) {
         await onLoginSuccess({
-          email: formData.email,
+          username: formData.username,
           password: formData.password,
           rememberMe: formData.rememberMe
         });
       }
     } catch (err) {
       if (onError) {
-        onError(err.message || 'Invalid email or password');
+        onError(err.message || 'Invalid username or password');
       }
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const fillDemoAccount = (email, password) => {
-    setFormData({
-      email,
-      password,
-      rememberMe: true
-    });
-    setTouched({
-      email: true,
-      password: true
-    });
   };
 
   const getInputClass = (field) => {
@@ -151,41 +139,41 @@ export default function LoginPage({
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
-            {/* 1. Email Address Field */}
+            {/* 1. Username / Email Field */}
             <div className="auth-form-group">
               <div className="auth-label-row">
-                <label className="auth-label" htmlFor="login-email">
-                  Email Address <span className="required-star">*</span>
+                <label className="auth-label" htmlFor="login-username">
+                  Username or Email <span className="required-star">*</span>
                 </label>
               </div>
               <div className="auth-input-wrapper">
                 <span className="auth-input-icon">
-                  <Mail size={19} />
+                  <User size={19} />
                 </span>
                 <input
-                  id="login-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  onBlur={() => handleBlur('email')}
-                  placeholder="you@example.com"
-                  className={getInputClass('email')}
+                  id="login-username"
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => handleInputChange('username', e.target.value)}
+                  onBlur={() => handleBlur('username')}
+                  placeholder="Enter your username or email"
+                  className={getInputClass('username')}
                   disabled={isSubmitting}
-                  autoComplete="email"
+                  autoComplete="username"
                 />
                 <span className="auth-input-status-icon">
-                  {touched.email && !errors.email && (
+                  {touched.username && !errors.username && (
                     <CheckCircle2 size={18} color="#10B981" />
                   )}
-                  {touched.email && errors.email && (
+                  {touched.username && errors.username && (
                     <AlertCircle size={18} color="#EF4444" />
                   )}
                 </span>
               </div>
-              {touched.email && errors.email && (
+              {touched.username && errors.username && (
                 <div className="auth-error-msg">
                   <AlertCircle size={14} />
-                  <span>{errors.email}</span>
+                  <span>{errors.username}</span>
                 </div>
               )}
             </div>
@@ -199,7 +187,7 @@ export default function LoginPage({
                 <button
                   type="button"
                   onClick={() => {
-                    setResetEmail(formData.email);
+                    setResetEmail(formData.username);
                     setShowForgotModal(true);
                   }}
                   className="auth-link-btn"
@@ -273,32 +261,6 @@ export default function LoginPage({
             </button>
           </form>
 
-          {/* Quick Demo Accounts Helper */}
-          <div className="auth-demo-section">
-            <div className="auth-demo-header">
-              <span>Quick Test Demo Logins:</span>
-              <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Click to auto-fill</span>
-            </div>
-            <div className="auth-demo-grid">
-              <button
-                type="button"
-                onClick={() => fillDemoAccount('aarav.sharma@example.com', 'Password@123')}
-                className="auth-demo-chip"
-                title="Aarav Sharma (Citizen)"
-              >
-                <span>👤 Citizen Demo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemoAccount('rajesh.sawant@mcgm.gov.in', 'Engineer@2026')}
-                className="auth-demo-chip"
-                title="Er. Rajesh Sawant (Ward H/West Engineer)"
-              >
-                <span>👷 Ward Engineer</span>
-              </button>
-            </div>
-          </div>
-
           {/* Bottom Card Footer */}
           <div className="auth-card-footer">
             <p>
@@ -347,17 +309,17 @@ export default function LoginPage({
             ) : (
               <div style={{ marginBottom: '20px' }}>
                 <p style={{ fontSize: '0.84rem', color: '#64748B', lineHeight: 1.5, margin: '0 0 14px' }}>
-                  Enter your registered email address to receive secure instructions to recover your Sahayata account.
+                  Enter your registered username or email address to receive secure instructions to recover your Sahayata account.
                 </p>
                 <div className="auth-input-wrapper">
                   <span className="auth-input-icon">
-                    <Mail size={18} />
+                    <User size={18} />
                   </span>
                   <input
-                    type="email"
+                    type="text"
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder="Enter username or email"
                     className="auth-input"
                   />
                 </div>

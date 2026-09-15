@@ -2,6 +2,7 @@
   {
     "id": "usr-1",
     "fullName": "Aarav Sharma",
+    "username": "aarav",
     "email": "aarav.sharma@example.com",
     "phone": "+91 98765 43210",
     "password": "Password@123",
@@ -11,6 +12,7 @@
   {
     "id": "usr-2",
     "fullName": "Er. Rajesh Sawant",
+    "username": "rajesh.ward",
     "email": "rajesh.sawant@mcgm.gov.in",
     "phone": "+91 98111 22233",
     "password": "Engineer@2026",
@@ -20,6 +22,7 @@
   {
     "id": "usr-3",
     "fullName": "Shri Ashish Shelar",
+    "username": "mla.shelar",
     "email": "ashish.shelar@maharashtra.gov.in",
     "phone": "+91 99000 11223",
     "password": "MLA@2026",
@@ -29,8 +32,39 @@
   {
     "id": "usr-1788474432239",
     "fullName": "Suresh Patil",
+    "username": "suresh.patil",
     "email": "citizen1788474432@example.com",
     "phone": "+91 9822233445",
+    "password": "Password@123",
+    "role": "citizen",
+    "civicKarma": 50
+  },
+  {
+    "id": "usr-1788488826330",
+    "fullName": "Rahul Varma",
+    "username": "democitizen",
+    "email": "democitizen@sahayata.local",
+    "phone": "+91 98000 00000",
+    "password": "MyPass@2026",
+    "role": "citizen",
+    "civicKarma": 50
+  },
+  {
+    "id": "usr-1788489194637",
+    "fullName": "Test Citizen User",
+    "username": "user_1788489194519",
+    "email": "user_1788489194519@test.org",
+    "phone": "+91 98000 00000",
+    "password": "SecretPassword@1",
+    "role": "citizen",
+    "civicKarma": 50
+  },
+  {
+    "id": "usr-1788489781413",
+    "fullName": "Real Citizen",
+    "username": "citizen_1788489781410",
+    "email": "citizen_1788489781410@mumbai.in",
+    "phone": "+91 98000 00000",
     "password": "Password@123",
     "role": "citizen",
     "civicKarma": 50

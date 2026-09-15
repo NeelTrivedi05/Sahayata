@@ -18,14 +18,17 @@ import { validateField, getPasswordCriteria } from '../../utils/validators';
 
 export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError }) {
   const [formData, setFormData] = useState({
+    username: '',
     fullName: '',
     email: '',
     phone: '',
+    role: 'citizen',
     password: '',
     confirmPassword: ''
   });
 
   const [touched, setTouched] = useState({
+    username: false,
     fullName: false,
     email: false,
     phone: false,
@@ -39,6 +42,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
 
   // Compute validation errors dynamically
   const errors = {
+    username: validateField('username', formData.username, formData, false),
     fullName: validateField('fullName', formData.fullName, formData, false),
     email: validateField('email', formData.email, formData, false),
     phone: validateField('phone', formData.phone, formData, false),
@@ -49,6 +53,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
   // All fields must be non-empty and error-free to be valid
   const isFormValid =
     Object.values(errors).every(err => err === null) &&
+    formData.username.trim() !== '' &&
     formData.fullName.trim() !== '' &&
     formData.email.trim() !== '' &&
     formData.phone.trim() !== '' &&
@@ -69,6 +74,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
     e.preventDefault();
 
     setTouched({
+      username: true,
       fullName: true,
       email: true,
       phone: true,
@@ -127,7 +133,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
             <h2>Create Citizen Account</h2>
             <p>Register to file grievances, track resolutions, and earn Civic Karma</p>
           </div>
-          <span className="auth-card-badge">Citizen Portal</span>
+          <span className="auth-card-badge">Citizen Registration</span>
         </div>
 
         {/* Card Body */}
@@ -149,7 +155,51 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
-            {/* 1. Full Name */}
+            {/* 1. Username */}
+            <div className="auth-form-group">
+              <div className="auth-label-row">
+                <label className="auth-label" htmlFor="signup-username">
+                  Username <span className="required-star">*</span>
+                </label>
+              </div>
+              <div className="auth-input-wrapper">
+                <span className="auth-input-icon">
+                  <User size={19} />
+                </span>
+                <input
+                  id="signup-username"
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                  onBlur={() => handleBlur('username')}
+                  placeholder="e.g. priya_sharma"
+                  className={getInputClass('username')}
+                  disabled={isSubmitting}
+                  autoComplete="username"
+                />
+                <span className="auth-input-status-icon">
+                  {touched.username && !errors.username && (
+                    <CheckCircle2 size={18} color="#10B981" />
+                  )}
+                  {touched.username && errors.username && (
+                    <AlertCircle size={18} color="#EF4444" />
+                  )}
+                </span>
+              </div>
+              {touched.username && errors.username && (
+                <div className="auth-error-msg">
+                  <AlertCircle size={14} />
+                  <span>{errors.username}</span>
+                </div>
+              )}
+              {!touched.username && (
+                <div className="auth-help-hint">
+                  3-30 characters (letters, numbers, dot, dash, underscore)
+                </div>
+              )}
+            </div>
+
+            {/* 2. Full Name */}
             <div className="auth-form-group">
               <div className="auth-label-row">
                 <label className="auth-label" htmlFor="signup-fullname">
@@ -186,14 +236,9 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
                   <span>{errors.fullName}</span>
                 </div>
               )}
-              {!touched.fullName && (
-                <div className="auth-help-hint">
-                  Alphabets and spaces only (2-50 characters)
-                </div>
-              )}
             </div>
 
-            {/* 2. Email Address */}
+            {/* 3. Email Address */}
             <div className="auth-form-group">
               <div className="auth-label-row">
                 <label className="auth-label" htmlFor="signup-email">
@@ -232,7 +277,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
               )}
             </div>
 
-            {/* 3. Phone Number */}
+            {/* 5. Phone Number */}
             <div className="auth-form-group">
               <div className="auth-label-row">
                 <label className="auth-label" htmlFor="signup-phone">
@@ -276,7 +321,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
               )}
             </div>
 
-            {/* 4. Password */}
+            {/* 6. Password */}
             <div className="auth-form-group">
               <div className="auth-label-row">
                 <label className="auth-label" htmlFor="signup-password">
@@ -335,7 +380,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
               </div>
             </div>
 
-            {/* 5. Confirm Password */}
+            {/* 7. Confirm Password */}
             <div className="auth-form-group">
               <div className="auth-label-row">
                 <label className="auth-label" htmlFor="signup-confirmpassword">
@@ -389,7 +434,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
                 </>
               ) : (
                 <>
-                  <span>Create Sahayata Account</span>
+                  <span>Create Citizen Account</span>
                   <ArrowRight size={17} />
                 </>
               )}
@@ -401,7 +446,7 @@ export default function SignupPage({ onNavigateToLogin, onSignupSuccess, onError
             <p>
               Already have an account?
               <button type="button" onClick={onNavigateToLogin}>
-                Login
+                Sign In
               </button>
             </p>
           </div>

@@ -7,6 +7,7 @@ export const DEFAULT_USERS = [
   {
     id: 'usr-1',
     fullName: 'Aarav Sharma',
+    username: 'aarav',
     email: 'aarav.sharma@example.com',
     phone: '+91 98765 43210',
     password: 'Password@123',
@@ -17,6 +18,7 @@ export const DEFAULT_USERS = [
   {
     id: 'usr-2',
     fullName: 'Er. Rajesh Sawant',
+    username: 'rajesh.ward',
     email: 'rajesh.sawant@mcgm.gov.in',
     phone: '+91 98111 22233',
     password: 'Engineer@2026',
@@ -27,6 +29,7 @@ export const DEFAULT_USERS = [
   {
     id: 'usr-3',
     fullName: 'Shri Ashish Shelar',
+    username: 'mla.shelar',
     email: 'ashish.shelar@maharashtra.gov.in',
     phone: '+91 99000 11223',
     password: 'MLA@2026',
@@ -84,7 +87,7 @@ export function AuthProvider({ children }) {
     try {
       // 1. Attempt real Express API call
       const res = await api.signup(formData);
-      if (res.user) {
+      if (res && res.user) {
         newUser = {
           ...res.user,
           password: formData.password
@@ -93,22 +96,25 @@ export function AuthProvider({ children }) {
     } catch (apiErr) {
       console.warn('Backend API signup error or offline, falling back to local store:', apiErr.message);
       
+      const cleanUsername = (formData.username || formData.email?.split('@')[0] || '').trim().toLowerCase();
       // Local fallback check
       const existing = users.find(
-        u => u.email.toLowerCase() === formData.email.toLowerCase().trim()
+        u => (u.username && u.username.toLowerCase() === cleanUsername) ||
+             (u.email && u.email.toLowerCase() === (formData.email || '').toLowerCase().trim())
       );
       if (existing) {
-        throw new Error('An account with this email address already exists. Please login.');
+        throw new Error('An account with this username or email already exists. Please login.');
       }
 
       newUser = {
         id: `usr-${Date.now()}`,
-        fullName: formData.fullName.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone.trim(),
+        fullName: (formData.fullName || cleanUsername).trim(),
+        username: cleanUsername,
+        email: formData.email?.trim() || `${cleanUsername}@sahayata.local`,
+        phone: formData.phone?.trim() || '+91 98000 00000',
         password: formData.password,
-        role: 'citizen',
-        civicKarma: 50,
+        role: formData.role || 'citizen',
+        civicKarma: formData.role === 'citizen' ? 50 : 500,
         createdAt: new Date().toISOString().split('T')[0]
       };
     }
@@ -118,19 +124,20 @@ export function AuthProvider({ children }) {
       return {
         success: true,
         user: newUser,
-        message: 'Citizen account registered successfully!'
+        message: 'Account registered successfully!'
       };
     }
   };
 
   // Real full-stack Login
-  const login = async ({ email, password, rememberMe = true }) => {
+  const login = async ({ username, email, password, rememberMe = true }) => {
     let sessionUser = null;
+    const identifier = (username || email || '').trim().toLowerCase();
 
     try {
       // 1. Attempt real Express API call
-      const res = await api.login({ email: email.trim(), password });
-      if (res.user) {
+      const res = await api.login({ username: identifier, email: identifier, password });
+      if (res && res.user) {
         sessionUser = res.user;
       }
     } catch (apiErr) {
@@ -139,17 +146,19 @@ export function AuthProvider({ children }) {
       // Local fallback
       const target = users.find(
         u =>
-          u.email.toLowerCase() === email.toLowerCase().trim() &&
+          ((u.username && u.username.toLowerCase() === identifier) ||
+           (u.email && u.email.toLowerCase() === identifier)) &&
           (u.password === password || (u.role === 'mla' && (password === 'MLA@2026' || password === 'Mla@2026')))
       );
 
       if (!target) {
-        throw new Error('Invalid email or password');
+        throw new Error('Invalid username or password');
       }
 
       sessionUser = {
         id: target.id,
         fullName: target.fullName,
+        username: target.username || target.email.split('@')[0],
         email: target.email,
         phone: target.phone,
         role: target.role,

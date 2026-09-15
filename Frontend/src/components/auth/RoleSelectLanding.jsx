@@ -1,7 +1,7 @@
 import React from 'react';
-import { User, Wrench, Landmark, Shield, ArrowRight, CheckCircle, Sparkles, Building2 } from 'lucide-react';
+import { User, Wrench, Landmark, ArrowRight, CheckCircle, Sparkles } from 'lucide-react';
 
-export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
+export default function RoleSelectLanding({ onSelectRole }) {
   const roles = [
     {
       id: 'citizen',
@@ -14,7 +14,6 @@ export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
       icon: <User size={28} color="#1E3A5F" />,
       accentColor: '#1E3A5F',
       actionLabel: 'Sign In as Citizen',
-      demoUser: 'Aarav Sharma (Citizen)',
       features: ['File photo grievances with GPS', 'Endorse duplicate issues', 'Earn Karma for verifying repairs']
     },
     {
@@ -28,7 +27,6 @@ export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
       icon: <Wrench size={28} color="#D97706" />,
       accentColor: '#D97706',
       actionLabel: 'Officer Sign In',
-      demoUser: 'Er. Rajesh Sawant (Ward Officer)',
       features: ['SLA tracking & anti-deadlock', 'Contractor work orders', 'Upload after-repair proof']
     },
     {
@@ -42,7 +40,6 @@ export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
       icon: <Landmark size={28} color="#7C3AED" />,
       accentColor: '#7C3AED',
       actionLabel: 'Legislator Sign In',
-      demoUser: 'Shri Ashish Shelar (MLA)',
       features: ['Real-time ward SLA compliance', 'Neglected hotspot alerts', 'Contractor accountability audit']
     }
   ];
@@ -52,7 +49,7 @@ export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
       {/* Top Nav */}
       <div className="auth-top-nav" style={{ maxWidth: '1080px', width: '100%', margin: '0 auto 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '1.2rem' }}>🏛️</span>
+          <Landmark size={20} color="#1E3A5F" />
           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E3A5F' }}>
             Brihanmumbai Municipal Corporation (BMC) & Govt. of Maharashtra
           </span>
@@ -68,6 +65,11 @@ export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
           <Sparkles size={15} />
           <span>Official Civic Grievance & SLA Anti-Deadlock Network • Ward H/West</span>
         </div>
+        <img 
+          src="/sahayata-logo.jpg" 
+          alt="Sahayata Logo" 
+          style={{ height: '70px', width: 'auto', margin: '0 auto 16px', display: 'block', objectFit: 'contain', borderRadius: '8px' }}
+        />
         <h1 style={{ fontSize: '2.6rem', fontWeight: 900, color: '#0F172A', margin: '0 0 10px', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
           Welcome to <span style={{ color: '#1E3A5F' }}>Sahayata</span>
         </h1>
@@ -98,54 +100,54 @@ export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
           gap: '24px',
           maxWidth: '1080px',
           width: '100%',
           margin: '0 auto 40px'
         }}
       >
-        {roles.map(role => (
+        {roles.map((role) => (
           <div
             key={role.id}
             onClick={() => onSelectRole(role.id)}
             style={{
               background: '#FFFFFF',
               borderRadius: '20px',
-              border: '1.5px solid #E2E8F0',
+              border: `2px solid ${role.id === 'citizen' ? '#BFDBFE' : '#E2E8F0'}`,
               padding: '28px',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.05)',
               cursor: 'pointer',
               transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-              position: 'relative',
-              overflow: 'hidden'
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.04)',
+              position: 'relative'
             }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-6px)';
               e.currentTarget.style.borderColor = role.accentColor;
-              e.currentTarget.style.boxShadow = '0 20px 30px -10px rgba(15, 23, 42, 0.12)';
+              e.currentTarget.style.boxShadow = `0 18px 32px -8px ${role.accentColor}25`;
             }}
-            onMouseLeave={e => {
+            onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.borderColor = '#E2E8F0';
-              e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(15, 23, 42, 0.05)';
+              e.currentTarget.style.borderColor = role.id === 'citizen' ? '#BFDBFE' : '#E2E8F0';
+              e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.04)';
             }}
           >
-            {/* Card Top */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
+              {/* Card Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div
                   style={{
-                    width: '54px',
-                    height: '54px',
-                    borderRadius: '16px',
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '14px',
                     background: role.badgeBg,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    border: `1.5px solid ${role.accentColor}30`
                   }}
                 >
                   {role.icon}
@@ -215,44 +217,6 @@ export default function RoleSelectLanding({ onSelectRole, onQuickLogin }) {
                 <span>{role.actionLabel}</span>
                 <ArrowRight size={17} />
               </button>
-
-              {onQuickLogin && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onQuickLogin(role.id);
-                  }}
-                  style={{
-                    background: '#F8FAFC',
-                    color: '#334155',
-                    border: '1.5px solid #E2E8F0',
-                    borderRadius: '10px',
-                    padding: '8px 12px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = '#F1F5F9';
-                    e.currentTarget.style.borderColor = role.accentColor;
-                    e.currentTarget.style.color = role.accentColor;
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = '#F8FAFC';
-                    e.currentTarget.style.borderColor = '#E2E8F0';
-                    e.currentTarget.style.color = '#334155';
-                  }}
-                  title={`Quick demo access as ${role.demoUser}`}
-                >
-                  <span>⚡ 1-Click Demo ({role.demoUser.split(' ')[0]})</span>
-                </button>
-              )}
             </div>
           </div>
         ))}

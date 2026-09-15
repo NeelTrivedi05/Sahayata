@@ -1,0 +1,1916 @@
+{
+  "meta": {
+    "dataset": "BMC Mumbai Historical Grievance Redressal (2018-2024)",
+    "totalRecords": 960000,
+    "generatedAt": "2026-09-04T04:10:46Z",
+    "executionTimeSeconds": 53.29
+  },
+  "stats": {
+    "totalComplaints": 960000,
+    "resolvedCount": 556014,
+    "inProgressCount": 134340,
+    "closedCount": 115838,
+    "escalatedCount": 86593,
+    "reopenedCount": 67215,
+    "avgResolutionDays": 13.73,
+    "avgWorkQualityRating": 2.38,
+    "siteInspectionRate": 54.08,
+    "citizenSatisfactionRate": 76.82,
+    "avgEstimatedCost": 10939.77,
+    "avgInfrastructureAge": 13.5,
+    "avgMaintenanceGapMonths": 18.0,
+    "monsoonComplaints": 320638,
+    "repeatComplaints": 296816,
+    "photoEvidenceCount": 585367,
+    "gpsLocationCount": 690783,
+    "monsoonRate": 33.4,
+    "resolvedRate": 57.9,
+    "repeatRate": 30.9,
+    "categories": [
+      {
+        "category": "Pothole / Road Damage",
+        "primaryDepartment": "Roads",
+        "totalComplaints": 172475,
+        "avgResolutionDays": 15.45,
+        "satisfactionRate": 76.4,
+        "avgWorkQuality": 2.38,
+        "avgCost": 17912.0,
+        "highSeverityCount": 55052,
+        "monsoonComplaints": 57801
+      },
+      {
+        "category": "Water Supply Disruption",
+        "primaryDepartment": "Hydraulic",
+        "totalComplaints": 153875,
+        "avgResolutionDays": 9.29,
+        "satisfactionRate": 77.85,
+        "avgWorkQuality": 2.38,
+        "avgCost": 9572.0,
+        "highSeverityCount": 49112,
+        "monsoonComplaints": 51247
+      },
+      {
+        "category": "Solid Waste / Garbage",
+        "primaryDepartment": "SWM",
+        "totalComplaints": 134953,
+        "avgResolutionDays": 7.75,
+        "satisfactionRate": 78.28,
+        "avgWorkQuality": 2.38,
+        "avgCost": 3587.0,
+        "highSeverityCount": 43235,
+        "monsoonComplaints": 45198
+      },
+      {
+        "category": "Drainage Overflow / Flooding",
+        "primaryDepartment": "Storm Water Drain",
+        "totalComplaints": 105867,
+        "avgResolutionDays": 12.38,
+        "satisfactionRate": 77.12,
+        "avgWorkQuality": 2.38,
+        "avgCost": 29900.0,
+        "highSeverityCount": 33911,
+        "monsoonComplaints": 35466
+      },
+      {
+        "category": "Street Light Failure",
+        "primaryDepartment": "Electric",
+        "totalComplaints": 86380,
+        "avgResolutionDays": 10.78,
+        "satisfactionRate": 77.31,
+        "avgWorkQuality": 2.38,
+        "avgCost": 5978.0,
+        "highSeverityCount": 27571,
+        "monsoonComplaints": 28859
+      },
+      {
+        "category": "Illegal Construction",
+        "primaryDepartment": "Building Proposal",
+        "totalComplaints": 66867,
+        "avgResolutionDays": 36.89,
+        "satisfactionRate": 71.31,
+        "avgWorkQuality": 2.38,
+        "avgCost": 2394.0,
+        "highSeverityCount": 21346,
+        "monsoonComplaints": 22280
+      },
+      {
+        "category": "Encroachment",
+        "primaryDepartment": "Encroachment",
+        "totalComplaints": 57630,
+        "avgResolutionDays": 26.2,
+        "satisfactionRate": 74.32,
+        "avgWorkQuality": 2.38,
+        "avgCost": 3000.0,
+        "highSeverityCount": 18515,
+        "monsoonComplaints": 19201
+      },
+      {
+        "category": "Tree Fallen / Dangerous Tree",
+        "primaryDepartment": "Garden",
+        "totalComplaints": 48117,
+        "avgResolutionDays": 6.32,
+        "satisfactionRate": 78.49,
+        "avgWorkQuality": 2.38,
+        "avgCost": 7216.0,
+        "highSeverityCount": 15350,
+        "monsoonComplaints": 15970
+      },
+      {
+        "category": "Public Toilet Condition",
+        "primaryDepartment": "Sanitation",
+        "totalComplaints": 38225,
+        "avgResolutionDays": 9.3,
+        "satisfactionRate": 77.9,
+        "avgWorkQuality": 2.37,
+        "avgCost": 4789.0,
+        "highSeverityCount": 12283,
+        "monsoonComplaints": 12671
+      },
+      {
+        "category": "Water Leakage / Pipe Burst",
+        "primaryDepartment": "Hydraulic",
+        "totalComplaints": 38121,
+        "avgResolutionDays": 7.78,
+        "satisfactionRate": 78.08,
+        "avgWorkQuality": 2.38,
+        "avgCost": 14335.0,
+        "highSeverityCount": 12073,
+        "monsoonComplaints": 12682
+      },
+      {
+        "category": "Noise / Air Pollution",
+        "primaryDepartment": "Environment",
+        "totalComplaints": 28752,
+        "avgResolutionDays": 20.0,
+        "satisfactionRate": 75.4,
+        "avgWorkQuality": 2.38,
+        "avgCost": 1809.0,
+        "highSeverityCount": 9256,
+        "monsoonComplaints": 9615
+      },
+      {
+        "category": "Stray Animal Menace",
+        "primaryDepartment": "Veterinary",
+        "totalComplaints": 18962,
+        "avgResolutionDays": 12.32,
+        "satisfactionRate": 76.94,
+        "avgWorkQuality": 2.39,
+        "avgCost": 4186.0,
+        "highSeverityCount": 6022,
+        "monsoonComplaints": 6313
+      },
+      {
+        "category": "Health / Epidemic",
+        "primaryDepartment": "Health",
+        "totalComplaints": 9776,
+        "avgResolutionDays": 6.23,
+        "satisfactionRate": 79.04,
+        "avgWorkQuality": 2.37,
+        "avgCost": 23826.0,
+        "highSeverityCount": 3159,
+        "monsoonComplaints": 3335
+      }
+    ],
+    "wards": [
+      {
+        "wardCode": "K/E",
+        "wardArea": "Andheri East",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "High",
+        "slumPercentage": 30.0,
+        "totalComplaints": 59673,
+        "avgResolutionDays": 13.36,
+        "satisfactionRate": 76.23,
+        "siteInspectionRate": 54.2,
+        "resolvedCount": 34524,
+        "monsoonComplaints": 19901,
+        "coords": [
+          19.115,
+          72.86
+        ],
+        "wardFullName": "Andheri East, Jogeshwari East, MIDC"
+      },
+      {
+        "wardCode": "L",
+        "wardArea": "Kurla-Vidyavihar",
+        "zone": "Eastern",
+        "wardType": "Suburban",
+        "populationDensity": "Very High",
+        "slumPercentage": 45.0,
+        "totalComplaints": 59459,
+        "avgResolutionDays": 16.04,
+        "satisfactionRate": 75.07,
+        "siteInspectionRate": 54.24,
+        "resolvedCount": 34373,
+        "monsoonComplaints": 19739,
+        "coords": [
+          19.07,
+          72.885
+        ],
+        "wardFullName": "Kurla, Chunabhatti, Sakinaka"
+      },
+      {
+        "wardCode": "M/E",
+        "wardArea": "Govandi-Mankhurd",
+        "zone": "Eastern",
+        "wardType": "Suburban",
+        "populationDensity": "High",
+        "slumPercentage": 65.0,
+        "totalComplaints": 49648,
+        "avgResolutionDays": 13.38,
+        "satisfactionRate": 76.13,
+        "siteInspectionRate": 54.37,
+        "resolvedCount": 28893,
+        "monsoonComplaints": 16660,
+        "coords": [
+          19.055,
+          72.915
+        ],
+        "wardFullName": "Govandi, Mankhurd, Shivaji Nagar"
+      },
+      {
+        "wardCode": "P/N",
+        "wardArea": "Malad",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "High",
+        "slumPercentage": 35.0,
+        "totalComplaints": 49548,
+        "avgResolutionDays": 13.46,
+        "satisfactionRate": 76.12,
+        "siteInspectionRate": 53.99,
+        "resolvedCount": 28837,
+        "monsoonComplaints": 16549,
+        "coords": [
+          19.185,
+          72.845
+        ],
+        "wardFullName": "Malad, Marve, Madh Island, Dindoshi"
+      },
+      {
+        "wardCode": "F/N",
+        "wardArea": "Sion-Dharavi",
+        "zone": "City",
+        "wardType": "Central",
+        "populationDensity": "Very High",
+        "slumPercentage": 55.0,
+        "totalComplaints": 49375,
+        "avgResolutionDays": 16.1,
+        "satisfactionRate": 75.09,
+        "siteInspectionRate": 53.8,
+        "resolvedCount": 28630,
+        "monsoonComplaints": 16663,
+        "coords": [
+          19.03,
+          72.858
+        ],
+        "wardFullName": "Matunga, Wadala, Sion, Hindu Colony"
+      },
+      {
+        "wardCode": "N",
+        "wardArea": "Ghatkopar",
+        "zone": "Eastern",
+        "wardType": "Suburban",
+        "populationDensity": "High",
+        "slumPercentage": 28.0,
+        "totalComplaints": 49316,
+        "avgResolutionDays": 13.42,
+        "satisfactionRate": 76.0,
+        "siteInspectionRate": 54.18,
+        "resolvedCount": 28491,
+        "monsoonComplaints": 16435,
+        "coords": [
+          19.08,
+          72.91
+        ],
+        "wardFullName": "Ghatkopar, Vikhroli West, Pant Nagar"
+      },
+      {
+        "wardCode": "H/E",
+        "wardArea": "Bandra East",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "High",
+        "slumPercentage": 38.0,
+        "totalComplaints": 49269,
+        "avgResolutionDays": 13.54,
+        "satisfactionRate": 76.01,
+        "siteInspectionRate": 53.84,
+        "resolvedCount": 28573,
+        "monsoonComplaints": 16427,
+        "coords": [
+          19.075,
+          72.85
+        ],
+        "wardFullName": "Santacruz East, Khar East, Vakola"
+      },
+      {
+        "wardCode": "G/N",
+        "wardArea": "Dharavi-Matunga",
+        "zone": "City",
+        "wardType": "Central",
+        "populationDensity": "Very High",
+        "slumPercentage": 60.0,
+        "totalComplaints": 49162,
+        "avgResolutionDays": 16.08,
+        "satisfactionRate": 75.07,
+        "siteInspectionRate": 54.22,
+        "resolvedCount": 28316,
+        "monsoonComplaints": 16417,
+        "coords": [
+          19.025,
+          72.841
+        ],
+        "wardFullName": "Dadar, Mahim, Dharavi"
+      },
+      {
+        "wardCode": "E",
+        "wardArea": "Byculla-Mazgaon",
+        "zone": "City",
+        "wardType": "South",
+        "populationDensity": "Very High",
+        "slumPercentage": 35.0,
+        "totalComplaints": 39839,
+        "avgResolutionDays": 13.87,
+        "satisfactionRate": 81.43,
+        "siteInspectionRate": 54.29,
+        "resolvedCount": 23168,
+        "monsoonComplaints": 13308,
+        "coords": [
+          18.973,
+          72.83
+        ],
+        "wardFullName": "Byculla, Mazgaon, Mumbai Central"
+      },
+      {
+        "wardCode": "G/S",
+        "wardArea": "Dadar-Mahim",
+        "zone": "City",
+        "wardType": "Central",
+        "populationDensity": "High",
+        "slumPercentage": 25.0,
+        "totalComplaints": 39768,
+        "avgResolutionDays": 13.46,
+        "satisfactionRate": 75.83,
+        "siteInspectionRate": 54.05,
+        "resolvedCount": 23085,
+        "monsoonComplaints": 13224,
+        "coords": [
+          18.995,
+          72.818
+        ],
+        "wardFullName": "Worli, Lower Parel, Prabhadevi"
+      },
+      {
+        "wardCode": "D",
+        "wardArea": "Worli-Prabhadevi",
+        "zone": "City",
+        "wardType": "South",
+        "populationDensity": "High",
+        "slumPercentage": 22.0,
+        "totalComplaints": 39736,
+        "avgResolutionDays": 11.7,
+        "satisfactionRate": 82.02,
+        "siteInspectionRate": 53.61,
+        "resolvedCount": 23029,
+        "monsoonComplaints": 13400,
+        "coords": [
+          18.963,
+          72.812
+        ],
+        "wardFullName": "Malabar Hill, Grant Road, Walkeshwar"
+      },
+      {
+        "wardCode": "S",
+        "wardArea": "Bhandup-Mulund",
+        "zone": "Eastern",
+        "wardType": "Suburban",
+        "populationDensity": "Medium",
+        "slumPercentage": 25.0,
+        "totalComplaints": 39718,
+        "avgResolutionDays": 13.32,
+        "satisfactionRate": 75.75,
+        "siteInspectionRate": 53.94,
+        "resolvedCount": 22931,
+        "monsoonComplaints": 13215,
+        "coords": [
+          19.13,
+          72.93
+        ],
+        "wardFullName": "Bhandup, Powai, Kanjurmarg, IIT"
+      },
+      {
+        "wardCode": "F/S",
+        "wardArea": "Wadala-Antop Hill",
+        "zone": "City",
+        "wardType": "Central",
+        "populationDensity": "High",
+        "slumPercentage": 40.0,
+        "totalComplaints": 39712,
+        "avgResolutionDays": 13.52,
+        "satisfactionRate": 75.96,
+        "siteInspectionRate": 54.34,
+        "resolvedCount": 23119,
+        "monsoonComplaints": 13126,
+        "coords": [
+          18.998,
+          72.842
+        ],
+        "wardFullName": "Parel, Sewri, Naigaon"
+      },
+      {
+        "wardCode": "K/W",
+        "wardArea": "Andheri West-Juhu",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "Medium",
+        "slumPercentage": 18.0,
+        "totalComplaints": 39693,
+        "avgResolutionDays": 13.39,
+        "satisfactionRate": 75.99,
+        "siteInspectionRate": 53.73,
+        "resolvedCount": 23073,
+        "monsoonComplaints": 13191,
+        "coords": [
+          19.125,
+          72.835
+        ],
+        "wardFullName": "Andheri West, Juhu, Versova, Lokhandwala"
+      },
+      {
+        "wardCode": "M/W",
+        "wardArea": "Chembur West",
+        "zone": "Eastern",
+        "wardType": "Suburban",
+        "populationDensity": "High",
+        "slumPercentage": 32.0,
+        "totalComplaints": 39361,
+        "avgResolutionDays": 13.55,
+        "satisfactionRate": 75.42,
+        "siteInspectionRate": 54.15,
+        "resolvedCount": 22589,
+        "monsoonComplaints": 13094,
+        "coords": [
+          19.055,
+          72.895
+        ],
+        "wardFullName": "Chembur, Tilak Nagar, Pestom Sagar"
+      },
+      {
+        "wardCode": "P/S",
+        "wardArea": "Goregaon",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "High",
+        "slumPercentage": 30.0,
+        "totalComplaints": 39328,
+        "avgResolutionDays": 13.5,
+        "satisfactionRate": 76.41,
+        "siteInspectionRate": 54.24,
+        "resolvedCount": 22945,
+        "monsoonComplaints": 13306,
+        "coords": [
+          19.165,
+          72.845
+        ],
+        "wardFullName": "Goregaon, Aarey Colony, Bangur Nagar"
+      },
+      {
+        "wardCode": "C",
+        "wardArea": "Girgaon-Marine Lines",
+        "zone": "City",
+        "wardType": "South",
+        "populationDensity": "High",
+        "slumPercentage": 15.0,
+        "totalComplaints": 29882,
+        "avgResolutionDays": 11.78,
+        "satisfactionRate": 81.48,
+        "siteInspectionRate": 53.94,
+        "resolvedCount": 17277,
+        "monsoonComplaints": 9963,
+        "coords": [
+          18.951,
+          72.825
+        ],
+        "wardFullName": "Marine Lines, Bhuleshwar, Kalbadevi"
+      },
+      {
+        "wardCode": "H/W",
+        "wardArea": "Bandra West",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "Medium",
+        "slumPercentage": 10.0,
+        "totalComplaints": 29773,
+        "avgResolutionDays": 13.56,
+        "satisfactionRate": 75.8,
+        "siteInspectionRate": 54.52,
+        "resolvedCount": 17193,
+        "monsoonComplaints": 10092,
+        "coords": [
+          19.06,
+          72.835
+        ],
+        "wardFullName": "Bandra West, Khar West, Bandstand"
+      },
+      {
+        "wardCode": "R/S",
+        "wardArea": "Kandivali",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "Medium",
+        "slumPercentage": 18.0,
+        "totalComplaints": 29694,
+        "avgResolutionDays": 13.57,
+        "satisfactionRate": 75.56,
+        "siteInspectionRate": 54.18,
+        "resolvedCount": 17047,
+        "monsoonComplaints": 9961,
+        "coords": [
+          19.205,
+          72.85
+        ],
+        "wardFullName": "Kandivali, Charkop, Poisar"
+      },
+      {
+        "wardCode": "B",
+        "wardArea": "Mandvi-Masjid",
+        "zone": "City",
+        "wardType": "South",
+        "populationDensity": "Very High",
+        "slumPercentage": 28.0,
+        "totalComplaints": 29658,
+        "avgResolutionDays": 13.81,
+        "satisfactionRate": 81.21,
+        "siteInspectionRate": 53.97,
+        "resolvedCount": 17037,
+        "monsoonComplaints": 9854,
+        "coords": [
+          18.95,
+          72.838
+        ],
+        "wardFullName": "Sandhurst Road, Dongri, Masjid"
+      },
+      {
+        "wardCode": "A",
+        "wardArea": "Colaba-Fort",
+        "zone": "City",
+        "wardType": "South",
+        "populationDensity": "High",
+        "slumPercentage": 12.0,
+        "totalComplaints": 29637,
+        "avgResolutionDays": 11.74,
+        "satisfactionRate": 81.78,
+        "siteInspectionRate": 54.15,
+        "resolvedCount": 17151,
+        "monsoonComplaints": 9918,
+        "coords": [
+          18.927,
+          72.833
+        ],
+        "wardFullName": "Colaba, Fort, Nariman Point"
+      },
+      {
+        "wardCode": "R/N",
+        "wardArea": "Dahisar",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "Medium",
+        "slumPercentage": 20.0,
+        "totalComplaints": 29533,
+        "avgResolutionDays": 13.43,
+        "satisfactionRate": 75.64,
+        "siteInspectionRate": 53.76,
+        "resolvedCount": 17166,
+        "monsoonComplaints": 9841,
+        "coords": [
+          19.25,
+          72.86
+        ],
+        "wardFullName": "Dahisar, Mandapeshwar"
+      },
+      {
+        "wardCode": "R/C",
+        "wardArea": "Borivali Central",
+        "zone": "Western",
+        "wardType": "Suburban",
+        "populationDensity": "Medium",
+        "slumPercentage": 22.0,
+        "totalComplaints": 29473,
+        "avgResolutionDays": 13.48,
+        "satisfactionRate": 76.14,
+        "siteInspectionRate": 53.78,
+        "resolvedCount": 17114,
+        "monsoonComplaints": 9818,
+        "coords": [
+          19.225,
+          72.855
+        ],
+        "wardFullName": "Borivali, Gorai, Eksar"
+      },
+      {
+        "wardCode": "T",
+        "wardArea": "Mulund",
+        "zone": "Eastern",
+        "wardType": "Suburban",
+        "populationDensity": "Low",
+        "slumPercentage": 15.0,
+        "totalComplaints": 19745,
+        "avgResolutionDays": 13.29,
+        "satisfactionRate": 76.4,
+        "siteInspectionRate": 54.21,
+        "resolvedCount": 11453,
+        "monsoonComplaints": 6536,
+        "coords": [
+          19.175,
+          72.95
+        ],
+        "wardFullName": "Mulund, Nahur"
+      }
+    ],
+    "severities": [
+      {
+        "severity": "Critical",
+        "count": 76843,
+        "satisfactionRate": 72.3
+      },
+      {
+        "severity": "High",
+        "count": 230042,
+        "satisfactionRate": 77.7
+      },
+      {
+        "severity": "Medium",
+        "count": 383397,
+        "satisfactionRate": 77.6
+      },
+      {
+        "severity": "Low",
+        "count": 269718,
+        "satisfactionRate": 76.1
+      }
+    ]
+  },
+  "categories": [
+    {
+      "category": "Pothole / Road Damage",
+      "primaryDepartment": "Roads",
+      "totalComplaints": 172475,
+      "avgResolutionDays": 15.45,
+      "satisfactionRate": 76.4,
+      "avgWorkQuality": 2.38,
+      "avgCost": 17912.0,
+      "highSeverityCount": 55052,
+      "monsoonComplaints": 57801
+    },
+    {
+      "category": "Water Supply Disruption",
+      "primaryDepartment": "Hydraulic",
+      "totalComplaints": 153875,
+      "avgResolutionDays": 9.29,
+      "satisfactionRate": 77.85,
+      "avgWorkQuality": 2.38,
+      "avgCost": 9572.0,
+      "highSeverityCount": 49112,
+      "monsoonComplaints": 51247
+    },
+    {
+      "category": "Solid Waste / Garbage",
+      "primaryDepartment": "SWM",
+      "totalComplaints": 134953,
+      "avgResolutionDays": 7.75,
+      "satisfactionRate": 78.28,
+      "avgWorkQuality": 2.38,
+      "avgCost": 3587.0,
+      "highSeverityCount": 43235,
+      "monsoonComplaints": 45198
+    },
+    {
+      "category": "Drainage Overflow / Flooding",
+      "primaryDepartment": "Storm Water Drain",
+      "totalComplaints": 105867,
+      "avgResolutionDays": 12.38,
+      "satisfactionRate": 77.12,
+      "avgWorkQuality": 2.38,
+      "avgCost": 29900.0,
+      "highSeverityCount": 33911,
+      "monsoonComplaints": 35466
+    },
+    {
+      "category": "Street Light Failure",
+      "primaryDepartment": "Electric",
+      "totalComplaints": 86380,
+      "avgResolutionDays": 10.78,
+      "satisfactionRate": 77.31,
+      "avgWorkQuality": 2.38,
+      "avgCost": 5978.0,
+      "highSeverityCount": 27571,
+      "monsoonComplaints": 28859
+    },
+    {
+      "category": "Illegal Construction",
+      "primaryDepartment": "Building Proposal",
+      "totalComplaints": 66867,
+      "avgResolutionDays": 36.89,
+      "satisfactionRate": 71.31,
+      "avgWorkQuality": 2.38,
+      "avgCost": 2394.0,
+      "highSeverityCount": 21346,
+      "monsoonComplaints": 22280
+    },
+    {
+      "category": "Encroachment",
+      "primaryDepartment": "Encroachment",
+      "totalComplaints": 57630,
+      "avgResolutionDays": 26.2,
+      "satisfactionRate": 74.32,
+      "avgWorkQuality": 2.38,
+      "avgCost": 3000.0,
+      "highSeverityCount": 18515,
+      "monsoonComplaints": 19201
+    },
+    {
+      "category": "Tree Fallen / Dangerous Tree",
+      "primaryDepartment": "Garden",
+      "totalComplaints": 48117,
+      "avgResolutionDays": 6.32,
+      "satisfactionRate": 78.49,
+      "avgWorkQuality": 2.38,
+      "avgCost": 7216.0,
+      "highSeverityCount": 15350,
+      "monsoonComplaints": 15970
+    },
+    {
+      "category": "Public Toilet Condition",
+      "primaryDepartment": "Sanitation",
+      "totalComplaints": 38225,
+      "avgResolutionDays": 9.3,
+      "satisfactionRate": 77.9,
+      "avgWorkQuality": 2.37,
+      "avgCost": 4789.0,
+      "highSeverityCount": 12283,
+      "monsoonComplaints": 12671
+    },
+    {
+      "category": "Water Leakage / Pipe Burst",
+      "primaryDepartment": "Hydraulic",
+      "totalComplaints": 38121,
+      "avgResolutionDays": 7.78,
+      "satisfactionRate": 78.08,
+      "avgWorkQuality": 2.38,
+      "avgCost": 14335.0,
+      "highSeverityCount": 12073,
+      "monsoonComplaints": 12682
+    },
+    {
+      "category": "Noise / Air Pollution",
+      "primaryDepartment": "Environment",
+      "totalComplaints": 28752,
+      "avgResolutionDays": 20.0,
+      "satisfactionRate": 75.4,
+      "avgWorkQuality": 2.38,
+      "avgCost": 1809.0,
+      "highSeverityCount": 9256,
+      "monsoonComplaints": 9615
+    },
+    {
+      "category": "Stray Animal Menace",
+      "primaryDepartment": "Veterinary",
+      "totalComplaints": 18962,
+      "avgResolutionDays": 12.32,
+      "satisfactionRate": 76.94,
+      "avgWorkQuality": 2.39,
+      "avgCost": 4186.0,
+      "highSeverityCount": 6022,
+      "monsoonComplaints": 6313
+    },
+    {
+      "category": "Health / Epidemic",
+      "primaryDepartment": "Health",
+      "totalComplaints": 9776,
+      "avgResolutionDays": 6.23,
+      "satisfactionRate": 79.04,
+      "avgWorkQuality": 2.37,
+      "avgCost": 23826.0,
+      "highSeverityCount": 3159,
+      "monsoonComplaints": 3335
+    }
+  ],
+  "wards": [
+    {
+      "wardCode": "K/E",
+      "wardArea": "Andheri East",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "High",
+      "slumPercentage": 30.0,
+      "totalComplaints": 59673,
+      "avgResolutionDays": 13.36,
+      "satisfactionRate": 76.23,
+      "siteInspectionRate": 54.2,
+      "resolvedCount": 34524,
+      "monsoonComplaints": 19901,
+      "coords": [
+        19.115,
+        72.86
+      ],
+      "wardFullName": "Andheri East, Jogeshwari East, MIDC"
+    },
+    {
+      "wardCode": "L",
+      "wardArea": "Kurla-Vidyavihar",
+      "zone": "Eastern",
+      "wardType": "Suburban",
+      "populationDensity": "Very High",
+      "slumPercentage": 45.0,
+      "totalComplaints": 59459,
+      "avgResolutionDays": 16.04,
+      "satisfactionRate": 75.07,
+      "siteInspectionRate": 54.24,
+      "resolvedCount": 34373,
+      "monsoonComplaints": 19739,
+      "coords": [
+        19.07,
+        72.885
+      ],
+      "wardFullName": "Kurla, Chunabhatti, Sakinaka"
+    },
+    {
+      "wardCode": "M/E",
+      "wardArea": "Govandi-Mankhurd",
+      "zone": "Eastern",
+      "wardType": "Suburban",
+      "populationDensity": "High",
+      "slumPercentage": 65.0,
+      "totalComplaints": 49648,
+      "avgResolutionDays": 13.38,
+      "satisfactionRate": 76.13,
+      "siteInspectionRate": 54.37,
+      "resolvedCount": 28893,
+      "monsoonComplaints": 16660,
+      "coords": [
+        19.055,
+        72.915
+      ],
+      "wardFullName": "Govandi, Mankhurd, Shivaji Nagar"
+    },
+    {
+      "wardCode": "P/N",
+      "wardArea": "Malad",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "High",
+      "slumPercentage": 35.0,
+      "totalComplaints": 49548,
+      "avgResolutionDays": 13.46,
+      "satisfactionRate": 76.12,
+      "siteInspectionRate": 53.99,
+      "resolvedCount": 28837,
+      "monsoonComplaints": 16549,
+      "coords": [
+        19.185,
+        72.845
+      ],
+      "wardFullName": "Malad, Marve, Madh Island, Dindoshi"
+    },
+    {
+      "wardCode": "F/N",
+      "wardArea": "Sion-Dharavi",
+      "zone": "City",
+      "wardType": "Central",
+      "populationDensity": "Very High",
+      "slumPercentage": 55.0,
+      "totalComplaints": 49375,
+      "avgResolutionDays": 16.1,
+      "satisfactionRate": 75.09,
+      "siteInspectionRate": 53.8,
+      "resolvedCount": 28630,
+      "monsoonComplaints": 16663,
+      "coords": [
+        19.03,
+        72.858
+      ],
+      "wardFullName": "Matunga, Wadala, Sion, Hindu Colony"
+    },
+    {
+      "wardCode": "N",
+      "wardArea": "Ghatkopar",
+      "zone": "Eastern",
+      "wardType": "Suburban",
+      "populationDensity": "High",
+      "slumPercentage": 28.0,
+      "totalComplaints": 49316,
+      "avgResolutionDays": 13.42,
+      "satisfactionRate": 76.0,
+      "siteInspectionRate": 54.18,
+      "resolvedCount": 28491,
+      "monsoonComplaints": 16435,
+      "coords": [
+        19.08,
+        72.91
+      ],
+      "wardFullName": "Ghatkopar, Vikhroli West, Pant Nagar"
+    },
+    {
+      "wardCode": "H/E",
+      "wardArea": "Bandra East",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "High",
+      "slumPercentage": 38.0,
+      "totalComplaints": 49269,
+      "avgResolutionDays": 13.54,
+      "satisfactionRate": 76.01,
+      "siteInspectionRate": 53.84,
+      "resolvedCount": 28573,
+      "monsoonComplaints": 16427,
+      "coords": [
+        19.075,
+        72.85
+      ],
+      "wardFullName": "Santacruz East, Khar East, Vakola"
+    },
+    {
+      "wardCode": "G/N",
+      "wardArea": "Dharavi-Matunga",
+      "zone": "City",
+      "wardType": "Central",
+      "populationDensity": "Very High",
+      "slumPercentage": 60.0,
+      "totalComplaints": 49162,
+      "avgResolutionDays": 16.08,
+      "satisfactionRate": 75.07,
+      "siteInspectionRate": 54.22,
+      "resolvedCount": 28316,
+      "monsoonComplaints": 16417,
+      "coords": [
+        19.025,
+        72.841
+      ],
+      "wardFullName": "Dadar, Mahim, Dharavi"
+    },
+    {
+      "wardCode": "E",
+      "wardArea": "Byculla-Mazgaon",
+      "zone": "City",
+      "wardType": "South",
+      "populationDensity": "Very High",
+      "slumPercentage": 35.0,
+      "totalComplaints": 39839,
+      "avgResolutionDays": 13.87,
+      "satisfactionRate": 81.43,
+      "siteInspectionRate": 54.29,
+      "resolvedCount": 23168,
+      "monsoonComplaints": 13308,
+      "coords": [
+        18.973,
+        72.83
+      ],
+      "wardFullName": "Byculla, Mazgaon, Mumbai Central"
+    },
+    {
+      "wardCode": "G/S",
+      "wardArea": "Dadar-Mahim",
+      "zone": "City",
+      "wardType": "Central",
+      "populationDensity": "High",
+      "slumPercentage": 25.0,
+      "totalComplaints": 39768,
+      "avgResolutionDays": 13.46,
+      "satisfactionRate": 75.83,
+      "siteInspectionRate": 54.05,
+      "resolvedCount": 23085,
+      "monsoonComplaints": 13224,
+      "coords": [
+        18.995,
+        72.818
+      ],
+      "wardFullName": "Worli, Lower Parel, Prabhadevi"
+    },
+    {
+      "wardCode": "D",
+      "wardArea": "Worli-Prabhadevi",
+      "zone": "City",
+      "wardType": "South",
+      "populationDensity": "High",
+      "slumPercentage": 22.0,
+      "totalComplaints": 39736,
+      "avgResolutionDays": 11.7,
+      "satisfactionRate": 82.02,
+      "siteInspectionRate": 53.61,
+      "resolvedCount": 23029,
+      "monsoonComplaints": 13400,
+      "coords": [
+        18.963,
+        72.812
+      ],
+      "wardFullName": "Malabar Hill, Grant Road, Walkeshwar"
+    },
+    {
+      "wardCode": "S",
+      "wardArea": "Bhandup-Mulund",
+      "zone": "Eastern",
+      "wardType": "Suburban",
+      "populationDensity": "Medium",
+      "slumPercentage": 25.0,
+      "totalComplaints": 39718,
+      "avgResolutionDays": 13.32,
+      "satisfactionRate": 75.75,
+      "siteInspectionRate": 53.94,
+      "resolvedCount": 22931,
+      "monsoonComplaints": 13215,
+      "coords": [
+        19.13,
+        72.93
+      ],
+      "wardFullName": "Bhandup, Powai, Kanjurmarg, IIT"
+    },
+    {
+      "wardCode": "F/S",
+      "wardArea": "Wadala-Antop Hill",
+      "zone": "City",
+      "wardType": "Central",
+      "populationDensity": "High",
+      "slumPercentage": 40.0,
+      "totalComplaints": 39712,
+      "avgResolutionDays": 13.52,
+      "satisfactionRate": 75.96,
+      "siteInspectionRate": 54.34,
+      "resolvedCount": 23119,
+      "monsoonComplaints": 13126,
+      "coords": [
+        18.998,
+        72.842
+      ],
+      "wardFullName": "Parel, Sewri, Naigaon"
+    },
+    {
+      "wardCode": "K/W",
+      "wardArea": "Andheri West-Juhu",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "Medium",
+      "slumPercentage": 18.0,
+      "totalComplaints": 39693,
+      "avgResolutionDays": 13.39,
+      "satisfactionRate": 75.99,
+      "siteInspectionRate": 53.73,
+      "resolvedCount": 23073,
+      "monsoonComplaints": 13191,
+      "coords": [
+        19.125,
+        72.835
+      ],
+      "wardFullName": "Andheri West, Juhu, Versova, Lokhandwala"
+    },
+    {
+      "wardCode": "M/W",
+      "wardArea": "Chembur West",
+      "zone": "Eastern",
+      "wardType": "Suburban",
+      "populationDensity": "High",
+      "slumPercentage": 32.0,
+      "totalComplaints": 39361,
+      "avgResolutionDays": 13.55,
+      "satisfactionRate": 75.42,
+      "siteInspectionRate": 54.15,
+      "resolvedCount": 22589,
+      "monsoonComplaints": 13094,
+      "coords": [
+        19.055,
+        72.895
+      ],
+      "wardFullName": "Chembur, Tilak Nagar, Pestom Sagar"
+    },
+    {
+      "wardCode": "P/S",
+      "wardArea": "Goregaon",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "High",
+      "slumPercentage": 30.0,
+      "totalComplaints": 39328,
+      "avgResolutionDays": 13.5,
+      "satisfactionRate": 76.41,
+      "siteInspectionRate": 54.24,
+      "resolvedCount": 22945,
+      "monsoonComplaints": 13306,
+      "coords": [
+        19.165,
+        72.845
+      ],
+      "wardFullName": "Goregaon, Aarey Colony, Bangur Nagar"
+    },
+    {
+      "wardCode": "C",
+      "wardArea": "Girgaon-Marine Lines",
+      "zone": "City",
+      "wardType": "South",
+      "populationDensity": "High",
+      "slumPercentage": 15.0,
+      "totalComplaints": 29882,
+      "avgResolutionDays": 11.78,
+      "satisfactionRate": 81.48,
+      "siteInspectionRate": 53.94,
+      "resolvedCount": 17277,
+      "monsoonComplaints": 9963,
+      "coords": [
+        18.951,
+        72.825
+      ],
+      "wardFullName": "Marine Lines, Bhuleshwar, Kalbadevi"
+    },
+    {
+      "wardCode": "H/W",
+      "wardArea": "Bandra West",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "Medium",
+      "slumPercentage": 10.0,
+      "totalComplaints": 29773,
+      "avgResolutionDays": 13.56,
+      "satisfactionRate": 75.8,
+      "siteInspectionRate": 54.52,
+      "resolvedCount": 17193,
+      "monsoonComplaints": 10092,
+      "coords": [
+        19.06,
+        72.835
+      ],
+      "wardFullName": "Bandra West, Khar West, Bandstand"
+    },
+    {
+      "wardCode": "R/S",
+      "wardArea": "Kandivali",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "Medium",
+      "slumPercentage": 18.0,
+      "totalComplaints": 29694,
+      "avgResolutionDays": 13.57,
+      "satisfactionRate": 75.56,
+      "siteInspectionRate": 54.18,
+      "resolvedCount": 17047,
+      "monsoonComplaints": 9961,
+      "coords": [
+        19.205,
+        72.85
+      ],
+      "wardFullName": "Kandivali, Charkop, Poisar"
+    },
+    {
+      "wardCode": "B",
+      "wardArea": "Mandvi-Masjid",
+      "zone": "City",
+      "wardType": "South",
+      "populationDensity": "Very High",
+      "slumPercentage": 28.0,
+      "totalComplaints": 29658,
+      "avgResolutionDays": 13.81,
+      "satisfactionRate": 81.21,
+      "siteInspectionRate": 53.97,
+      "resolvedCount": 17037,
+      "monsoonComplaints": 9854,
+      "coords": [
+        18.95,
+        72.838
+      ],
+      "wardFullName": "Sandhurst Road, Dongri, Masjid"
+    },
+    {
+      "wardCode": "A",
+      "wardArea": "Colaba-Fort",
+      "zone": "City",
+      "wardType": "South",
+      "populationDensity": "High",
+      "slumPercentage": 12.0,
+      "totalComplaints": 29637,
+      "avgResolutionDays": 11.74,
+      "satisfactionRate": 81.78,
+      "siteInspectionRate": 54.15,
+      "resolvedCount": 17151,
+      "monsoonComplaints": 9918,
+      "coords": [
+        18.927,
+        72.833
+      ],
+      "wardFullName": "Colaba, Fort, Nariman Point"
+    },
+    {
+      "wardCode": "R/N",
+      "wardArea": "Dahisar",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "Medium",
+      "slumPercentage": 20.0,
+      "totalComplaints": 29533,
+      "avgResolutionDays": 13.43,
+      "satisfactionRate": 75.64,
+      "siteInspectionRate": 53.76,
+      "resolvedCount": 17166,
+      "monsoonComplaints": 9841,
+      "coords": [
+        19.25,
+        72.86
+      ],
+      "wardFullName": "Dahisar, Mandapeshwar"
+    },
+    {
+      "wardCode": "R/C",
+      "wardArea": "Borivali Central",
+      "zone": "Western",
+      "wardType": "Suburban",
+      "populationDensity": "Medium",
+      "slumPercentage": 22.0,
+      "totalComplaints": 29473,
+      "avgResolutionDays": 13.48,
+      "satisfactionRate": 76.14,
+      "siteInspectionRate": 53.78,
+      "resolvedCount": 17114,
+      "monsoonComplaints": 9818,
+      "coords": [
+        19.225,
+        72.855
+      ],
+      "wardFullName": "Borivali, Gorai, Eksar"
+    },
+    {
+      "wardCode": "T",
+      "wardArea": "Mulund",
+      "zone": "Eastern",
+      "wardType": "Suburban",
+      "populationDensity": "Low",
+      "slumPercentage": 15.0,
+      "totalComplaints": 19745,
+      "avgResolutionDays": 13.29,
+      "satisfactionRate": 76.4,
+      "siteInspectionRate": 54.21,
+      "resolvedCount": 11453,
+      "monsoonComplaints": 6536,
+      "coords": [
+        19.175,
+        72.95
+      ],
+      "wardFullName": "Mulund, Nahur"
+    }
+  ],
+  "departments": [
+    {
+      "department": "Hydraulic",
+      "totalComplaints": 191996,
+      "avgReassignments": 1.03,
+      "avgResolutionDays": 8.99,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 54.12,
+      "satisfactionRate": 77.89,
+      "avgCost": 10518.0
+    },
+    {
+      "department": "Roads",
+      "totalComplaints": 172475,
+      "avgReassignments": 1.03,
+      "avgResolutionDays": 15.45,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 54.19,
+      "satisfactionRate": 76.4,
+      "avgCost": 17912.0
+    },
+    {
+      "department": "SWM",
+      "totalComplaints": 134953,
+      "avgReassignments": 1.03,
+      "avgResolutionDays": 7.75,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 53.9,
+      "satisfactionRate": 78.28,
+      "avgCost": 3587.0
+    },
+    {
+      "department": "Storm Water Drain",
+      "totalComplaints": 105867,
+      "avgReassignments": 1.03,
+      "avgResolutionDays": 12.38,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 54.03,
+      "satisfactionRate": 77.12,
+      "avgCost": 29900.0
+    },
+    {
+      "department": "Electric",
+      "totalComplaints": 86380,
+      "avgReassignments": 1.03,
+      "avgResolutionDays": 10.78,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 54.28,
+      "satisfactionRate": 77.31,
+      "avgCost": 5978.0
+    },
+    {
+      "department": "Building Proposal",
+      "totalComplaints": 66867,
+      "avgReassignments": 1.02,
+      "avgResolutionDays": 36.89,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 54.21,
+      "satisfactionRate": 71.31,
+      "avgCost": 2394.0
+    },
+    {
+      "department": "Encroachment",
+      "totalComplaints": 57630,
+      "avgReassignments": 1.03,
+      "avgResolutionDays": 26.2,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 53.9,
+      "satisfactionRate": 74.32,
+      "avgCost": 3000.0
+    },
+    {
+      "department": "Garden",
+      "totalComplaints": 48117,
+      "avgReassignments": 1.03,
+      "avgResolutionDays": 6.32,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 53.7,
+      "satisfactionRate": 78.49,
+      "avgCost": 7216.0
+    },
+    {
+      "department": "Sanitation",
+      "totalComplaints": 38225,
+      "avgReassignments": 1.04,
+      "avgResolutionDays": 9.3,
+      "avgWorkQuality": 2.37,
+      "siteInspectionRate": 53.97,
+      "satisfactionRate": 77.9,
+      "avgCost": 4789.0
+    },
+    {
+      "department": "Environment",
+      "totalComplaints": 28752,
+      "avgReassignments": 1.03,
+      "avgResolutionDays": 20.0,
+      "avgWorkQuality": 2.38,
+      "siteInspectionRate": 54.18,
+      "satisfactionRate": 75.4,
+      "avgCost": 1809.0
+    },
+    {
+      "department": "Veterinary",
+      "totalComplaints": 18962,
+      "avgReassignments": 1.04,
+      "avgResolutionDays": 12.32,
+      "avgWorkQuality": 2.39,
+      "siteInspectionRate": 54.01,
+      "satisfactionRate": 76.94,
+      "avgCost": 4186.0
+    },
+    {
+      "department": "Health",
+      "totalComplaints": 9776,
+      "avgReassignments": 1.02,
+      "avgResolutionDays": 6.23,
+      "avgWorkQuality": 2.37,
+      "siteInspectionRate": 54.28,
+      "satisfactionRate": 79.04,
+      "avgCost": 23826.0
+    }
+  ],
+  "trends": {
+    "yearly": [
+      {
+        "year": 2018,
+        "totalComplaints": 136729,
+        "avgResolutionDays": 13.74,
+        "satisfactionRate": 76.72,
+        "resolvedCount": 79108,
+        "monsoonComplaints": 45711
+      },
+      {
+        "year": 2019,
+        "totalComplaints": 136908,
+        "avgResolutionDays": 13.76,
+        "satisfactionRate": 76.64,
+        "resolvedCount": 79369,
+        "monsoonComplaints": 45933
+      },
+      {
+        "year": 2020,
+        "totalComplaints": 138600,
+        "avgResolutionDays": 13.7,
+        "satisfactionRate": 76.94,
+        "resolvedCount": 80430,
+        "monsoonComplaints": 45919
+      },
+      {
+        "year": 2021,
+        "totalComplaints": 137707,
+        "avgResolutionDays": 13.7,
+        "satisfactionRate": 76.91,
+        "resolvedCount": 79812,
+        "monsoonComplaints": 45847
+      },
+      {
+        "year": 2022,
+        "totalComplaints": 136817,
+        "avgResolutionDays": 13.72,
+        "satisfactionRate": 76.76,
+        "resolvedCount": 79278,
+        "monsoonComplaints": 45814
+      },
+      {
+        "year": 2023,
+        "totalComplaints": 136858,
+        "avgResolutionDays": 13.79,
+        "satisfactionRate": 76.93,
+        "resolvedCount": 79189,
+        "monsoonComplaints": 45820
+      },
+      {
+        "year": 2024,
+        "totalComplaints": 136381,
+        "avgResolutionDays": 13.72,
+        "satisfactionRate": 76.8,
+        "resolvedCount": 78828,
+        "monsoonComplaints": 45594
+      }
+    ],
+    "monthly": [
+      {
+        "month": 1,
+        "totalComplaints": 81542,
+        "avgResolutionDays": 12.2,
+        "satisfactionRate": 78.83
+      },
+      {
+        "month": 2,
+        "totalComplaints": 74290,
+        "avgResolutionDays": 12.22,
+        "satisfactionRate": 78.66
+      },
+      {
+        "month": 3,
+        "totalComplaints": 81514,
+        "avgResolutionDays": 12.23,
+        "satisfactionRate": 78.76
+      },
+      {
+        "month": 4,
+        "totalComplaints": 79023,
+        "avgResolutionDays": 12.22,
+        "satisfactionRate": 78.5
+      },
+      {
+        "month": 5,
+        "totalComplaints": 81736,
+        "avgResolutionDays": 12.25,
+        "satisfactionRate": 78.8
+      },
+      {
+        "month": 6,
+        "totalComplaints": 78983,
+        "avgResolutionDays": 16.78,
+        "satisfactionRate": 72.93
+      },
+      {
+        "month": 7,
+        "totalComplaints": 81470,
+        "avgResolutionDays": 16.75,
+        "satisfactionRate": 73.13
+      },
+      {
+        "month": 8,
+        "totalComplaints": 81241,
+        "avgResolutionDays": 16.73,
+        "satisfactionRate": 73.17
+      },
+      {
+        "month": 9,
+        "totalComplaints": 78944,
+        "avgResolutionDays": 16.68,
+        "satisfactionRate": 73.1
+      },
+      {
+        "month": 10,
+        "totalComplaints": 81359,
+        "avgResolutionDays": 12.21,
+        "satisfactionRate": 78.62
+      },
+      {
+        "month": 11,
+        "totalComplaints": 78873,
+        "avgResolutionDays": 12.27,
+        "satisfactionRate": 78.7
+      },
+      {
+        "month": 12,
+        "totalComplaints": 81025,
+        "avgResolutionDays": 12.21,
+        "satisfactionRate": 78.64
+      }
+    ],
+    "monsoonComparison": {
+      "monsoon": {
+        "isMonsoon": 1,
+        "totalComplaints": 320638,
+        "avgResolutionDays": 16.74,
+        "satisfactionRate": 73.08,
+        "avgCost": 10968.0
+      },
+      "nonMonsoon": {
+        "isMonsoon": 0,
+        "totalComplaints": 639362,
+        "avgResolutionDays": 12.23,
+        "satisfactionRate": 78.69,
+        "avgCost": 10926.0
+      }
+    }
+  },
+  "mapData": [
+    {
+      "wardCode": "K/E",
+      "wardName": "Andheri East, Jogeshwari East, MIDC",
+      "zone": "Western",
+      "coords": [
+        19.115,
+        72.86
+      ],
+      "totalComplaints": 59673,
+      "satisfactionRate": 76.23,
+      "avgResolutionDays": 13.36,
+      "slumPercentage": 30.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 54.2,
+      "monsoonComplaints": 19901
+    },
+    {
+      "wardCode": "L",
+      "wardName": "Kurla, Chunabhatti, Sakinaka",
+      "zone": "Eastern",
+      "coords": [
+        19.07,
+        72.885
+      ],
+      "totalComplaints": 59459,
+      "satisfactionRate": 75.07,
+      "avgResolutionDays": 16.04,
+      "slumPercentage": 45.0,
+      "populationDensity": "Very High",
+      "siteInspectionRate": 54.24,
+      "monsoonComplaints": 19739
+    },
+    {
+      "wardCode": "M/E",
+      "wardName": "Govandi, Mankhurd, Shivaji Nagar",
+      "zone": "Eastern",
+      "coords": [
+        19.055,
+        72.915
+      ],
+      "totalComplaints": 49648,
+      "satisfactionRate": 76.13,
+      "avgResolutionDays": 13.38,
+      "slumPercentage": 65.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 54.37,
+      "monsoonComplaints": 16660
+    },
+    {
+      "wardCode": "P/N",
+      "wardName": "Malad, Marve, Madh Island, Dindoshi",
+      "zone": "Western",
+      "coords": [
+        19.185,
+        72.845
+      ],
+      "totalComplaints": 49548,
+      "satisfactionRate": 76.12,
+      "avgResolutionDays": 13.46,
+      "slumPercentage": 35.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 53.99,
+      "monsoonComplaints": 16549
+    },
+    {
+      "wardCode": "F/N",
+      "wardName": "Matunga, Wadala, Sion, Hindu Colony",
+      "zone": "City",
+      "coords": [
+        19.03,
+        72.858
+      ],
+      "totalComplaints": 49375,
+      "satisfactionRate": 75.09,
+      "avgResolutionDays": 16.1,
+      "slumPercentage": 55.0,
+      "populationDensity": "Very High",
+      "siteInspectionRate": 53.8,
+      "monsoonComplaints": 16663
+    },
+    {
+      "wardCode": "N",
+      "wardName": "Ghatkopar, Vikhroli West, Pant Nagar",
+      "zone": "Eastern",
+      "coords": [
+        19.08,
+        72.91
+      ],
+      "totalComplaints": 49316,
+      "satisfactionRate": 76.0,
+      "avgResolutionDays": 13.42,
+      "slumPercentage": 28.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 54.18,
+      "monsoonComplaints": 16435
+    },
+    {
+      "wardCode": "H/E",
+      "wardName": "Santacruz East, Khar East, Vakola",
+      "zone": "Western",
+      "coords": [
+        19.075,
+        72.85
+      ],
+      "totalComplaints": 49269,
+      "satisfactionRate": 76.01,
+      "avgResolutionDays": 13.54,
+      "slumPercentage": 38.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 53.84,
+      "monsoonComplaints": 16427
+    },
+    {
+      "wardCode": "G/N",
+      "wardName": "Dadar, Mahim, Dharavi",
+      "zone": "City",
+      "coords": [
+        19.025,
+        72.841
+      ],
+      "totalComplaints": 49162,
+      "satisfactionRate": 75.07,
+      "avgResolutionDays": 16.08,
+      "slumPercentage": 60.0,
+      "populationDensity": "Very High",
+      "siteInspectionRate": 54.22,
+      "monsoonComplaints": 16417
+    },
+    {
+      "wardCode": "E",
+      "wardName": "Byculla, Mazgaon, Mumbai Central",
+      "zone": "City",
+      "coords": [
+        18.973,
+        72.83
+      ],
+      "totalComplaints": 39839,
+      "satisfactionRate": 81.43,
+      "avgResolutionDays": 13.87,
+      "slumPercentage": 35.0,
+      "populationDensity": "Very High",
+      "siteInspectionRate": 54.29,
+      "monsoonComplaints": 13308
+    },
+    {
+      "wardCode": "G/S",
+      "wardName": "Worli, Lower Parel, Prabhadevi",
+      "zone": "City",
+      "coords": [
+        18.995,
+        72.818
+      ],
+      "totalComplaints": 39768,
+      "satisfactionRate": 75.83,
+      "avgResolutionDays": 13.46,
+      "slumPercentage": 25.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 54.05,
+      "monsoonComplaints": 13224
+    },
+    {
+      "wardCode": "D",
+      "wardName": "Malabar Hill, Grant Road, Walkeshwar",
+      "zone": "City",
+      "coords": [
+        18.963,
+        72.812
+      ],
+      "totalComplaints": 39736,
+      "satisfactionRate": 82.02,
+      "avgResolutionDays": 11.7,
+      "slumPercentage": 22.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 53.61,
+      "monsoonComplaints": 13400
+    },
+    {
+      "wardCode": "S",
+      "wardName": "Bhandup, Powai, Kanjurmarg, IIT",
+      "zone": "Eastern",
+      "coords": [
+        19.13,
+        72.93
+      ],
+      "totalComplaints": 39718,
+      "satisfactionRate": 75.75,
+      "avgResolutionDays": 13.32,
+      "slumPercentage": 25.0,
+      "populationDensity": "Medium",
+      "siteInspectionRate": 53.94,
+      "monsoonComplaints": 13215
+    },
+    {
+      "wardCode": "F/S",
+      "wardName": "Parel, Sewri, Naigaon",
+      "zone": "City",
+      "coords": [
+        18.998,
+        72.842
+      ],
+      "totalComplaints": 39712,
+      "satisfactionRate": 75.96,
+      "avgResolutionDays": 13.52,
+      "slumPercentage": 40.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 54.34,
+      "monsoonComplaints": 13126
+    },
+    {
+      "wardCode": "K/W",
+      "wardName": "Andheri West, Juhu, Versova, Lokhandwala",
+      "zone": "Western",
+      "coords": [
+        19.125,
+        72.835
+      ],
+      "totalComplaints": 39693,
+      "satisfactionRate": 75.99,
+      "avgResolutionDays": 13.39,
+      "slumPercentage": 18.0,
+      "populationDensity": "Medium",
+      "siteInspectionRate": 53.73,
+      "monsoonComplaints": 13191
+    },
+    {
+      "wardCode": "M/W",
+      "wardName": "Chembur, Tilak Nagar, Pestom Sagar",
+      "zone": "Eastern",
+      "coords": [
+        19.055,
+        72.895
+      ],
+      "totalComplaints": 39361,
+      "satisfactionRate": 75.42,
+      "avgResolutionDays": 13.55,
+      "slumPercentage": 32.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 54.15,
+      "monsoonComplaints": 13094
+    },
+    {
+      "wardCode": "P/S",
+      "wardName": "Goregaon, Aarey Colony, Bangur Nagar",
+      "zone": "Western",
+      "coords": [
+        19.165,
+        72.845
+      ],
+      "totalComplaints": 39328,
+      "satisfactionRate": 76.41,
+      "avgResolutionDays": 13.5,
+      "slumPercentage": 30.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 54.24,
+      "monsoonComplaints": 13306
+    },
+    {
+      "wardCode": "C",
+      "wardName": "Marine Lines, Bhuleshwar, Kalbadevi",
+      "zone": "City",
+      "coords": [
+        18.951,
+        72.825
+      ],
+      "totalComplaints": 29882,
+      "satisfactionRate": 81.48,
+      "avgResolutionDays": 11.78,
+      "slumPercentage": 15.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 53.94,
+      "monsoonComplaints": 9963
+    },
+    {
+      "wardCode": "H/W",
+      "wardName": "Bandra West, Khar West, Bandstand",
+      "zone": "Western",
+      "coords": [
+        19.06,
+        72.835
+      ],
+      "totalComplaints": 29773,
+      "satisfactionRate": 75.8,
+      "avgResolutionDays": 13.56,
+      "slumPercentage": 10.0,
+      "populationDensity": "Medium",
+      "siteInspectionRate": 54.52,
+      "monsoonComplaints": 10092
+    },
+    {
+      "wardCode": "R/S",
+      "wardName": "Kandivali, Charkop, Poisar",
+      "zone": "Western",
+      "coords": [
+        19.205,
+        72.85
+      ],
+      "totalComplaints": 29694,
+      "satisfactionRate": 75.56,
+      "avgResolutionDays": 13.57,
+      "slumPercentage": 18.0,
+      "populationDensity": "Medium",
+      "siteInspectionRate": 54.18,
+      "monsoonComplaints": 9961
+    },
+    {
+      "wardCode": "B",
+      "wardName": "Sandhurst Road, Dongri, Masjid",
+      "zone": "City",
+      "coords": [
+        18.95,
+        72.838
+      ],
+      "totalComplaints": 29658,
+      "satisfactionRate": 81.21,
+      "avgResolutionDays": 13.81,
+      "slumPercentage": 28.0,
+      "populationDensity": "Very High",
+      "siteInspectionRate": 53.97,
+      "monsoonComplaints": 9854
+    },
+    {
+      "wardCode": "A",
+      "wardName": "Colaba, Fort, Nariman Point",
+      "zone": "City",
+      "coords": [
+        18.927,
+        72.833
+      ],
+      "totalComplaints": 29637,
+      "satisfactionRate": 81.78,
+      "avgResolutionDays": 11.74,
+      "slumPercentage": 12.0,
+      "populationDensity": "High",
+      "siteInspectionRate": 54.15,
+      "monsoonComplaints": 9918
+    },
+    {
+      "wardCode": "R/N",
+      "wardName": "Dahisar, Mandapeshwar",
+      "zone": "Western",
+      "coords": [
+        19.25,
+        72.86
+      ],
+      "totalComplaints": 29533,
+      "satisfactionRate": 75.64,
+      "avgResolutionDays": 13.43,
+      "slumPercentage": 20.0,
+      "populationDensity": "Medium",
+      "siteInspectionRate": 53.76,
+      "monsoonComplaints": 9841
+    },
+    {
+      "wardCode": "R/C",
+      "wardName": "Borivali, Gorai, Eksar",
+      "zone": "Western",
+      "coords": [
+        19.225,
+        72.855
+      ],
+      "totalComplaints": 29473,
+      "satisfactionRate": 76.14,
+      "avgResolutionDays": 13.48,
+      "slumPercentage": 22.0,
+      "populationDensity": "Medium",
+      "siteInspectionRate": 53.78,
+      "monsoonComplaints": 9818
+    },
+    {
+      "wardCode": "T",
+      "wardName": "Mulund, Nahur",
+      "zone": "Eastern",
+      "coords": [
+        19.175,
+        72.95
+      ],
+      "totalComplaints": 19745,
+      "satisfactionRate": 76.4,
+      "avgResolutionDays": 13.29,
+      "slumPercentage": 15.0,
+      "populationDensity": "Low",
+      "siteInspectionRate": 54.21,
+      "monsoonComplaints": 6536
+    }
+  ]
+}

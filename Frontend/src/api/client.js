@@ -73,5 +73,40 @@ export const api = {
   classifyImage: (imageBase64) => request('/classify-image', {
     method: 'POST',
     body: JSON.stringify({ imageBase64 })
-  })
+  }),
+
+  // Resolution Verification AI Audit
+  verifyResolutionPhoto: (data) => request('/verify-resolution-photo', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+
+  // Municipal AI Resource Allocation Advisor
+  suggestResources: (reportData) => request('/suggest-resources', {
+    method: 'POST',
+    body: JSON.stringify(reportData)
+  }),
+
+  // BMC Historical Intelligence (2018-2024 Records)
+  getBmcStats: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/historical/bmc/stats${query ? '?' + query : ''}`);
+  },
+  getBmcComplaints: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/historical/bmc/complaints${query ? '?' + query : ''}`);
+  },
+  getBmcComplaintById: (id) => request(`/historical/bmc/complaints/${id}`),
+  getBmcCategories: () => request('/historical/bmc/categories'),
+  getBmcWards: () => request('/historical/bmc/wards'),
+  getBmcDepartments: () => request('/historical/bmc/departments'),
+  getBmcTrends: () => request('/historical/bmc/trends'),
+  getBmcMapData: () => request('/historical/bmc/map')
 };
+
+export const getWebSocketUrl = () => {
+  const host = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+  const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${host}:5000/ws`;
+};
+
